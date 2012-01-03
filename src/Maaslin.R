@@ -6,7 +6,25 @@
 # Start Date: 10-26-2011
 ####################################
 
+library( logging )
 library( optparse )
+
+# Constants
+c_dMinSamp			<- 0.1
+c_dFreq				<- 0.01
+# Input
+c_strMatrixData		<- "Abundance"
+c_strMatrixMetadata	<- "Metadata"
+# Output
+c_iMFA				<- 30
+c_dHeight			<- 9
+# Summary
+c_strKeywordEvaluatedForInclusion	<- "Q-value"
+c_strProcessFunction				<- "processFunction"
+
+c_logrMaaslin	<- getLogger( "maaslin" )
+addHandler( writeToConsole, c_logrMaaslin )
+setLevel( "INFO", c_logrMaaslin )
 
 pArgs <- OptionParser( usage = "%prog [options] <output.txt> <data.tsv> <data.read.config> <data.R> [source.R]*" )
 lsArgs <- parse_args( pArgs, positional_arguments = TRUE )
@@ -18,22 +36,6 @@ strInputRC		<- lsArgs$args[3]
 strInputR		<- lsArgs$args[4]
 astrSourceR		<- lsArgs$args[5:length( lsArgs$args )]
 
-#Remove any previously stored variables
-#rm(list=ls(all=TRUE))
-
-#Constants
-c_dMinSamp = 0.1
-c_dFreq = 0.01
-#Input
-c_strMatrixData		<- "Abundance"
-c_strMatrixMetadata	<- "Metadata"
-# Output
-c_iMFA = 30
-c_dHeight = 9
-# Summary
-c_strKeywordEvaluatedForInclusion = "Q-value"
-c_strProcessFunction = "processFunction"
-
 #Get command line arguments
 inputFile = strInputRC
 outputDirectory = paste(dirname(strOutputTXT), "/", sep = "" )
@@ -42,36 +44,26 @@ customDataProcessFunction = strInputR
 strBase <- sub(".read.config", "", basename(strInputRC))
 strSummaryFileName = paste(outputDirectory,strBase,"_Summary.txt",sep="")
 
-print(astrSourceR)
-print(inputFile)
-print(outputDirectory)
-print(customDataProcessFunction)
-
-#Libraries
 for( strR in astrSourceR ) {
 	source( strR ) }
 
 #Indictate start
-print("Start MaAsLin")
-print(lsArgs)
+logdebug("Start MaAsLin", c_logrMaaslin)
+logdebug(lsArgs, c_logrMaaslin)
 
-funcSourceScript = function(astrFunctionPath)
-{
+funcSourceScript = function(astrFunctionPath) {
   #If is specified, set up the custom func clean variable
   #Check to see if is NA (or not given)
-  if(!is.na(astrFunctionPath))
-  {
+  if(!is.na(astrFunctionPath)) {
     #Check to make sure the file exists
-    if(file.exists(astrFunctionPath))
-    {
+    if(file.exists(astrFunctionPath)) {
       noImpute = NULL
       invert = FALSE
       #Read in the file
       source(astrFunctionPath)
       #If the script exists in the file, run.
-      if(exists(c_strProcessFunction,mode="function"))
-      {
-        print(paste("Preprocessing script is loaded an available. Script Name:",c_strProcessFunction," Script File:",astrFunctionPath,sep=""))
+      if(exists(c_strProcessFunction,mode="function")) {
+        loginfo(paste("Preprocessing script is loaded and available. Script Name:",c_strProcessFunction," Script File:",astrFunctionPath,sep=""), c_logrMaaslin)
         return( list(
           processFunction   = get( c_strProcessFunction ),
           significanceLevel = significanceLevel,
@@ -79,14 +71,11 @@ funcSourceScript = function(astrFunctionPath)
           noImpute          = noImpute) )
       } else {
         print(paste("MaAsLin Error: Attempted to read in function but was not successful. Function Name: ",c_strProcessFunction,sep=""))
-        return(-1)
-      }
+        return(-1) }
     #Handle when the file does not exist
     } else {
       print(paste("MaAsLin Error: A custom data manipulation script was indicated but was not found at the file path: ",astrFunctionPath,sep=""))
-      return(-1)
-    }
-  }
+      return(-1) } }
 }
 
 if(!file.exists(inputFile))
@@ -153,8 +142,8 @@ lsScript = funcSourceScript(customDataProcessFunction)
 
 #Clean the data and update the current data list to the cleaned data list
 lsRet = funcClean( frmeData=frmeData, funcDataProcess=lsScript$processFunction, aiMetadata=aiMetadata, aiGenetics=aiGenetics, aiData=aiData, lsQCCounts=lsData$lsQCCounts, astrNoImpute=lsScript$noImpute )
-print("lsRet")
-print(lsRet)
+logdebug("lsRet", c_logrMaaslin)
+logdebug(format(lsRet), c_logrMaaslin)
 #Update the variables after cleaning
 lsRet$frmeRaw = frmeData
 lsData = lsRet
@@ -185,7 +174,7 @@ lsData$lsQCCounts$iNoTerms = 0
 lsData$lsQCCounts$iLms = 0
 
 #Run analysis
-alsRetBugs = funcBugs( frmeData, funcBugHybrid, lsData, aiMetadata, aiGenetics, aiData, strData,
+alsRetBugs = funcBugs( frmeData, lsData, aiMetadata, aiGenetics, aiData, strData,
   lsScript$significanceLevel, lsScript$invert, dirname(strOutputTXT), astrScreen = c() )
 aiBugs = alsRetBugs$aiReturnBugs
 lsQCCounts = alsRetBugs$lsQCCounts
@@ -236,18 +225,14 @@ funcWrite("\nData which survived clean: ", strProcessFileName )
 funcWrite(lsQCCounts$aiDataCleaned, strProcessFileName )
 
 #Run MFA and plot covariance of factors
-if( length( aiBugs ) )
-{
-    print("MFA:in")
+if( length( aiBugs ) ) {
+    logdebug("MFA:in", c_logrMaaslin)
     lsMFA <- funcMFA( frmeData, aiUMD, aiBugs )
-    print("MFA:out")
-    if( class( lsMFA ) != "try-error" )
-    {
-        print("PlotMFA:in")
+    logdebug("MFA:out", c_logrMaaslin)
+    if( class( lsMFA ) != "try-error" ) {
+        logdebug("PlotMFA:in", c_logrMaaslin)
         funcPlotMFA( lsMFA, paste(outputDirectory,strBase,sep="") )
-        print("PlotMFA:out")
-    }
-}
+        logdebug("PlotMFA:out", c_logrMaaslin) } }
 
 #Summarize output files based on a keyword and a significance threshold
 #Look for less than or equal to the threshold (approapriate for p-value and q-value type measurements)

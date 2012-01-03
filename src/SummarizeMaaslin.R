@@ -5,16 +5,20 @@
 # Start Date: 12-23-2011
 ####################################
 
+library(logging)
+
+c_logrMaaslin	<- getLogger( "maaslin" )
+
 #Transposes a data file
 #Assumes the file data is rectangular/square
 funcSummarizeDirectory = function(astrOutputDirectory, strBaseName, astrSummaryFileName, astrKeyword, afSignificanceLevel, acharDelimiter="\t")
 {
-  print("funcSummarizeDirectory")
-  print(astrOutputDirectory)
-  print("astrSummaryFileName")
-  print(astrSummaryFileName)
-  print("afSignificanceLevel")
-  print(afSignificanceLevel)
+  logdebug("funcSummarizeDirectory", c_logrMaaslin)
+  logdebug(format(astrOutputDirectory), c_logrMaaslin)
+  logdebug("astrSummaryFileName", c_logrMaaslin)
+  logdebug(format(astrSummaryFileName), c_logrMaaslin)
+  logdebug("afSignificanceLevel", c_logrMaaslin)
+  logdebug(format(afSignificanceLevel), c_logrMaaslin)
 
   filePrefix = paste(strBaseName,"-",sep="")
   aiPrefixLength = nchar(filePrefix)
@@ -29,7 +33,7 @@ funcSummarizeDirectory = function(astrOutputDirectory, strBaseName, astrSummaryF
 
   #Get files in output directory
   astrlsDirectoryFiles = list.files(astrOutputDirectory, full.names=FALSE)
-  print(astrlsDirectoryFiles)
+  logdebug(format(astrlsDirectoryFiles), c_logrMaaslin)
 
   #Reduce to detail files
   for(astrLowestPathLevel in astrlsDirectoryFiles)

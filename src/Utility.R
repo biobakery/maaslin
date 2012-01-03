@@ -122,3 +122,12 @@ funcWriteTable <- function( frmeTable, strFile, fAppend = FALSE )
 {
   write.table( frmeTable, strFile, quote = FALSE, sep = "\t", na = "", col.names = NA, append = fAppend )
 }
+
+funcFormat <- function( pValue ) {
+	c_iMax	<- 8192
+
+	strRet <- paste( format( pValue ), collapse = " " )
+	if( nchar( strRet ) > c_iMax ) {
+		strRet <- paste( substr( strRet, 0, c_iMax - 3 ), "...", sep = "" ) }
+	return( strRet )
+}
