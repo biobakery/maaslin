@@ -11,7 +11,7 @@ library( optparse )
 
 # Constants
 c_dMinSamp			<- 0.1
-c_dFreq				<- 0.01
+c_dFreq				<- 0.001
 # Input
 c_strMatrixData		<- "Abundance"
 c_strMatrixMetadata	<- "Metadata"

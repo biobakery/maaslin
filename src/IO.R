@@ -391,7 +391,7 @@ funcReadMatrix = function(tempMatrixName = NA, tempFileName = NA, tempDelimiter 
     return(-1)
   }
 
-  dataMatrix = read.table(tempFileName, header = FALSE, sep = tempDelimiter, as.is = TRUE, skip = startSkip, na.strings=c_astrNA)
+  dataMatrix = read.table(tempFileName, sep = tempDelimiter, as.is = TRUE, skip = startSkip, na.strings=c_astrNA, quote = "", comment.char = "")
   
   #Get column names
   print("Reading ID column/row.")
@@ -401,7 +401,7 @@ funcReadMatrix = function(tempMatrixName = NA, tempFileName = NA, tempDelimiter 
   if(funcIsValid(tempIdCol))
   {
     columnNameList = as.matrix(dataMatrix[tempIdRow,])
-  }
+}
   if(funcIsValid(tempIdRow))
   {
     rowNameList = dataMatrix[tempIdCol][[1]]
