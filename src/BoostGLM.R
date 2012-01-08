@@ -14,9 +14,9 @@ c_logrMaaslin	<- getLogger( "maaslin" )
 #Properly clean / get data ready for analysis
 funcClean <- function( frmeData, funcDataProcess, aiMetadata, aiGenetics, aiData, lsQCCounts, astrNoImpute = c() ) {
 
-  logdebug( "Start Clean", c_logrMaaslin )
+  c_logrMaaslin$debug( "Start Clean")
   if( !is.null( funcDataProcess ) ) {
-    logdebug("Additional preprocess function attempted.", c_logrMaaslin)
+    c_logrMaaslin$debug("Additional preprocess function attempted.")
 
     pTmp <- funcDataProcess( frmeData=frmeData, aiMetadata=aiMetadata, aiGenetics=aiGenetics, aiData=aiData)
     if( class( pTmp ) == "data.frame" ) {
@@ -34,8 +34,8 @@ funcClean <- function( frmeData, funcDataProcess, aiMetadata, aiGenetics, aiData
   for( i in aiMetadata ) {
     if( ( class( frmeData[,i] ) %in% c("integer", "numeric", "logical") ) &&
       ( length( unique( frmeData[,i] ) ) < 5 ) ) {
-      logdebug("Changing metadatum from numeric/integer/logical to factor", c_logrMaaslin)
-      logdebug(colnames(frmeData)[i], c_logrMaaslin)
+      c_logrMaaslin$debug("Changing metadatum from numeric/integer/logical to factor")
+      c_logrMaaslin$debug(colnames(frmeData)[i])
       frmeData[,i] = factor( frmeData[,i] ) } }
 
   # Remove missing metadata
@@ -49,8 +49,8 @@ funcClean <- function( frmeData, funcDataProcess, aiMetadata, aiGenetics, aiData
   aiGenetics = setdiff( aiGenetics, aiRemove )
   lsQCCounts$iMissingMetadata = aiRemove
   if(length(aiRemove)) {
-    loginfo("Removing the following metadata/genetics, too much missing data.", c_logrMaaslin)
-    loginfo(format(colnames( frmeData )[aiRemove]), c_logrMaaslin) }
+    c_logrMaaslin$info("Removing the following metadata/genetics, too much missing data.")
+    c_logrMaaslin$info(format(colnames( frmeData )[aiRemove])) }
 
   # Remove crummy SNPs
   aiRemove = c()
@@ -61,8 +61,8 @@ funcClean <- function( frmeData, funcDataProcess, aiMetadata, aiGenetics, aiData
   aiGenetics <- setdiff( aiGenetics, aiRemove )
   lsQCCounts$iRemovedSNPs = aiRemove
   if(length(aiRemove)) {
-    loginfo("Removing the following genetics indicies, too sparse.", c_logrMaaslin)
-    loginfo(format(colnames( frmeData )[aiRemove]), c_logrMaaslin) }
+    c_logrMaaslin$info("Removing the following genetics indicies, too sparse.")
+    c_logrMaaslin$info(format(colnames( frmeData )[aiRemove])) }
 
   # Remove outliers
   aiSumOutlierPerDatum = c()
@@ -81,9 +81,8 @@ funcClean <- function( frmeData, funcDataProcess, aiMetadata, aiGenetics, aiData
         if( !is.na( d ) && ( ( d < dLF ) || ( d > dUF ) ) ) {
           aiRemove <- c(aiRemove, j) } }
   	  if( length( aiRemove ) ) {
-		  loginfo( sprintf( "Removing %d outliers from %s", length( aiRemove ), colnames(frmeData)[iData] ),
-			  c_logrMaaslin )
-		  loginfo( format( rownames( frmeData )[aiRemove] ), c_logrMaaslin ) }
+		  c_logrMaaslin$info( "Removing %d outliers from %s", length( aiRemove ), colnames(frmeData)[iData] )
+		  c_logrMaaslin$info( format( rownames( frmeData )[aiRemove] )) }
       adData[aiRemove] <- NA
       frmeData[,iData] <- adData
       aiSumOutlierPerDatum = c(aiSumOutlierPerDatum,length(aiRemove)) } }
@@ -99,8 +98,8 @@ funcClean <- function( frmeData, funcDataProcess, aiMetadata, aiGenetics, aiData
   aiData = setdiff( aiData, aiRemove )
   lsQCCounts$iMissingData = aiRemove
   if(length(aiRemove)) {
-	loginfo( "Removing the following for missing data.", c_logrMaaslin )
-    loginfo( format( colnames( frmeData )[aiRemove] ), c_logrMaaslin) }
+	c_logrMaaslin$info( "Removing the following for missing data.")
+    c_logrMaaslin$info( format( colnames( frmeData )[aiRemove] )) }
 
   # Keep track of factor levels
   lslsFactors <- list()
@@ -127,7 +126,7 @@ funcClean <- function( frmeData, funcDataProcess, aiMetadata, aiGenetics, aiData
     if( "NA" %in% levels( aCol ) ) {
       frmeData[,iCol] <- factor( aCol, levels = c(lsFactor[[2]], "NA") ) } }
 
-  logdebug("End FuncClean", c_logrMaaslin)
+  c_logrMaaslin$debug("End FuncClean")
   return( list(frmeData = frmeData, aiMetadata = aiMetadata, aiGenetics = aiGenetics, aiData = aiData, lsQCCounts = lsQCCounts) )
 }
 
@@ -165,8 +164,8 @@ funcBugHybrid <- function( iTaxon, frmeData, lsData, aiMetadata, aiGenetics, dSi
       astrRemove <- c(astrRemove, strMetadatum) } }
 
   if(length(astrRemove)) {
-    logdebug("These metadata will be removed in func bug", c_logrMaaslin)
-    logdebug( format(c(colnames( frmeData )[iTaxon], astrRemove) ), c_logrMaaslin ) }
+    c_logrMaaslin$debug("These metadata will be removed in func bug")
+    c_logrMaaslin$debug( format(c(colnames( frmeData )[iTaxon], astrRemove) )) }
   #Reset metadata with removed metadata removed.
   astrMetadata <- setdiff( astrMetadata, astrRemove )
 	
@@ -216,7 +215,7 @@ funcBugHybrid <- function( iTaxon, frmeData, lsData, aiMetadata, aiGenetics, dSi
 	  if( is.null( strTerm ) ) { next }
       #If you cant find the coefficient name, write
       if( is.na( strTerm ) ) {
-		logerror( sprintf( "Unknown coefficient: %s", strMetadata ), c_logrMaaslin )
+		c_logrMaaslin$error( "Unknown coefficient: %s", strMetadata )
         next }
       #Collect metadata names
       astrTerms <- c(astrTerms, strTerm) }
@@ -249,12 +248,12 @@ funcBugHybrid <- function( iTaxon, frmeData, lsData, aiMetadata, aiGenetics, dSi
 #strData Log file name. NA indicates no logging. No append to previous sessions, file is deleted if old.
 funcBugs <- function( frmeData, lsData, aiMetadata, aiGenetics, aiData, strData, dSig, fInvert, strDirOut = NA, astrScreen = c() ) {
 
-  logdebug("Start funcBugs", c_logrMaaslin)
+  c_logrMaaslin$debug("Start funcBugs")
   if( is.na( strDirOut ) ) {
 	  strDirOut <- paste( dirname( strData ), "/", sep = "" ) }
   strBaseOut <- paste( strDirOut, sub( "\\.(\\S+)$", "", basename(strData) ), sep = "/" )
   strLog <- paste( strBaseOut, ".txt", sep = "" )
-  loginfo( sprintf( "Outputting to: %s", strLog ), c_logrMaaslin )
+  c_logrMaaslin$info( "Outputting to: %s", strLog )
   unlink( strLog )
 
   #Will contain pvalues
@@ -263,7 +262,7 @@ funcBugs <- function( frmeData, lsData, aiMetadata, aiGenetics, aiData, strData,
   lsSig <- list()
   for( iTaxon in aiData ) {
     if( !( iTaxon %% 10 ) ) {
-	  loginfo( sprintf( "Taxon %d/%d", iTaxon, max( aiData ) ), c_logrMaaslin ) }
+	  c_logrMaaslin$info( "Taxon %d/%d", iTaxon, max( aiData ) ) }
     #Call analysis method
     lsOne <- funcBugHybrid( iTaxon, frmeData, lsData, aiMetadata, aiGenetics, dSig, adP, lsSig, strLog )
 
@@ -273,8 +272,8 @@ funcBugs <- function( frmeData, lsData, aiMetadata, aiGenetics, aiData, strData,
     lsSig <- lsOne$lsSig
     #Update the qc data
     lsData$lsQCCounts = lsOne$lsQCCounts }
-  logdebug("lsData$lsQCCounts", c_logrMaaslin)
-  logdebug(format(lsData$lsQCCounts), c_logrMaaslin)
+  c_logrMaaslin$debug("lsData$lsQCCounts")
+  c_logrMaaslin$debug(format(lsData$lsQCCounts))
 
   #Presort for order for FDR calculation
   if( is.null( adP ) ) { return( NULL ) }
@@ -466,7 +465,7 @@ funcBugResult = function( lmod, frmeData, iTaxon, dSig, adP, lsSig, strLog = NA,
         strMetadata = funcCoef2Col( strOrig, frmeData, astrCols )
         if( is.na( strMetadata ) ) {
           if( substring( strOrig, nchar( strOrig ) - 1 ) == "NA" ) { next }
-		  logerror( sprintf( "Unknown coefficient: %s", strOrig ), c_logrMaaslin ) }
+		  c_logrMaaslin$error( "Unknown coefficient: %s", strOrig ) }
         if( substring( strOrig, nchar( strMetadata ) + 1 ) == "NA" ) { next }
         adMetadata <- frmeData[,strMetadata] }
 

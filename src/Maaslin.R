@@ -23,10 +23,12 @@ c_strKeywordEvaluatedForInclusion	<- "Q-value"
 c_strProcessFunction				<- "processFunction"
 
 c_logrMaaslin	<- getLogger( "maaslin" )
-addHandler( writeToConsole, c_logrMaaslin )
-setLevel( "INFO", c_logrMaaslin )
+c_logrMaaslin$addHandler( writeToConsole )
 
 pArgs <- OptionParser( usage = "%prog [options] <output.txt> <data.tsv> <data.read.config> <data.R> [source.R]*" )
+pArgs <- add_option( pArgs,	c("-v", "--verbosity"),	type = "integer",
+	action = "store",		dest = "iVerbosity",	default = 3,
+	metavar = "verbosity",	help="Logging verbosity" )
 lsArgs <- parse_args( pArgs, positional_arguments = TRUE )
 if( length( lsArgs$args ) < 4 ) {
 	stop( print_help( pArgs ) ) }
@@ -35,6 +37,9 @@ strInputTSV		<- lsArgs$args[2]
 strInputRC		<- lsArgs$args[3]
 strInputR		<- lsArgs$args[4]
 astrSourceR		<- lsArgs$args[5:length( lsArgs$args )]
+
+for( pLogr in c(c_logrMaaslin, c_logrMaaslin$handlers) ) {
+	setLevel( max( loglevels ) - ( 10 * lsArgs$options$iVerbosity ), pLogr ) }
 
 #Get command line arguments
 inputFile = strInputRC
@@ -48,8 +53,8 @@ for( strR in astrSourceR ) {
 	source( strR ) }
 
 #Indictate start
-logdebug("Start MaAsLin", c_logrMaaslin)
-logdebug(lsArgs, c_logrMaaslin)
+c_logrMaaslin$debug("Start MaAsLin")
+c_logrMaaslin$debug(lsArgs)
 
 funcSourceScript = function(astrFunctionPath) {
   #If is specified, set up the custom func clean variable
@@ -63,7 +68,7 @@ funcSourceScript = function(astrFunctionPath) {
       source(astrFunctionPath)
       #If the script exists in the file, run.
       if(exists(c_strProcessFunction,mode="function")) {
-        loginfo(paste("Preprocessing script is loaded and available. Script Name:",c_strProcessFunction," Script File:",astrFunctionPath,sep=""), c_logrMaaslin)
+        c_logrMaaslin$info("Preprocessing script is loaded and available. Script Name:",c_strProcessFunction," Script File:",astrFunctionPath)
         return( list(
           processFunction   = get( c_strProcessFunction ),
           significanceLevel = significanceLevel,
@@ -142,8 +147,8 @@ lsScript = funcSourceScript(customDataProcessFunction)
 
 #Clean the data and update the current data list to the cleaned data list
 lsRet = funcClean( frmeData=frmeData, funcDataProcess=lsScript$processFunction, aiMetadata=aiMetadata, aiGenetics=aiGenetics, aiData=aiData, lsQCCounts=lsData$lsQCCounts, astrNoImpute=lsScript$noImpute )
-logdebug("lsRet", c_logrMaaslin)
-logdebug(format(lsRet), c_logrMaaslin)
+c_logrMaaslin$debug("lsRet")
+c_logrMaaslin$debug(format(lsRet))
 #Update the variables after cleaning
 lsRet$frmeRaw = frmeData
 lsData = lsRet
@@ -226,13 +231,13 @@ funcWrite(lsQCCounts$aiDataCleaned, strProcessFileName )
 
 #Run MFA and plot covariance of factors
 if( length( aiBugs ) ) {
-    logdebug("MFA:in", c_logrMaaslin)
+    c_logrMaaslin$debug("MFA:in")
     lsMFA <- funcMFA( frmeData, aiUMD, aiBugs )
-    logdebug("MFA:out", c_logrMaaslin)
+    c_logrMaaslin$debug("MFA:out")
     if( class( lsMFA ) != "try-error" ) {
-        logdebug("PlotMFA:in", c_logrMaaslin)
+        c_logrMaaslin$debug("PlotMFA:in")
         funcPlotMFA( lsMFA, paste(outputDirectory,strBase,sep="") )
-        logdebug("PlotMFA:out", c_logrMaaslin) } }
+        c_logrMaaslin$debug("PlotMFA:out")
 
 #Summarize output files based on a keyword and a significance threshold
 #Look for less than or equal to the threshold (approapriate for p-value and q-value type measurements)

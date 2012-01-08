@@ -13,12 +13,12 @@ c_logrMaaslin	<- getLogger( "maaslin" )
 #Assumes the file data is rectangular/square
 funcSummarizeDirectory = function(astrOutputDirectory, strBaseName, astrSummaryFileName, astrKeyword, afSignificanceLevel, acharDelimiter="\t")
 {
-  logdebug("funcSummarizeDirectory", c_logrMaaslin)
-  logdebug(format(astrOutputDirectory), c_logrMaaslin)
-  logdebug("astrSummaryFileName", c_logrMaaslin)
-  logdebug(format(astrSummaryFileName), c_logrMaaslin)
-  logdebug("afSignificanceLevel", c_logrMaaslin)
-  logdebug(format(afSignificanceLevel), c_logrMaaslin)
+  c_logrMaaslin$debug("funcSummarizeDirectory")
+  c_logrMaaslin$debug(format(astrOutputDirectory))
+  c_logrMaaslin$debug("astrSummaryFileName")
+  c_logrMaaslin$debug(format(astrSummaryFileName))
+  c_logrMaaslin$debug("afSignificanceLevel")
+  c_logrMaaslin$debug(format(afSignificanceLevel))
 
   filePrefix = paste(strBaseName,"-",sep="")
   aiPrefixLength = nchar(filePrefix)
@@ -33,7 +33,7 @@ funcSummarizeDirectory = function(astrOutputDirectory, strBaseName, astrSummaryF
 
   #Get files in output directory
   astrlsDirectoryFiles = list.files(astrOutputDirectory, full.names=FALSE)
-  logdebug(format(astrlsDirectoryFiles), c_logrMaaslin)
+  c_logrMaaslin$debug(format(astrlsDirectoryFiles))
 
   #Reduce to detail files
   for(astrLowestPathLevel in astrlsDirectoryFiles)
