@@ -184,9 +184,6 @@ alsRetBugs = funcBugs( frmeData, lsData, aiMetadata, aiGenetics, aiData, strData
 aiBugs = alsRetBugs$aiReturnBugs
 lsQCCounts = alsRetBugs$lsQCCounts
 
-#Numeric vector of Metadata indexes
-aiUMD <- intersect( aiMetadata, which( colnames( frmeData ) %in% lsData$astrMetadata ) )
-
 #Output a summary file of analysis process
 strProcessFileName = c(paste(outputDirectory,"ProcessQC.txt",sep=""))
 unlink(strProcessFileName)
@@ -232,12 +229,12 @@ funcWrite(lsQCCounts$aiDataCleaned, strProcessFileName )
 #Run MFA and plot covariance of factors
 if( length( aiBugs ) ) {
     c_logrMaaslin$debug("MFA:in")
-    lsMFA <- funcMFA( frmeData, aiUMD, aiBugs )
-    c_logrMaaslin$debug("MFA:out")
+	lsMFA <- funcMFA( frmeData, aiMetadata, aiBugs )
+	c_logrMaaslin$debug("MFA:out")
     if( class( lsMFA ) != "try-error" ) {
         c_logrMaaslin$debug("PlotMFA:in")
-        funcPlotMFA( lsMFA, paste(outputDirectory,strBase,sep="") )
-        c_logrMaaslin$debug("PlotMFA:out")
+		funcPlotMFA( lsMFA, paste(outputDirectory,strBase,sep="") )
+        c_logrMaaslin$debug("PlotMFA:out") } }
 
 #Summarize output files based on a keyword and a significance threshold
 #Look for less than or equal to the threshold (approapriate for p-value and q-value type measurements)

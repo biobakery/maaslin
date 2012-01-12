@@ -32,4 +32,4 @@ for fileTSV in afileTSVs:
 	strBase = sfle.rebase( fileTSV, c_strSufTSV )
 	fileR, fileRC = (File( sfle.d( fileDirInput, strBase + s ) ) for s in (c_strSufR, c_strSufRC))
 	fileTXT = File( sfle.d( fileDirOutput, strBase, strBase + c_strSufTXT ) )
-	Command( fileTXT, [c_fileProgMaaslin, fileTSV, fileRC, fileR] + c_afileProgRs, funcMaaslin )
+	Default( Command( fileTXT, [c_fileProgMaaslin, fileTSV, fileRC, fileR] + c_afileProgRs, funcMaaslin ) )
