@@ -11,7 +11,7 @@ library( optparse )
 
 # Constants
 c_dMinSamp			<- 0.1
-c_dFreq				<- 0.001
+c_dFreq				<- 0.01
 # Input
 c_strMatrixData		<- "Abundance"
 c_strMatrixMetadata	<- "Metadata"
@@ -100,12 +100,12 @@ data = dim(inputFileData[[c_strMatrixData]])
 dataToWrite = list(Metadata = inputFileData[[c_strMatrixMetadata]])
 saveToFile = c(paste(outputDirectory,"metadata.tsv",sep=""))
 configFileName = c(paste(outputDirectory,"metadata.read.config",sep=""))
-funcWriteMatrices(dataFrameList=dataToWrite, saveFileList=saveToFile, configureFileName=configFileName, acharDelimiter="\t")
+fRes <- funcWriteMatrices(dataFrameList=dataToWrite, saveFileList=saveToFile, configureFileName=configFileName, acharDelimiter="\t")
 
 dataToWrite = list(Data = inputFileData[[c_strMatrixData]])
 saveToFile = c(paste(outputDirectory,"data.tsv",sep=""))
 configFileName = c(paste(outputDirectory,"data.read.config",sep=""))
-funcWriteMatrices(dataFrameList=dataToWrite, saveFileList=saveToFile, configureFileName=configFileName, acharDelimiter="\t")
+fRes <- funcWriteMatrices(dataFrameList=dataToWrite, saveFileList=saveToFile, configureFileName=configFileName, acharDelimiter="\t")
 
 #Merge data files together
 frmeData = merge(inputFileData[[c_strMatrixMetadata]],inputFileData[[c_strMatrixData]],by.x=0,by.y=0)
@@ -118,7 +118,7 @@ frmeData = frmeData[-1]
 dataToWrite = list(Merged = frmeData)
 saveToFile = c(paste(outputDirectory,"read-Merged.tsv",sep=""))
 configFileName = c(paste(outputDirectory,"read-Merged.read.config",sep=""))
-funcWriteMatrices(dataFrameList=dataToWrite, saveFileList=saveToFile, configureFileName=configFileName, acharDelimiter="\t")
+fRes <- funcWriteMatrices(dataFrameList=dataToWrite, saveFileList=saveToFile, configureFileName=configFileName, acharDelimiter="\t")
 
 #Data needed for the MaAsLin environment
 #List of lists (one entry per file)
@@ -167,7 +167,7 @@ lsData$astrMetadata = astrMetadata
 dataToWrite = list(Cleaned = frmeData)
 saveToFile = c(paste(outputDirectory,"read_cleaned.tsv",sep=""))
 configFileName = c(paste(outputDirectory,"read_cleaned.read.config",sep=""))
-funcWriteMatrices(dataFrameList=dataToWrite, saveFileList=saveToFile, configureFileName=configFileName, acharDelimiter="\t")
+fRes <- funcWriteMatrices(dataFrameList=dataToWrite, saveFileList=saveToFile, configureFileName=configFileName, acharDelimiter="\t")
 
 #Log file
 strData = paste(outputDirectory,strBase,".txt",sep="")

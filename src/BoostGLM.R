@@ -5,8 +5,8 @@
 ####################################
 
 library( gam )
+library( gbm )
 library( logging )
-library( mboost )
 
 c_dFence		<- 3
 c_logrMaaslin	<- getLogger( "maaslin" )
@@ -177,50 +177,50 @@ funcBugHybrid <- function( iTaxon, frmeData, lsData, aiMetadata, aiGenetics, dSi
       funcWrite( c("#genetics", astrGenetics), strLog ) }
     funcWrite( c("#samples", rownames( frmeTmp )), strLog ) }
 
-  lmod <- NA
-  #Create a linear additive mode including all metadata or genetics not removed at this iteration
-  strFormula <- paste( "adCur ~", paste( sprintf( "`%s`", astrMetadata ), collapse = " + " ),
-    ifelse( length( astrGenetics ), "+", "" ), paste( astrGenetics, collapse = " + " ), sep = " " )
-
-  #Count model selection
-  lsData$lsQCCounts$iBoosts = lsData$lsQCCounts$iBoosts + 1
-
+	lmod <- NA
+	#Create a linear additive mode including all metadata or genetics not removed at this iteration
+	strFormula <- paste( "adCur ~", paste( sprintf( "`%s`", astrMetadata ), collapse = " + " ),
+		ifelse( length( astrGenetics ), "+", "" ), paste( astrGenetics, collapse = " + " ), sep = " " )
+	
+	#Count model selection
+	lsData$lsQCCounts$iBoosts = lsData$lsQCCounts$iBoosts + 1
+	
 #dTime01 <- proc.time()[3]
 #dTime00 <- dTime01 - dTime00
-  #Boost the model for model selection
-  lmod <- try( glmboost( as.formula( strFormula ), data = frmeTmp,
-    control = boost_control( nu = min( 1 / length( c(astrMetadata, astrGenetics) ) ), mstop = 5000 ) ) )
+	#Boost the model for model selection
+	lmod <- try( gbm( as.formula( strFormula ), data = frmeTmp, distribution = "gaussian", verbose = FALSE,
+		n.minobsinnode = min( 10, round( 0.2 * nrow( frmeTmp ) ) ), n.trees = 1000 ) )
 #dTime02 <- proc.time()[3]
 #dTime01 <- dTime02 - dTime01
-
-  astrTerms <- c()
-  if( !is.na( lmod ) && ( class( lmod ) != "try-error" ) ) {
-    lsSum <- summary( lmod )
-    if( !is.na( strLog ) ) {
-      funcWrite( "#model-glmboost", strLog )
-      funcWrite( lmod, strLog )
-      funcWrite( "#summary-glmboost", strLog )
-      funcWrite( lsSum, strLog ) }
-  
-    #For each metadata coefficient
-    #Check selprob in the model summary
-    for( strMetadata in names( coefficients( lmod ) ) ) {
-      #If the selprob is less than a certain frequency, skip
-	  dSel <- lsSum$selprob[strMetadata]
-      if( is.na(dSel) || ( dSel < c_dFreq ) ) { next }
-      #Get the name of the metadata
-      strTerm <- funcCoef2Col( strMetadata, frmeData, c(astrMetadata, astrGenetics) )
-
-	  #If you should ignore the coefficient, continue
-	  if( is.null( strTerm ) ) { next }
-      #If you cant find the coefficient name, write
-      if( is.na( strTerm ) ) {
-		c_logrMaaslin$error( "Unknown coefficient: %s", strMetadata )
-        next }
-      #Collect metadata names
-      astrTerms <- c(astrTerms, strTerm) }
-  } else {
-    lsData$lsQCCounts$iBoostErrors = lsData$lsQCCounts$iBoostErrors + 1 }
+	
+	astrTerms <- c()
+	if( !is.na( lmod ) && ( class( lmod ) != "try-error" ) ) {
+		lsSum <- summary( lmod, plotit = FALSE )
+		if( !is.na( strLog ) ) {
+			funcWrite( "#model-gbm", strLog )
+			funcWrite( lmod, strLog )
+			funcWrite( "#summary-gbm", strLog )
+			funcWrite( lsSum, strLog ) }
+		
+		#For each metadata coefficient
+		#Check selprob in the model summary
+		for( strMetadata in lmod$var.names ) {
+			#If the selprob is less than a certain frequency, skip
+			dSel <- lsSum$rel.inf[which( lsSum$var == strMetadata )] / 100
+			if( is.na(dSel) || ( dSel < c_dFreq ) ) { next }
+			#Get the name of the metadata
+			strTerm <- funcCoef2Col( strMetadata, frmeData, c(astrMetadata, astrGenetics) )
+			
+			#If you should ignore the coefficient, continue
+			if( is.null( strTerm ) ) { next }
+			#If you cant find the coefficient name, write
+			if( is.na( strTerm ) ) {
+				c_logrMaaslin$error( "Unknown coefficient: %s", strMetadata )
+				next }
+			#Collect metadata names
+			astrTerms <- c(astrTerms, strTerm) }
+	} else {
+		lsData$lsQCCounts$iBoostErrors = lsData$lsQCCounts$iBoostErrors + 1 }
 
   lmod <- NA
   if( length( astrTerms ) ) {
