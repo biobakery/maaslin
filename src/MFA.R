@@ -10,19 +10,51 @@ library( FactoMineR )
 #@params 
 funcMFA = function( frmeData, aiMetadata, aiBugs, aiGenes = c() )
 {
+  #Update aiBugs with factor and gene data that is being plotted
+  print("rownames(frmeData)")
+  print(rownames(frmeData))
+  print("colnames(frmeData)")
+  print(colnames(frmeData))
+  print("aiBugs")
+  print(aiBugs)
+  lsFeatures = c()
+  if(exists("funcPlotFeatures",mode="function"))
+  {
+    lsFeatures = funcPlotFeatures()
+  }
+  lsasMetadata = c(list(asNames=c(),asLabels=c()))
+  if(exists("funcPlotMetadata",mode="function"))
+  {
+    lsasMetadata = funcPlotMetadata()
+  }
+  print("lsFeatures")
+  print(lsFeatures)
+  liFeatures = which(colnames(frmeData) %in% lsFeatures)
+  print("liFeatures")
+  print(liFeatures)
+  print("lsasMetadata$asNames")
+  print(lsasMetadata$asNames)
+  liMetadata = which(colnames(frmeData) %in% lsasMetadata$asNames)
+  print("liMetadata")
+  print(liMetadata)
+  aiMetadata = union(aiMetadata,liMetadata)
+  print("union(aiBugs,liFeatures)")
+  print(union(aiBugs,liFeatures))
+  aiBugs = union(aiBugs,liFeatures)
+  print("aiBugs")
+  print(aiBugs)
+
   #Check / Select numeric data
   #Eventually holds numeric rows to be extracted from the data frame
   aiRows = c()
   #For each row in the data frame
   for( iRow in 1:nrow( frmeData ) )
   {
-
     #Indicates if the row passed and is good
     rowOK = TRUE
     #Look through all the data rows of each metadata, bug, or gene of interest
     for( aiCols in list(aiMetadata, aiBugs, aiGenes) )
     {
-
       #Attempt to convert to numeric
       aData = as.numeric( frmeData[iRow, aiCols] )
 
@@ -67,7 +99,7 @@ funcMFA = function( frmeData, aiMetadata, aiBugs, aiGenes = c() )
   #Reduce the data frame to rows
   frmeMFA = frmeData[aiRows,]
 
-  #Check / Select factor data
+  #Needing to set if the data is numeric or categorical for the MFA
   aiMDN <- c()
   aiMDC <- c()
   for( iCol in c(aiMetadata, aiBugs, aiGenes) )
@@ -118,7 +150,9 @@ funcMFA = function( frmeData, aiMetadata, aiBugs, aiGenes = c() )
     astrNames <- c("metadata_nom", "metadata_cont", "taxa")
   }
   #MFA requires
+  print("Start MFA")
   lsRet <- try( MFA( frmeMFA[,aiCols], group = aiLengths, type = astrTypes, name.group = astrNames, graph = FALSE ) )
+  print("Stop MFA")
   return( lsRet )
 }
 
@@ -134,38 +168,133 @@ funcMFA = function( frmeData, aiMetadata, aiBugs, aiGenes = c() )
 #@params tempLabelColor Pdf image label color
 #@params tempTitleColor Pdf image title color
 #@params tempSubtitleColor Pdf image subtitle color
-funcPlotMFA <- function(lsMFA, tempSaveFileName="MFA", tempWidth=(tempHeight*1.5), tempHeight=6, tempPCH=20, tempBackgroundColor="white", tempForeground="black", tempAxesColor="black", tempLabelColor="black", tempTitleColor="black", tempSubtitleColor="black")
+funcPlotMFA <- function(lsMFA, tempSaveFileName="MFA", funcPlotColors = NULL, funcPlotPoints = NULL, funcPlotLegend = NULL, tempWidth=(tempHeight*1.5), tempHeight=6, tempPCH=20)
 {
   #Set pdf settings
-  pdf(paste(tempSaveFileName,".pdf",sep=""), width=tempWidth, height=tempHeight)
-  par(bg=tempBackgroundColor, fg=tempForeground, col.axis=tempAxesColor, col.lab=tempLabelColor, col.main=tempTitleColor, col.sub=tempSubtitleColor)
-
+  pdf(paste(tempSaveFileName,".pdf",sep=""), width = c_dHeight * 1.5, height = c_dHeight, useDingbats=FALSE )
+  if( c_fInvert )
+  {
+    par( bg = "black", fg = "white", col.axis = "white", col.lab = "white", col.main = "white", col.sub = "white" )
+  }
   #Get MFA pca data and set dimensions
   lsPCA = lsMFA$global.pca
-  pointColors = funcGetRandomColors( length( lsPCA$ind$coord ) )
+
+  #Plot colors
+  astrCols = NULL
+  if(exists("funcPlotColors",mode="function"))
+  {
+    astrCols=funcPlotColors( frmeData )
+  } else {
+    astrCols = funcGetRandomColors( length( lsPCA$ind$coord ) )
+  }
+#    astrCols <- funcPlotColors( frmeData )#[match( names( lsPCA$ind$dist ), rownames( frmeData ) )]
+
+  #Plot points
+  aiPoints = 16
+  if(exists("funcPlotPoints",mode="function"))
+  {
+    aiPoints = funcPlotPoints( frmeData )
+  }
+#    aiPoints <- funcPlotPoints( frmeData )[match( names( lsPCA$ind$dist ), rownames( frmeData ) )]
+
+
   dX1 = max( lsPCA$ind$coord[,1] ) / max( lsPCA$var$coord[,1] )
   dX2 = min( lsPCA$ind$coord[,1] ) / min( lsPCA$var$coord[,1] )
   dY1 = max( lsPCA$ind$coord[,2] ) / max( lsPCA$var$coord[,2] )
   dY2 = min( lsPCA$ind$coord[,2] ) / min( lsPCA$var$coord[,2] )
-  dScale = 0.95 * min( abs( c(dX1, dX2, dY1, dY2) ) )
+  #Scale the metadate labels so they are viewable
+  dScaleFactor = 1
+  if(exists("funcGetMetadataScale",mode="function"))
+  {
+    aiPoints = funcGetMetadataScale()
+  }
+
+  dScale = dScaleFactor * min( abs( c(dX1, dX2, dY1, dY2) ) )
+  #Scale the feature labels so they are viewable
+  dBugScaleFactor = 1
+  if(exists("funcGetFeatureScale",mode="function"))
+  {
+    dBugScaleFactor = funcGetFeatureScale()
+  }
+  dBugScale = dBugScaleFactor * min( abs( c(dX1, dX2, dY1, dY2) ) ) # was 7
 
   #Set X and Y coordinates and plot points
-  tempXTitle = sprintf( "Dimension 1 (%.2f%%)", lsPCA$eig$`percentage of variance`[1] )
-  tempYTitle = sprintf( "Dimension 2 (%.2f%%)", lsPCA$eig$`percentage of variance`[2] )
-  plot( lsPCA$ind$coord, pch=tempPCH, col=pointColors, xlab=tempXTitle, ylab=tempYTitle )
+  strX <- sprintf( "Dimension 1 (%.2f%%)", lsPCA$eig$`percentage of variance`[1] )
+  strY <- sprintf( "Dimension 2 (%.2f%%)", lsPCA$eig$`percentage of variance`[2] )
+  plot( lsPCA$ind$coord, pch = aiPoints, col = astrCols, xlab = strX, ylab = strY, cex.axis=1.5, cex.lab=1.5, cex=1.5)
+  if(exists("funcPlotLegend",mode="function"))
+  {
+    funcPlotLegend("topright", NULL)
+  }
 
   #Plot metadata
-  metadata = rownames(lsPCA$var$coord) %in% lsMFA$summary.quali$modalite
-  plot( lsPCA$ind$coord, pch=tempPCH, col = pointColors, xlab = tempXTitle, ylab = tempYTitle )
-  text( lsPCA$var$coord[metadata,] * dScale, labels = funcRenameTaxa( rownames( lsPCA$var$coord )[metadata] ), font = 2 )
 
-  #Plot factors
-  plot( lsPCA$ind$coord, pch=tempPCH, col = pointColors, xlab = tempXTitle, ylab = tempYTitle )
-  text( lsPCA$var$coord[!metadata,] * dScale, labels = funcRenameTaxa( rownames( lsPCA$var$coord )[!metadata] ), cex = 0.75, font = 3 )
+#  afMetadata <- rownames(lsPCA$var$coord) %in% lsMFA$summary.quali$modalite
+  lsasMetadata = NULL
+  if(exists("funcPlotMetadata",mode="function"))
+  {
+    lsasMetadata = funcPlotMetadata()
+  } else {
+    lsasMetadata = list(asNames=lsMFA$summary.quali$modalite, asLabels=lsMFA$summary.quali$modalite)
+  }
 
-  plot( lsPCA$ind$coord, pch=tempPCH, col = pointColors, xlab = tempXTitle, ylab = tempYTitle )
-  text( lsPCA$var$coord * dScale, labels = funcRenameTaxa( rownames( lsPCA$var$coord ) ), cex = ifelse(metadata, 1, 0.75 ), font = ifelse(metadata, 2, 3 ) )
-  dev.off()
+  afMetadata <- rownames(lsPCA$var$coord) %in% lsasMetadata$asNames
+  afLabels = lsasMetadata$asLabels
+  asOrderedPlotLabels = c()
+  for(sMetadata in rownames(lsPCA$var$coord)[afMetadata])
+  {
+    asOrderedPlotLabels=c(asOrderedPlotLabels,afLabels[which(lsasMetadata$asNames==sMetadata)])
+  }
+  if(length(asOrderedPlotLabels) != length(afMetadata[afMetadata==TRUE]))
+  {
+    asOrderedPlotLabels = afMetadata
+  }
+  plot( lsPCA$ind$coord, pch = aiPoints, col = astrCols, xlab = strX, ylab = strY, cex.axis=1.5, cex.lab=1.5, cex=1.5)
+  text( lsPCA$var$coord[afMetadata,] * dScale, labels=asOrderedPlotLabels, cex=1.8, font = 2 )
+#  text( lsPCA$var$coord[afMetadata,] * dScale, labels = funcRename( rownames( lsPCA$var$coord )[afMetadata] ), cex=2.0, font = 2 )
+  if(exists("funcPlotLegend",mode="function"))
+  {
+    funcPlotLegend("topright", NULL)
+  }
+#  if( !is.null( funcPlotLegend ) )
+#  {
+#    funcPlotLegend( "topright", NULL )
+#  }
+
+  #Plot features
+  lsFeaturesToPlot = lsMFA$summary.quanti$variable
+  if(exists("funcPlotFeatures",mode="function"))
+  {
+    lsFeaturesToPlot = funcPlotFeatures()
+  }
+  afFeatures = rownames(lsPCA$var$coord) %in% lsFeaturesToPlot
+  plot( lsPCA$ind$coord, pch = aiPoints, col = astrCols, xlab = strX, ylab = strY, cex.axis=1.5, cex.lab=1.5, cex=1.5)
+  text( lsPCA$var$coord[afFeatures,] * dBugScale, labels = funcRename( rownames( lsPCA$var$coord )[afFeatures] ), cex = 1.6, font = 3 )
+#  text( lsPCA$var$coord[!afMetadata,] * dScale, labels = funcRename( rownames( lsPCA$var$coord )[!afMetadata] ), cex = 1.75, font = 3 )
+  if(exists("funcPlotLegend",mode="function"))
+  {
+    funcPlotLegend("topright", NULL)
+  }
+#  if( !is.null( funcPlotLegend ) )
+#  {
+#    funcPlotLegend( "topright", NULL )
+#  }
+
+  #Plot metadata and features
+  plot( lsPCA$ind$coord, pch = aiPoints, col = astrCols, xlab = strX, ylab = strY, cex.axis=1.5, cex.lab=1.5, cex=1.5)
+  text( lsPCA$var$coord[afMetadata,] * dScale, labels=asOrderedPlotLabels, cex=1.8, font = 2 )
+  text( lsPCA$var$coord[afFeatures,] * dBugScale, labels=funcRename( rownames( lsPCA$var$coord )[afFeatures] ), cex = 1.6, font = 3 )
+#  text( lsPCA$var$coord * dScale, labels = funcRename( rownames( lsPCA$var$coord ) ),
+#        cex = ifelse( afMetadata, 2.0, 1.75 ), font = ifelse( afMetadata, 2, 3 ) )
+  if(exists("funcPlotLegend",mode="function"))
+  {
+    funcPlotLegend("topright", NULL)
+  }
+#  if( !is.null( funcPlotLegend ) )
+#  {
+#    funcPlotLegend( "topright", NULL )
+#  }
+  dev.off( )
 }
 
 #Modifies taxa names for plotting

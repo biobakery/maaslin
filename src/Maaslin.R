@@ -11,7 +11,7 @@ library( optparse )
 
 # Constants
 c_dMinSamp			<- 0.1
-c_dFreq				<- 0.01
+c_dFreq				<- 0.001
 # Input
 c_strMatrixData		<- "Abundance"
 c_strMatrixMetadata	<- "Metadata"
@@ -20,15 +20,13 @@ c_iMFA				<- 30
 c_dHeight			<- 9
 # Summary
 c_strKeywordEvaluatedForInclusion	<- "Q-value"
-c_strProcessFunction				<- "processFunction"
+c_strProcessFunction			<- "processFunction"
 
 c_logrMaaslin	<- getLogger( "maaslin" )
-c_logrMaaslin$addHandler( writeToConsole )
+addHandler( writeToConsole, c_logrMaaslin )
+setLevel( "INFO", c_logrMaaslin )
 
 pArgs <- OptionParser( usage = "%prog [options] <output.txt> <data.tsv> <data.read.config> <data.R> [source.R]*" )
-pArgs <- add_option( pArgs,	c("-v", "--verbosity"),	type = "integer",
-	action = "store",		dest = "iVerbosity",	default = 3,
-	metavar = "verbosity",	help="Logging verbosity" )
 lsArgs <- parse_args( pArgs, positional_arguments = TRUE )
 if( length( lsArgs$args ) < 4 ) {
 	stop( print_help( pArgs ) ) }
@@ -37,9 +35,6 @@ strInputTSV		<- lsArgs$args[2]
 strInputRC		<- lsArgs$args[3]
 strInputR		<- lsArgs$args[4]
 astrSourceR		<- lsArgs$args[5:length( lsArgs$args )]
-
-for( pLogr in c(c_logrMaaslin, c_logrMaaslin$handlers) ) {
-	setLevel( max( loglevels ) - ( 10 * lsArgs$options$iVerbosity ), pLogr ) }
 
 #Get command line arguments
 inputFile = strInputRC
@@ -53,8 +48,8 @@ for( strR in astrSourceR ) {
 	source( strR ) }
 
 #Indictate start
-c_logrMaaslin$debug("Start MaAsLin")
-c_logrMaaslin$debug(lsArgs)
+logdebug("Start MaAsLin", c_logrMaaslin)
+logdebug(lsArgs, c_logrMaaslin)
 
 funcSourceScript = function(astrFunctionPath) {
   #If is specified, set up the custom func clean variable
@@ -62,25 +57,42 @@ funcSourceScript = function(astrFunctionPath) {
   if(!is.na(astrFunctionPath)) {
     #Check to make sure the file exists
     if(file.exists(astrFunctionPath)) {
-      noImpute = NULL
-      invert = FALSE
       #Read in the file
       source(astrFunctionPath)
+      dSigLevel = 0.05
+      fInvert = FALSE
+      aNoImpute = NULL
+      if(exists("noImpute"))
+      {
+        aNoImpute = noImpute
+      }
+      if(exists("c_fInvert"))
+      {
+        fInvert = c_fInvert
+      }
+      if(exists("significanceLevel"))
+      {
+        dSigLevel = significanceLevel
+      }
       #If the script exists in the file, run.
       if(exists(c_strProcessFunction,mode="function")) {
-        c_logrMaaslin$info("Preprocessing script is loaded and available. Script Name:",c_strProcessFunction," Script File:",astrFunctionPath)
+        loginfo(paste("Preprocessing script is loaded and available. Script Name:",c_strProcessFunction," Script File:",astrFunctionPath,sep=""), c_logrMaaslin)
         return( list(
           processFunction   = get( c_strProcessFunction ),
-          significanceLevel = significanceLevel,
-          invert            = invert,
-          noImpute          = noImpute) )
+          significanceLevel = dSigLevel,
+          invert            = fInvert,
+          noImpute          = aNoImpute) )
       } else {
         print(paste("MaAsLin Error: Attempted to read in function but was not successful. Function Name: ",c_strProcessFunction,sep=""))
-        return(-1) }
+        return(list(
+          processFunction   = NULL,
+          significanceLevel = dSigLevel,
+          invert            = fInvert,
+          noImpute          = aNoImpute)) }
     #Handle when the file does not exist
     } else {
       print(paste("MaAsLin Error: A custom data manipulation script was indicated but was not found at the file path: ",astrFunctionPath,sep=""))
-      return(-1) } }
+      return(NULL) } }
 }
 
 if(!file.exists(inputFile))
@@ -100,12 +112,12 @@ data = dim(inputFileData[[c_strMatrixData]])
 dataToWrite = list(Metadata = inputFileData[[c_strMatrixMetadata]])
 saveToFile = c(paste(outputDirectory,"metadata.tsv",sep=""))
 configFileName = c(paste(outputDirectory,"metadata.read.config",sep=""))
-fRes <- funcWriteMatrices(dataFrameList=dataToWrite, saveFileList=saveToFile, configureFileName=configFileName, acharDelimiter="\t")
+funcWriteMatrices(dataFrameList=dataToWrite, saveFileList=saveToFile, configureFileName=configFileName, acharDelimiter="\t")
 
 dataToWrite = list(Data = inputFileData[[c_strMatrixData]])
 saveToFile = c(paste(outputDirectory,"data.tsv",sep=""))
 configFileName = c(paste(outputDirectory,"data.read.config",sep=""))
-fRes <- funcWriteMatrices(dataFrameList=dataToWrite, saveFileList=saveToFile, configureFileName=configFileName, acharDelimiter="\t")
+funcWriteMatrices(dataFrameList=dataToWrite, saveFileList=saveToFile, configureFileName=configFileName, acharDelimiter="\t")
 
 #Merge data files together
 frmeData = merge(inputFileData[[c_strMatrixMetadata]],inputFileData[[c_strMatrixData]],by.x=0,by.y=0)
@@ -118,7 +130,7 @@ frmeData = frmeData[-1]
 dataToWrite = list(Merged = frmeData)
 saveToFile = c(paste(outputDirectory,"read-Merged.tsv",sep=""))
 configFileName = c(paste(outputDirectory,"read-Merged.read.config",sep=""))
-fRes <- funcWriteMatrices(dataFrameList=dataToWrite, saveFileList=saveToFile, configureFileName=configFileName, acharDelimiter="\t")
+funcWriteMatrices(dataFrameList=dataToWrite, saveFileList=saveToFile, configureFileName=configFileName, acharDelimiter="\t")
 
 #Data needed for the MaAsLin environment
 #List of lists (one entry per file)
@@ -144,11 +156,12 @@ lsData$lsQCCounts$aiMetadataInitial = aiMetadata
 lsData$frmeRaw = frmeData
 
 lsScript = funcSourceScript(customDataProcessFunction)
-
+print("lsScript")
+print(lsScript)
 #Clean the data and update the current data list to the cleaned data list
 lsRet = funcClean( frmeData=frmeData, funcDataProcess=lsScript$processFunction, aiMetadata=aiMetadata, aiGenetics=aiGenetics, aiData=aiData, lsQCCounts=lsData$lsQCCounts, astrNoImpute=lsScript$noImpute )
-c_logrMaaslin$debug("lsRet")
-c_logrMaaslin$debug(format(lsRet))
+logdebug("lsRet", c_logrMaaslin)
+logdebug(format(lsRet), c_logrMaaslin)
 #Update the variables after cleaning
 lsRet$frmeRaw = frmeData
 lsData = lsRet
@@ -167,7 +180,7 @@ lsData$astrMetadata = astrMetadata
 dataToWrite = list(Cleaned = frmeData)
 saveToFile = c(paste(outputDirectory,"read_cleaned.tsv",sep=""))
 configFileName = c(paste(outputDirectory,"read_cleaned.read.config",sep=""))
-fRes <- funcWriteMatrices(dataFrameList=dataToWrite, saveFileList=saveToFile, configureFileName=configFileName, acharDelimiter="\t")
+funcWriteMatrices(dataFrameList=dataToWrite, saveFileList=saveToFile, configureFileName=configFileName, acharDelimiter="\t")
 
 #Log file
 strData = paste(outputDirectory,strBase,".txt",sep="")
@@ -183,6 +196,9 @@ alsRetBugs = funcBugs( frmeData, lsData, aiMetadata, aiGenetics, aiData, strData
   lsScript$significanceLevel, lsScript$invert, dirname(strOutputTXT), astrScreen = c() )
 aiBugs = alsRetBugs$aiReturnBugs
 lsQCCounts = alsRetBugs$lsQCCounts
+
+#Numeric vector of Metadata indexes
+aiUMD <- intersect( aiMetadata, which( colnames( frmeData ) %in% lsData$astrMetadata ) )
 
 #Output a summary file of analysis process
 strProcessFileName = c(paste(outputDirectory,"ProcessQC.txt",sep=""))
@@ -228,13 +244,13 @@ funcWrite(lsQCCounts$aiDataCleaned, strProcessFileName )
 
 #Run MFA and plot covariance of factors
 if( length( aiBugs ) ) {
-    c_logrMaaslin$debug("MFA:in")
-	lsMFA <- funcMFA( frmeData, aiMetadata, aiBugs )
-	c_logrMaaslin$debug("MFA:out")
+    logdebug("MFA:in", c_logrMaaslin)
+    lsMFA <- funcMFA( frmeData, aiUMD, aiBugs )
+    logdebug("MFA:out", c_logrMaaslin)
     if( class( lsMFA ) != "try-error" ) {
-        c_logrMaaslin$debug("PlotMFA:in")
-		funcPlotMFA( lsMFA, paste(outputDirectory,strBase,sep="") )
-        c_logrMaaslin$debug("PlotMFA:out") } }
+        logdebug("PlotMFA:in", c_logrMaaslin)
+        funcPlotMFA( lsMFA=lsMFA, tempSaveFileName=paste(outputDirectory,strBase,sep=""), funcPlotColors=lsData$funcPlotColors, funcPlotPoints=lsData$funcPlotPoints, funcPlotLegend=lsData$funcPlotLegend )
+        logdebug("PlotMFA:out", c_logrMaaslin) } }
 
 #Summarize output files based on a keyword and a significance threshold
 #Look for less than or equal to the threshold (approapriate for p-value and q-value type measurements)

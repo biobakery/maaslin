@@ -237,12 +237,12 @@ funcReadMatrices = function( configureFile , defaultFile = NA, log = FALSE)
 
   #Read in config file info
   configData = readConfigFile(configureFile, defaultFile)
-  
+
   #Read each data block extracted from the config file
   for(dataBlock in configData)
   {
     #Read in matrix
-	tempFileName = dataBlock[2]
+    tempFileName = dataBlock[2]
     dataMatrix = funcReadMatrix(tempMatrixName=dataBlock[1], tempFileName=tempFileName, tempDelimiter=dataBlock[3], tempIdRow=dataBlock[4], tempIdCol=dataBlock[5], tempRows=dataBlock[6], tempColumns=dataBlock[7], tempDtCharacter=dataBlock[8], tempDtFactor=dataBlock[9], tempDtInteger=dataBlock[10], tempDtLogical=dataBlock[11], tempDtNumeric=dataBlock[12], tempDtOrderedFactor=dataBlock[13], tempLog=log)
     if(class(dataMatrix)=="data.frame")
     {
@@ -703,7 +703,7 @@ readConfigFile = function(configureFile, defaultFile = NA)
       matrixName = fileDataList[textIndex]
 
       fileName = defaultFile
-      delimiter = NA
+      delimiter = "\t"
       idRow = 1
       idCol = 1
       rows = NA

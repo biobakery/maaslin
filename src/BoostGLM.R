@@ -8,7 +8,7 @@ library( gam )
 library( gbm )
 library( logging )
 
-c_dFence		<- 3
+c_dFence	<- 3
 c_logrMaaslin	<- getLogger( "maaslin" )
 
 #Properly clean / get data ready for analysis
@@ -198,7 +198,17 @@ funcBugHybrid <- function( iTaxon, frmeData, lsData, aiMetadata, aiGenetics, dSi
 		lsSum <- summary( lmod, plotit = FALSE )
 		if( !is.na( strLog ) ) {
 			funcWrite( "#model-gbm", strLog )
-			funcWrite( lmod, strLog )
+			funcWrite( lmod$fit, strLog )
+			funcWrite( lmod$train.error, strLog )
+			funcWrite( lmod$distribution, strLog )
+			funcWrite( lmod$n.trees, strLog )
+			funcWrite( lmod$nTrain, strLog )
+			funcWrite( lmod$response.name, strLog )
+			funcWrite( lmod$shrinkage, strLog )
+			funcWrite( lmod$train.fraction, strLog )
+			funcWrite( lmod$var.levels, strLog )
+			funcWrite( lmod$var.names, strLog )
+			funcWrite( lmod$Terms, strLog )
 			funcWrite( "#summary-gbm", strLog )
 			funcWrite( lsSum, strLog ) }
 		
@@ -211,9 +221,9 @@ funcBugHybrid <- function( iTaxon, frmeData, lsData, aiMetadata, aiGenetics, dSi
 			#Get the name of the metadata
 			strTerm <- funcCoef2Col( strMetadata, frmeData, c(astrMetadata, astrGenetics) )
 			
-			#If you should ignore the coefficient, continue
+			#If you should ignore the metadata, continue
 			if( is.null( strTerm ) ) { next }
-			#If you cant find the coefficient name, write
+			#If you cant find the metadata name, write
 			if( is.na( strTerm ) ) {
 				c_logrMaaslin$error( "Unknown coefficient: %s", strMetadata )
 				next }
@@ -266,7 +276,7 @@ funcBugs <- function( frmeData, lsData, aiMetadata, aiGenetics, aiData, strData,
     #Call analysis method
     lsOne <- funcBugHybrid( iTaxon, frmeData, lsData, aiMetadata, aiGenetics, dSig, adP, lsSig, strLog )
 
-	#Update pvalue array
+    #Update pvalue array
     adP <- lsOne$adP
     #lsSig contains data about significant feature v metadata comparisons
     lsSig <- lsOne$lsSig
@@ -285,7 +295,8 @@ funcBugs <- function( frmeData, lsData, aiMetadata, aiGenetics, aiData, strData,
   for( i in 1:length( aiSig ) ) {
     iSig <- aiSig[i]
     adQ[iSig] <- adP[iSig] * iTests / i }
-	
+
+  #
   astrNames <- c()
   for( i in 1:length( lsSig ) ) {
     astrNames <- c(astrNames, lsSig[[i]]$name) }
@@ -295,9 +306,11 @@ funcBugs <- function( frmeData, lsData, aiMetadata, aiGenetics, aiData, strData,
   astrRet <- c()
   for( j in aiSig ) {
     if( adQ[j] > dSig ) { next }
+    #This allows only c_iMFA count of significant data to be passed to the MFA plot
+    #Or in general to be pass out of the function.
     if( length( astrRet ) >= c_iMFA ) { break }
 
-	lsCur <- lsSig[[j]]
+    lsCur <- lsSig[[j]]
     astrFactors <- lsCur$factors
     strTaxon <- lsCur$taxon
 	
@@ -312,25 +325,27 @@ funcBugs <- function( frmeData, lsData, aiMetadata, aiGenetics, aiData, strData,
     strFileTXT <- NA
     strFilePDF <- NA
     for( j in aiSig ) {
-      lsCur			<- lsSig[[j]]
+      lsCur		<- lsSig[[j]]
       strCur		<- lsCur$name
       if( strCur != strName ) { next }
       strTaxon		<- lsCur$taxon
       adData		<- lsCur$data
       astrFactors	<- lsCur$factors
-      adCur			<- lsCur$metadata
+      adCur		<- lsCur$metadata
       if( is.na( strData ) ) { next }
 			
       if( is.na( strFileTXT ) ) {
         strFileTXT <- sprintf( "%s-%s.txt", strBaseOut, strName )
         unlink(strFileTXT)
-        funcWrite( c("astrFactors", "Taxon", "Coefficient", "N", "N not 0", "P-value", "Q-value"), strFileTXT ) }
-      funcWrite( c(strName, strTaxon, lsCur$orig, length( adData ), sum( adData > 0 ), adP[j], adQ[j]), strFileTXT )
+        funcWrite( c("Variable", "Feature", "Value", "Coefficient", "N", "N not 0", "P-value", "Q-value"), strFileTXT ) }
+      funcWrite( c(strName, strTaxon, lsCur$orig, lsCur$value, length( adData ), sum( adData > 0 ), adP[j], adQ[j]), strFileTXT )
       if( adQ[j] > dSig ) { next }
 
-	  if( is.na( strFilePDF ) ) {
-		strFilePDF <- sprintf( "%s-%s.pdf", strBaseOut, strName )
-        pdf( strFilePDF, width = 11 )
+      if( is.na( strFilePDF ) ) {
+        strFilePDF <- sprintf( "%s-%s.pdf", strBaseOut, strName )
+        pdf( strFilePDF, width = 11, useDingbats=FALSE )
+
+        #Invert plots
         if( fInvert ) {
           par( bg = "black", fg = "white", col.axis = "white", col.lab = "white", col.main = "white", col.sub = "white" )
           adColorMin <- c(1, 1, 0)
@@ -341,6 +356,7 @@ funcBugs <- function( frmeData, lsData, aiMetadata, aiGenetics, aiData, strData,
           adColorMax <- c(0, 1, 0)
           adColorMed <- c(0, 0, 0) } }
 
+      #Create linear model title data string
       strTitle <- sprintf( "%s (%.3g sd %.3g, p=%.3g, q=%.3g)", lsCur$orig, lsCur$value, lsCur$std, adP[j], adQ[j] )
       adMar <- c(5, 4, 4, 2) + 0.1
       dLine <- NA
@@ -353,7 +369,8 @@ funcBugs <- function( frmeData, lsData, aiMetadata, aiGenetics, aiData, strData,
           strTaxon <- paste( substring( strTaxon, 0, i ), substring( strTaxon, i + 1 ), sep = "\n" )
           adMar[2] <- adMar[2] + 1 }
       } else { dCEX = 1 }
-			
+
+      #Plot factor data as boxplot
       if( class( adCur ) == "factor" ) {
         if( "NA" %in% levels( adCur ) ) {
           afNA <- adCur == "NA"
@@ -374,11 +391,22 @@ funcBugs <- function( frmeData, lsData, aiMetadata, aiGenetics, aiData, strData,
           astrNames <- c(astrNames, sprintf( "%s (%d)", strLevel, sum( adCur == strLevel, na.rm = TRUE ) ))
           astrColors <- c(astrColors, sprintf( "%sAA", funcColor( ( median( adData[adCur == strLevel], na.rm = TRUE ) - dMed ) /
             dIQR, dMax = 3, dMin = -3, adMax = adColorMin, adMin = adColorMax, adMed = adColorMed ) )) }
+        #Controls boxplot labels
+        #(When there are many factor levels some are skipped and not plotted
+        #So this must be reduced)
+        dBoxPlotLabelCex = dCEX
+        if(length(astrNames)>8)
+        {
+          dBoxPlotLabelCex = dBoxPlotLabelCex * 1.5/(length(astrNames)/8)
+        }
+        par(cex.axis = dBoxPlotLabelCex)
         boxplot( adData ~ adCur, notch = TRUE, names = astrNames, mar = adMar, col = astrColors,
           main = strTitle, xlab = strCur, ylab = NA, cex.lab = dCEX, outpch = 4, outcex = 0.5 )
+        par(cex.axis = dCEX)
         stripchart( adData ~ adCur, add = TRUE, col = astrColors, method = "jitter", vertical = TRUE, pch = 20 )
         title( ylab = strTaxon, cex.lab = dCEX, line = dLine )
       } else {
+        #Plot continuous data
         fGenetics <- length( aiGenetics ) && ( class( adCur ) == "integer" ) &&
           length( intersect( astrFactors, colnames( frmeData )[aiGenetics] ) )
         if( fGenetics ) {
@@ -393,9 +421,32 @@ funcBugs <- function( frmeData, lsData, aiMetadata, aiGenetics, aiData, strData,
         title( ylab = strTaxon, cex.lab = dCEX )
         lmod <- lm( adData ~ adCur )
         dColor <- lmod$coefficients[2] * mean( adCur, na.rm = TRUE ) / mean( adData, na.rm = TRUE )
-#        dColor <- lsCur$value / lsCur$std
         strColor <- sprintf( "%sDD", funcColor( dColor, adMax = adColorMin, adMin = adColorMax, adMed = adColorMed ) )
-        abline( reg = lmod, col = strColor, lwd = 3 ) } }
+        abline( reg = lmod, col = strColor, lwd = 3 ) }
+
+      #Now plot residual hat plot
+      #Get coefficient names
+      lsAllCoefs = setdiff(names(lsCur$allCoefs),c("(Intercept)"))
+
+      #Current b1 coefficient
+      sCurSigData = lsCur$orig
+
+      #Other coefficients names
+      lsOtherCoefs = setdiff(lsAllCoefs, c(sCurSigData))
+
+      #Get b1 coefficient * data
+      b1 = as.matrix(adData) %*% lsCur$allCoefs[sCurSigData]
+
+      #Get bi coefficients * data
+      bi = as.matrix(adData) %*% t(as.matrix(lsCur$allCoefs[lsOtherCoefs]))
+      bi = bi %*% as.matrix(rep(1,ncol(bi)))
+
+      #Plot
+      plot(bi ~ b1, xlab = sCurSigData, ylab = paste(lsOtherCoefs,sep="", collapse="+"), main = paste(strTaxon,"~",strTitle), pch = 20)
+      rug(b1, side=1)
+      rug(bi, side=2)
+    }
+
     if( dev.cur( ) != 1 ) { dev.off( ) } }
 
   if( length( aiGenetics ) ) {
@@ -469,11 +520,11 @@ funcBugResult = function( lmod, frmeData, iTaxon, dSig, adP, lsSig, strLog = NA,
         if( substring( strOrig, nchar( strMetadata ) + 1 ) == "NA" ) { next }
         adMetadata <- frmeData[,strMetadata] }
 
-	  #Bonferonni correct the factor p-values based on the factor levels-1 comparisons
+      #Bonferonni correct the factor p-values based on the factor levels-1 comparisons
       if( class( adMetadata ) == "factor" ) {
         dP <- dP * ( nlevels( adMetadata ) - 1 ) }
 
-	  adP <- c(adP, dP)
+      adP <- c(adP, dP)
       lsSig[[length( lsSig ) + 1]] <- list(
         name		= strMetadata,
         orig		= strOrig,
@@ -482,7 +533,8 @@ funcBugResult = function( lmod, frmeData, iTaxon, dSig, adP, lsSig, strLog = NA,
         factors		= c(strMetadata),
         metadata	= adMetadata,
         value		= dCoef,
-        std			= dStd ) } }
+        std		= dStd,
+        allCoefs	= adCoefs) } }
 
   return( list(adP=adP, lsSig=lsSig, lsQCCounts=lsQCCounts) )
 }

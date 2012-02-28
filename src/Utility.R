@@ -1,23 +1,36 @@
 #Modifies taxa names for plotting
 #@params tempTaxaNames A list of string taxa names
-funcRenameTaxa = function(tempTaxaNames)
-{
-  returnList=c()
-  newName=""
-  for( name in tempTaxaNames )
-  {
-    modifiedName=strsplit(name, "\\|")[[1]]
-    i=length(modifiedName)
-    if((modifiedName[i] == "unclassified") || !is.na(as.numeric(modifiedName[i])))
-    {
-      newName=paste(modifiedName[(i-1):i], collapse = "|")
-    }else{
-      newName=modifiedName[i]
-    }
-    returnList=c(returnList, newName)
-  }
-  return(returnList)
-}
+#funcRenameTaxa = function(tempTaxaNames)
+#{
+#  returnList=c()
+#  newName=""
+#  for( name in tempTaxaNames )
+#  {
+#    modifiedName=strsplit(name, "\\|")[[1]]
+#    i=length(modifiedName)
+#    if((modifiedName[i] == "unclassified") || !is.na(as.numeric(modifiedName[i])))
+#    {
+#      newName=paste(modifiedName[(i-1):i], collapse = "|")
+#    }else{
+#      newName=modifiedName[i]
+#    }
+#    returnList=c(returnList, newName)
+#  }
+#  return(returnList)
+#}
+
+funcRename <- function( astrNames ) {
+	
+	astrRet <- c()
+	for( strName in astrNames ) {
+		astrName <- strsplit( strName, "\\|" )[[1]]
+		i <- length( astrName )
+		if( ( astrName[i] == "unclassified" ) || !is.na( as.numeric( astrName[i] ) ) ) {
+			strRet <- paste( astrName[( i - 1 ):i], collapse = "|" ) }
+		else {
+			strRet <- astrName[i] }
+		astrRet <- c(astrRet, strRet) }
+	return( astrRet ) }
 
 #Generates a given number of random colors
 #@params tempNumberColors Number of colors to generate
