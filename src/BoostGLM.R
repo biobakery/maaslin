@@ -426,25 +426,25 @@ funcBugs <- function( frmeData, lsData, aiMetadata, aiGenetics, aiData, strData,
 
       #Now plot residual hat plot
       #Get coefficient names
-      lsAllCoefs = setdiff(names(lsCur$allCoefs),c("(Intercept)"))
+#      lsAllCoefs = setdiff(names(lsCur$allCoefs),c("(Intercept)"))
 
       #Current b1 coefficient
-      sCurSigData = lsCur$orig
+#      sCurSigData = lsCur$orig
 
       #Other coefficients names
-      lsOtherCoefs = setdiff(lsAllCoefs, c(sCurSigData))
+#      lsOtherCoefs = setdiff(lsAllCoefs, c(sCurSigData))
 
-      #Get b1 coefficient * data
-      b1 = as.matrix(adData) %*% lsCur$allCoefs[sCurSigData]
+      #Get xi (raw data)
+#      b1 = as.matrix(adData)
 
       #Get bi coefficients * data
-      bi = as.matrix(adData) %*% t(as.matrix(lsCur$allCoefs[lsOtherCoefs]))
-      bi = bi %*% as.matrix(rep(1,ncol(bi)))
+#      bi = as.matrix(adData) %*% t(as.matrix(lsCur$allCoefs[lsOtherCoefs]))
+#      bi = bi %*% as.matrix(rep(1,ncol(bi)))
 
       #Plot
-      plot(bi ~ b1, xlab = sCurSigData, ylab = paste(lsOtherCoefs,sep="", collapse="+"), main = paste(strTaxon,"~",strTitle), pch = 20)
-      rug(b1, side=1)
-      rug(bi, side=2)
+#      plot(bi ~ b1, xlab = sCurSigData, ylab = paste(lsOtherCoefs,sep="", collapse="+"), main = paste(strTaxon,"~",strTitle), pch = 20)
+#      rug(b1, side=1)
+#      rug(bi, side=2)
     }
 
     if( dev.cur( ) != 1 ) { dev.off( ) } }
