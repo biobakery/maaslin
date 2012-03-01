@@ -8,7 +8,7 @@ library( gam )
 library( gbm )
 library( logging )
 
-c_dFence	<- 3
+c_dFence		<- 0
 c_logrMaaslin	<- getLogger( "maaslin" )
 
 #Properly clean / get data ready for analysis
@@ -160,7 +160,12 @@ funcBugHybrid <- function( iTaxon, frmeData, lsData, aiMetadata, aiGenetics, dSi
 
     #Find the amount of NA and if over a certain ratio, remove that metadata from analysis
     iNA = sum( is.na( aMetadatum ) ) + sum( aMetadatum == "NA", na.rm = TRUE )
-    if( ( iNA / length( aiRows ) ) > ( 2 * c_dMinSamp ) ) {
+	#Be kinder to genetics than other metadata
+	#if( length( grep( "^((chr)|(rs)\\d+)", strMetadatum ) ) ) {
+	#	dMult <- 8 }
+	#else {
+	dMult <- 2 # }
+    if( ( iNA / length( aiRows ) ) > ( dMult * c_dMinSamp ) ) {
       astrRemove <- c(astrRemove, strMetadatum) } }
 
   if(length(astrRemove)) {
@@ -188,7 +193,7 @@ funcBugHybrid <- function( iTaxon, frmeData, lsData, aiMetadata, aiGenetics, dSi
 #dTime01 <- proc.time()[3]
 #dTime00 <- dTime01 - dTime00
 	#Boost the model for model selection
-	lmod <- try( gbm( as.formula( strFormula ), data = frmeTmp, distribution = "gaussian", verbose = FALSE,
+	lmod <- try( gbm( as.formula( strFormula ), data = frmeTmp, distribution = "laplace", verbose = FALSE,
 		n.minobsinnode = min( 10, round( 0.2 * nrow( frmeTmp ) ) ), n.trees = 1000 ) )
 #dTime02 <- proc.time()[3]
 #dTime01 <- dTime02 - dTime01
@@ -200,14 +205,6 @@ funcBugHybrid <- function( iTaxon, frmeData, lsData, aiMetadata, aiGenetics, dSi
 			funcWrite( "#model-gbm", strLog )
 			funcWrite( lmod$fit, strLog )
 			funcWrite( lmod$train.error, strLog )
-			funcWrite( lmod$distribution, strLog )
-			funcWrite( lmod$n.trees, strLog )
-			funcWrite( lmod$nTrain, strLog )
-			funcWrite( lmod$response.name, strLog )
-			funcWrite( lmod$shrinkage, strLog )
-			funcWrite( lmod$train.fraction, strLog )
-			funcWrite( lmod$var.levels, strLog )
-			funcWrite( lmod$var.names, strLog )
 			funcWrite( lmod$Terms, strLog )
 			funcWrite( "#summary-gbm", strLog )
 			funcWrite( lsSum, strLog ) }
@@ -236,7 +233,19 @@ funcBugHybrid <- function( iTaxon, frmeData, lsData, aiMetadata, aiGenetics, dSi
   if( length( astrTerms ) ) {
     lsData$lsQCCounts$iLms = lsData$lsQCCounts$iLms + 1
     strFormula <- paste( "adCur ~", paste( sprintf( "`%s`", astrTerms ), collapse = " + " ), sep = " " )
-    lmod <- try( lm( as.formula( strFormula ), data = frmeTmp ) )
+	#plain old lm does fine on most data _if_ it's asin-sqrted
+	#in fact, it's the only thing that even comes close on exponential spiked synthetic data
+	lmod <- try( lm( as.formula( strFormula ), data = frmeTmp ) )
+	#Things I've tried:
+	# gaussian - identity = fine on normalish, pukes on exponential;  log = nonsensically bad
+	# binomial - logit = nonsensically bad; log = nonsensically bad
+	# Gamma - makes no sense, also doesn't work (for any link)
+	# poisson - log = identity = nonsensically bad; sqrt doesn't even make sense
+	# quasipoisson - log = fine on normalish data, pukes on exponential (worse than asin-sqrt)
+	# quasi - sqrt = nonsensically bad
+	#lmod <- try( glm( as.formula( strFormula ), data = frmeTmp, family = quasi( link = "sqrt" ) ) )
+	#glm.nb gives silly high p-values for everything
+	#lmod <- try( glm.nb( as.formula( strFormula ), data = frmeTmp ) )
   } else {
     lsData$lsQCCounts$iNoTerms = lsData$lsQCCounts$iNoTerms + 1 }
 
@@ -388,7 +397,12 @@ funcBugs <- function( frmeData, lsData, aiMetadata, aiGenetics, aiData, strData,
 
         #Print boxplots/strip charts of raw data. Add model data to it.
         for( strLevel in levels( adCur ) ) {
-          astrNames <- c(astrNames, sprintf( "%s (%d)", strLevel, sum( adCur == strLevel, na.rm = TRUE ) ))
+		  c_iLen <- 32
+		  strName <- strLevel
+		  if( nchar( strName ) > c_iLen ) {
+			  iTmp <- ( c_iLen / 2 ) - 2
+			  strName <- paste( substr( strName, 1, iTmp ), substring( strName, nchar( strName ) - iTmp ), sep = "..." ) }
+          astrNames <- c(astrNames, sprintf( "%s (%d)", strName, sum( adCur == strLevel, na.rm = TRUE ) ))
           astrColors <- c(astrColors, sprintf( "%sAA", funcColor( ( median( adData[adCur == strLevel], na.rm = TRUE ) - dMed ) /
             dIQR, dMax = 3, dMin = -3, adMax = adColorMin, adMin = adColorMax, adMed = adColorMed ) )) }
         #Controls boxplot labels

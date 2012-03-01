@@ -12,6 +12,7 @@ library( optparse )
 # Constants
 c_dMinSamp			<- 0.1
 c_dFreq				<- 0.001
+c_fInvert			<- FALSE
 # Input
 c_strMatrixData		<- "Abundance"
 c_strMatrixMetadata	<- "Metadata"
@@ -243,13 +244,15 @@ funcWrite("\nData which survived clean: ", strProcessFileName )
 funcWrite(lsQCCounts$aiDataCleaned, strProcessFileName )
 
 #Run MFA and plot covariance of factors
+if( !length( aiBugs ) ) {
+	aiBugs <- aiData }
 if( length( aiBugs ) ) {
     logdebug("MFA:in", c_logrMaaslin)
     lsMFA <- funcMFA( frmeData, aiUMD, aiBugs )
     logdebug("MFA:out", c_logrMaaslin)
     if( class( lsMFA ) != "try-error" ) {
         logdebug("PlotMFA:in", c_logrMaaslin)
-        funcPlotMFA( lsMFA=lsMFA, tempSaveFileName=paste(outputDirectory,strBase,sep=""), funcPlotColors=lsData$funcPlotColors, funcPlotPoints=lsData$funcPlotPoints, funcPlotLegend=lsData$funcPlotLegend )
+        funcPlotMFA( fInvert=lsScript$invert, lsMFA=lsMFA, tempSaveFileName=paste(outputDirectory,strBase,sep=""), funcPlotColors=lsData$funcPlotColors, funcPlotPoints=lsData$funcPlotPoints, funcPlotLegend=lsData$funcPlotLegend )
         logdebug("PlotMFA:out", c_logrMaaslin) } }
 
 #Summarize output files based on a keyword and a significance threshold

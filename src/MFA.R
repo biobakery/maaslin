@@ -168,14 +168,12 @@ funcMFA = function( frmeData, aiMetadata, aiBugs, aiGenes = c() )
 #@params tempLabelColor Pdf image label color
 #@params tempTitleColor Pdf image title color
 #@params tempSubtitleColor Pdf image subtitle color
-funcPlotMFA <- function(lsMFA, tempSaveFileName="MFA", funcPlotColors = NULL, funcPlotPoints = NULL, funcPlotLegend = NULL, tempWidth=(tempHeight*1.5), tempHeight=6, tempPCH=20)
+funcPlotMFA <- function(lsMFA, fInvert = FALSE, tempSaveFileName="MFA", funcPlotColors = NULL, funcPlotPoints = NULL, funcPlotLegend = NULL, tempWidth=(tempHeight*1.5), tempHeight=6, tempPCH=20)
 {
   #Set pdf settings
   pdf(paste(tempSaveFileName,".pdf",sep=""), width = c_dHeight * 1.5, height = c_dHeight, useDingbats=FALSE )
-  if( c_fInvert )
-  {
-    par( bg = "black", fg = "white", col.axis = "white", col.lab = "white", col.main = "white", col.sub = "white" )
-  }
+  if( fInvert ) {
+    par( bg = "black", fg = "white", col.axis = "white", col.lab = "white", col.main = "white", col.sub = "white" ) }
   #Get MFA pca data and set dimensions
   lsPCA = lsMFA$global.pca
 
