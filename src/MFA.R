@@ -204,7 +204,7 @@ funcPlotMFA <- function(lsMFA, fInvert = FALSE, tempSaveFileName="MFA", funcPlot
   dScaleFactor = 1
   if(exists("funcGetMetadataScale",mode="function"))
   {
-    aiPoints = funcGetMetadataScale()
+    dScaleFactor = funcGetMetadataScale()
   }
 
   dScale = dScaleFactor * min( abs( c(dX1, dX2, dY1, dY2) ) )

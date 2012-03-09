@@ -445,7 +445,6 @@ funcReadMatrix = function(tempMatrixName = NA, tempFileName = NA, tempDelimiter 
     }
   }
 
-  print("Adding name adornments to data frame.")
   #Add row and column names
   if(funcIsValid(tempIdRow)){  row.names(dataMatrix) = as.character(rowNameList)}
   if(funcIsValid(tempIdCol)){  colnames(dataMatrix) = as.character(columnNameList)}
