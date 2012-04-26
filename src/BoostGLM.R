@@ -398,11 +398,11 @@ funcBugs <- function( frmeData, lsData, aiMetadata, aiGenetics, aiData, strData,
         #Print boxplots/strip charts of raw data. Add model data to it.
         for( strLevel in levels( adCur ) ) {
 		  c_iLen <- 32
-		  strName <- strLevel
-		  if( nchar( strName ) > c_iLen ) {
+		  strLevelName <- strLevel
+		  if( nchar( strLevelName ) > c_iLen ) {
 			  iTmp <- ( c_iLen / 2 ) - 2
-			  strName <- paste( substr( strName, 1, iTmp ), substring( strName, nchar( strName ) - iTmp ), sep = "..." ) }
-          astrNames <- c(astrNames, sprintf( "%s (%d)", strName, sum( adCur == strLevel, na.rm = TRUE ) ))
+			  strLevelName <- paste( substr( strLevelName, 1, iTmp ), substring( strLevelName, nchar( strLevelName ) - iTmp ), sep = "..." ) }
+          astrNames <- c(astrNames, sprintf( "%s (%d)", strLevelName, sum( adCur == strLevel, na.rm = TRUE ) ))
           astrColors <- c(astrColors, sprintf( "%sAA", funcColor( ( median( adData[adCur == strLevel], na.rm = TRUE ) - dMed ) /
             dIQR, dMax = 3, dMin = -3, adMax = adColorMin, adMin = adColorMax, adMed = adColorMed ) )) }
         #Controls boxplot labels
