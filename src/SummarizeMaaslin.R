@@ -33,8 +33,6 @@ funcSummarizeDirectory = function(astrOutputDirectory, strBaseName, astrSummaryF
 
   #Get files in output directory
   astrlsDirectoryFiles = list.files(astrOutputDirectory, full.names=FALSE)
-  print("astrlsDirectoryFiles")
-  print(astrlsDirectoryFiles)
   c_logrMaaslin$debug(format(astrlsDirectoryFiles))
 
   #Reduce to detail files
@@ -50,9 +48,6 @@ funcSummarizeDirectory = function(astrOutputDirectory, strBaseName, astrSummaryF
       }
     }
   }
-  print("astrlsDetailFiles")
-  print(astrlsDetailFiles)
-
   #Evaluate header on first file
   #Will hold the position of the keyword to use to evaluate significance
   aiKeywordPosition = -1
