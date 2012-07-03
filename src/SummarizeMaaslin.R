@@ -33,13 +33,13 @@ funcSummarizeDirectory = function(astrOutputDirectory, strBaseName, astrSummaryF
 
   #Get files in output directory
   astrlsDirectoryFiles = list.files(astrOutputDirectory, full.names=FALSE)
+  print("astrlsDirectoryFiles")
+  print(astrlsDirectoryFiles)
   c_logrMaaslin$debug(format(astrlsDirectoryFiles))
 
   #Reduce to detail files
   for(astrLowestPathLevel in astrlsDirectoryFiles)
   {
-#    astrLowestPathLevel = strsplit(astrRandomFilePath,"/")[[1]]
-#    astrLowestPathLevel = astrLowestPathLevel[length(astrLowestPathLevel)]
     aiLowestPathLevelLength = nchar(astrLowestPathLevel)
     if(aiLowestPathLevelLength>aiPrefixLength)
     {
@@ -50,6 +50,8 @@ funcSummarizeDirectory = function(astrOutputDirectory, strBaseName, astrSummaryF
       }
     }
   }
+  print("astrlsDetailFiles")
+  print(astrlsDetailFiles)
 
   #Evaluate header on first file
   #Will hold the position of the keyword to use to evaluate significance
@@ -57,49 +59,17 @@ funcSummarizeDirectory = function(astrOutputDirectory, strBaseName, astrSummaryF
 
   #Read in file line by line into a list
   astrHeader = "No data files found to combine."
-  if(!is.null(astrlsDetailFiles[1]))
+  if(!is.null(astrlsDetailFiles[1]) && (length(astrlsDetailFiles)>0))
   {
-    astrlsFileContents = readLines(astrlsDetailFiles[1])
-    
     #Holds the initial header to make sure all data file are consistent in format
-    astrHeader = astrlsFileContents[1]
-
-    #Elements of the header to search through
-    astrlsHeaderElements = strsplit(astrHeader,acharDelimiter)[[1]]
-    #Search through header for keyword element position
-    aiCurrentHeaderElementPosition = 0
-    for(astrHeaderElement in astrlsHeaderElements)
-    {
-      aiCurrentHeaderElementPosition = aiCurrentHeaderElementPosition + 1
-      if(astrHeaderElement == astrKeyword)
-      {
-        aiKeywordPosition = aiCurrentHeaderElementPosition
-        break
-      }
-    }
-
-    #Check to see if the keyword was found, if not, skip file
-    if(aiKeywordPosition == -1)
-    {
-      print(paste("The following file did not have the keyword in the header, this file was skipped in the summary file. File:",astrFile," Keyword:",astrKeyword," Header:",astrHeader,sep=""))
-      return(-1)
-    }
-
-    #Read through file and store lines that pass significance
-    for(astrLine in astrlsFileContents[2:length(astrlsFileContents)])
-    {
-      astrlsHeaderElements = strsplit(astrLine,acharDelimiter)[[1]]
-      if(astrlsHeaderElements[aiCurrentHeaderElementPosition]<=afSignificanceLevel)
-      {
-        vData = c(vData,astrLine)
-      }
-    }
+    astrHeader = NA
 
     #For each file after the first file
-    for(astrFile in astrlsDetailFiles[2:length(astrlsDetailFiles)])
+    for(astrFile in astrlsDetailFiles)
     {
       #Read in file line by line into a list
       astrlsFileContents = readLines(astrFile)
+
       #If file has no data entries, pass
       if(length(astrlsFileContents)<2)
       {
@@ -107,6 +77,19 @@ funcSummarizeDirectory = function(astrOutputDirectory, strBaseName, astrSummaryF
         pass
       }
       #If file has an inconsistent header, pass
+      if(is.na(astrHeader))
+      {
+        astrHeader = astrlsFileContents[1]
+        #Elements of the header to search through
+        astrlsHeaderElements = strsplit(astrHeader,acharDelimiter)[[1]]
+        #Search through header for keyword element position
+        aiCurrentHeaderElementPosition = which(astrlsHeaderElements == astrKeyword)
+        if(aiCurrentHeaderElementPosition == 0)
+        {
+          print("The keyword to summarize on was not found and so the summary file was not made.")
+          return
+        }
+      }
       if(astrlsFileContents[1] != astrHeader)
       {
         print(paste("The following file had an inconsistent header, this file was skipped in the summary file. File:",astrFile,sep=""))
