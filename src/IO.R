@@ -16,20 +16,8 @@ options(warn=-1)
 #dataFrameList is a named list of data frames (what you get directly from the read function)
 #saveFileList File names to save the data matrices in (one name per data frame)
 #configureFileName Name of the configure file to be written which will direct the reading of these data
-funcWriteMatrices = function(dataFrameList = NA, saveFileList = NA, configureFileName = NA, acharDelimiter=",", log = FALSE)
+funcWriteMatrices = function(dataFrameList, saveFileList, configureFileName, acharDelimiter=",", log = FALSE)
 {
-  #Validate input
-  if(is.na(dataFrameList))
-  {
-    print("Received NA for the data frame list, returned false and produced no output.")
-    return(FALSE)
-  }
-  if(is.na(saveFileList))
-  {
-    print("Received NA for the save file list, returned false and produced no output.")
-    return(FALSE)
-  }
-
   #Get names
   dataFrameNames = names(dataFrameList)
 
@@ -45,6 +33,9 @@ funcWriteMatrices = function(dataFrameList = NA, saveFileList = NA, configureFil
     print(paste("Received a length of save files (",saveFileListLength,") that are different from the count of data frames (",dataFrameListLength,"). Stopped and returned false."),sep="")
     return(FALSE)
   }
+
+  #Delete the old config file
+  unlink(configureFileName)
 
   #For each data save
   for (dataIndex in c(1:dataFrameListLength))
@@ -572,7 +563,6 @@ funcReadMatrix = function(tempMatrixName = NA, tempFileName = NA, tempDelimiter 
     }
   }
 
-  print("Reduce Matrix.")
   #Reduce matrix
   #Account for when both column ranges and row ranges are given or just a column or a row range is given
   if(funcIsValid(tempColumns))
@@ -589,6 +579,11 @@ funcReadMatrix = function(tempMatrixName = NA, tempFileName = NA, tempDelimiter 
       dataMatrix = dataMatrix[tempRows,,drop=FALSE]
     }
   }
+
+#  print("DATAMATRIX:")
+#  print(is.numeric(dataMatrix[,1]))
+#  print(is.factor(dataMatrix[,1]))
+#  print(dataMatrix[,1])
 
   #Give feed back to user
   if(tempLog)

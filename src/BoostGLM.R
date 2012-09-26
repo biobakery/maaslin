@@ -1,130 +1,198 @@
 ####################################
 # Summary: Boosting + GLM
 # Author: Timothy Tickle
-# Start Date: 10-26-2011
+# Start Date: 10-26-2011 current
 ####################################
 
 library( gam )
 library( gbm )
 library( logging )
+library( outliers )
+library( robustbase )
+library( pscl )
 
-c_dFence		<- 0
-c_logrMaaslin	<- getLogger( "maaslin" )
+c_logrMaaslin <- getLogger( "maaslin" )
 
 #Properly clean / get data ready for analysis
 funcClean <- function( frmeData, funcDataProcess, aiMetadata, aiGenetics, aiData, lsQCCounts, astrNoImpute = c() ) {
 
   c_logrMaaslin$debug( "Start Clean")
-  if( !is.null( funcDataProcess ) ) {
+  if( !is.null( funcDataProcess ) )
+  {
     c_logrMaaslin$debug("Additional preprocess function attempted.")
 
     pTmp <- funcDataProcess( frmeData=frmeData, aiMetadata=aiMetadata, aiGenetics=aiGenetics, aiData=aiData)
-    if( class( pTmp ) == "data.frame" ) {
+    if( class( pTmp ) == "data.frame" )
+    {
       frmeData = pTmp
     } else {
       frmeData = pTmp$frmeData
       aiMetadata = pTmp$aiMetadata
       aiGenetics = pTmp$aiGenetics
       aiData = pTmp$aiData
-      lsQCCounts$lsQCCustom = pTmp$lsQCCounts } }
+      lsQCCounts$lsQCCustom = pTmp$lsQCCounts
+    }
+  }
 
   lsQCCounts$aiAfterPreprocess = aiData
 
   # Properly factorize all categorical features
-  for( i in aiMetadata ) {
+  for( i in aiMetadata )
+  {
     if( ( class( frmeData[,i] ) %in% c("integer", "numeric", "logical") ) &&
-      ( length( unique( frmeData[,i] ) ) < 5 ) ) {
+      ( length( unique( frmeData[,i] ) ) < 3 ) ) {
       c_logrMaaslin$debug("Changing metadatum from numeric/integer/logical to factor")
       c_logrMaaslin$debug(colnames(frmeData)[i])
-      frmeData[,i] = factor( frmeData[,i] ) } }
+      frmeData[,i] = factor( frmeData[,i] )
+    }
+  }
 
   # Remove missing metadata
   aiRemove = c()
-  for( iCol in c(aiMetadata, aiGenetics) ) {
+  for( iCol in c(aiMetadata, aiGenetics) )
+  {
     adCol = frmeData[,iCol]
     if( ( sum( !is.na( adCol ) ) < ( c_dMinSamp * length( adCol ) ) ) ||
-      ( length( unique( na.omit( adCol ) ) ) < 2 ) ) {
-      aiRemove = c(aiRemove, iCol) } }
+      ( length( unique( na.omit( adCol ) ) ) < 2 ) )
+    {
+      aiRemove = c(aiRemove, iCol)
+    }
+  }
   aiMetadata = setdiff( aiMetadata, aiRemove )
   aiGenetics = setdiff( aiGenetics, aiRemove )
   lsQCCounts$iMissingMetadata = aiRemove
-  if(length(aiRemove)) {
+  if(length(aiRemove))
+  {
     c_logrMaaslin$info("Removing the following metadata/genetics, too much missing data.")
-    c_logrMaaslin$info(format(colnames( frmeData )[aiRemove])) }
+    c_logrMaaslin$info(format(colnames( frmeData )[aiRemove]))
+  }
 
   # Remove crummy SNPs
   aiRemove = c()
-  for( iCol in aiGenetics ) {
+  for( iCol in aiGenetics )
+  {
     adCol = frmeData[,iCol]
-    if( sum( adCol > 0, na.rm = TRUE ) < ( c_dMinSamp * length( adCol ) ) ) {
-      aiRemove = c(aiRemove, iCol) } }
+    if( sum( adCol > 0, na.rm = TRUE ) < ( c_dMinSamp * length( adCol ) ) )
+    {
+      aiRemove = c(aiRemove, iCol)
+    }
+  }
   aiGenetics <- setdiff( aiGenetics, aiRemove )
   lsQCCounts$iRemovedSNPs = aiRemove
-  if(length(aiRemove)) {
+  if(length(aiRemove))
+  {
     c_logrMaaslin$info("Removing the following genetics indicies, too sparse.")
-    c_logrMaaslin$info(format(colnames( frmeData )[aiRemove])) }
+    c_logrMaaslin$info(format(colnames( frmeData )[aiRemove]))
+  }
 
   # Remove outliers
   aiSumOutlierPerDatum = c()
-  if( c_dFence ) {
-    for( iData in aiData ) {
+  if( c_dFence )
+  {
+    for( iData in aiData )
+    {
       adData <- frmeData[,iData]
       adQ <- quantile( adData, c(0.25, 0.5, 0.75), na.rm = TRUE )
       dIQR <- adQ[3] - adQ[1]
-      if(!dIQR) {
-        dIQR = sd(adData,na.rm = TRUE) }
+      if(!dIQR)
+      {
+        dIQR = sd(adData,na.rm = TRUE)
+      }
       dUF <- adQ[3] + ( c_dFence * dIQR )
       dLF <- adQ[1] - ( c_dFence * dIQR )
       aiRemove <- c()
-      for( j in 1:length( adData ) ) {
+      for( j in 1:length( adData ) )
+      {
         d <- adData[j]
-        if( !is.na( d ) && ( ( d < dLF ) || ( d > dUF ) ) ) {
-          aiRemove <- c(aiRemove, j) } }
-  	  if( length( aiRemove ) ) {
-		  c_logrMaaslin$info( "Removing %d outliers from %s", length( aiRemove ), colnames(frmeData)[iData] )
-		  c_logrMaaslin$info( format( rownames( frmeData )[aiRemove] )) }
+        if( !is.na( d ) && ( ( d < dLF ) || ( d > dUF ) ) )
+        {
+          aiRemove <- c(aiRemove, j)
+        }
+      }
+      if( length( aiRemove ) )
+      {
+        c_logrMaaslin$info( "Removing %d outliers from %s", length( aiRemove ), colnames(frmeData)[iData] )
+        c_logrMaaslin$info( format( rownames( frmeData )[aiRemove] ))
+      }
       adData[aiRemove] <- NA
       frmeData[,iData] <- adData
-      aiSumOutlierPerDatum = c(aiSumOutlierPerDatum,length(aiRemove)) } }
+      aiSumOutlierPerDatum = c(aiSumOutlierPerDatum,length(aiRemove))
+    }
+  } else {
+    for( iData in aiData )
+    {
+      adData <- frmeData[,iData]
+      while( TRUE )
+      {
+        lsTest <- try( grubbs.test( adData ), silent = TRUE )
+        if( ( class( lsTest ) == "try-error" ) || is.na( lsTest$p.value ) || ( lsTest$p.value > c_dPOutlier ) )
+        {break}
+        adData[outlier( adData, logical = TRUE )] <- NA
+      }
+      if( sum( is.na( adData ) ) )
+      {
+        c_logrMaaslin$info( "Removing %d outliers from %s", sum( is.na( adData ) ), colnames(frmeData)[iData] )
+			  c_logrMaaslin$info( format( rownames( frmeData )[is.na( adData )] ))
+      }
+      frmeData[,iData] <- adData
+    }
+  }
   lsQCCounts$aiSumOutlierPerDatum = aiSumOutlierPerDatum
 
   # Remove missing data
   aiRemove = c()
-  for( iCol in aiData ) {
+  for( iCol in aiData )
+  {
     adCol = frmeData[,iCol]
+    adCol[!is.finite( adCol )] <- NA
     if( ( sum( !is.na( adCol ) ) < ( c_dMinSamp * length( adCol ) ) ) ||
-      ( length( unique( na.omit( adCol ) ) ) < 2 ) ) {
-      aiRemove = c(aiRemove, iCol) } }
+      ( length( unique( na.omit( adCol ) ) ) < 2 ) )
+    {
+        aiRemove = c(aiRemove, iCol)
+    }
+  }
   aiData = setdiff( aiData, aiRemove )
   lsQCCounts$iMissingData = aiRemove
-  if(length(aiRemove)) {
-	c_logrMaaslin$info( "Removing the following for missing data.")
-    c_logrMaaslin$info( format( colnames( frmeData )[aiRemove] )) }
+  if(length(aiRemove))
+  {
+    c_logrMaaslin$info( "Removing the following for missing data.")
+    c_logrMaaslin$info( format( colnames( frmeData )[aiRemove] ))
+  }
 
   # Keep track of factor levels
   lslsFactors <- list()
-  for( iCol in c(aiGenetics, aiMetadata) ) {
+  for( iCol in c(aiGenetics, aiMetadata) )
+  {
     aCol <- frmeData[,iCol]
-    if( class( aCol ) == "factor" ) {
-      lslsFactors[[length( lslsFactors ) + 1]] <- list(iCol, levels( aCol )) } }
+    if( class( aCol ) == "factor" )
+    {
+      lslsFactors[[length( lslsFactors ) + 1]] <- list(iCol, levels( aCol ))
+    }
+  }
 
   # Replace missing data values by the mean of the data column.
-  for( iCol in aiData ) {
+  for( iCol in aiData )
+  {
     adCol <- frmeData[,iCol]
     adCol[is.infinite( adCol )] <- NA
     adCol[is.na( adCol )] <- mean( adCol, na.rm = TRUE )
-    frmeData[,iCol] <- adCol }
+    frmeData[,iCol] <- adCol
+  }
 
   #Use na.gam.replace to manage NA metadata and genetics
   aiTmp <- c(aiGenetics, aiMetadata)
   aiTmp <- setdiff( aiTmp, which( colnames( frmeData ) %in% astrNoImpute ) )
   frmeData[,aiTmp] <- na.gam.replace( frmeData[,aiTmp] )
 
-  for( lsFactor in lslsFactors ) {
+  for( lsFactor in lslsFactors )
+  {
     iCol <- lsFactor[[1]]
     aCol <- frmeData[,iCol]
-    if( "NA" %in% levels( aCol ) ) {
-      frmeData[,iCol] <- factor( aCol, levels = c(lsFactor[[2]], "NA") ) } }
+    if( "NA" %in% levels( aCol ) )
+    {
+      frmeData[,iCol] <- factor( aCol, levels = c(lsFactor[[2]], "NA") )
+    }
+  }
 
   c_logrMaaslin$debug("End FuncClean")
   return( list(frmeData = frmeData, aiMetadata = aiMetadata, aiGenetics = aiGenetics, aiData = aiData, lsQCCounts = lsQCCounts) )
@@ -140,7 +208,8 @@ funcClean <- function( frmeData, funcDataProcess, aiMetadata, aiGenetics, aiData
 #adP List of pvalues
 #lsSig Complex list of significant info
 #strLog String file to log to
-funcBugHybrid <- function( iTaxon, frmeData, lsData, aiMetadata, aiGenetics, dSig, adP, lsSig, strLog = NA ) {
+funcBugHybrid <- function( iTaxon, frmeData, lsData, aiMetadata, aiGenetics, dFreq, dSig, adP, lsSig, strLog = NA )
+{
 
 #dTime00 <- proc.time()[3]
   #Get metadata and genetics strings
@@ -155,7 +224,8 @@ funcBugHybrid <- function( iTaxon, frmeData, lsData, aiMetadata, aiGenetics, dSi
 
   #For each metadata, check it's data and see if there are too many NA to move forward.
   astrRemove <- c()
-  for( strMetadatum in astrMetadata ) {
+  for( strMetadatum in astrMetadata )
+  {
     aMetadatum <- frmeTmp[,strMetadatum]
 
     #Find the amount of NA and if over a certain ratio, remove that metadata from analysis
@@ -165,89 +235,154 @@ funcBugHybrid <- function( iTaxon, frmeData, lsData, aiMetadata, aiGenetics, dSi
 	#	dMult <- 8 }
 	#else {
 	dMult <- 2 # }
-    if( ( iNA / length( aiRows ) ) > ( dMult * c_dMinSamp ) ) {
-      astrRemove <- c(astrRemove, strMetadatum) } }
+    if( ( iNA / length( aiRows ) ) > ( dMult * c_dMinSamp ) )
+    {
+      astrRemove <- c(astrRemove, strMetadatum)
+    }
+  }
 
-  if(length(astrRemove)) {
+  if(length(astrRemove))
+  {
     c_logrMaaslin$debug("These metadata will be removed in func bug")
-    c_logrMaaslin$debug( format(c(colnames( frmeData )[iTaxon], astrRemove) )) }
+    c_logrMaaslin$debug( format(c(colnames( frmeData )[iTaxon], astrRemove) ))
+  }
   #Reset metadata with removed metadata removed.
   astrMetadata <- setdiff( astrMetadata, astrRemove )
-	
+  if( is.na( dFreq ) )
+  {
+    dFreq <- 0.5 / length( c(astrMetadata, astrGenetics) )
+  }
+
   adCur = frmeTmp[,iTaxon]
-  if( !is.na( strLog ) ) {
+  if( !is.na( strLog ) )
+  {
     funcWrite( c("#taxon", colnames( frmeData )[iTaxon]), strLog )
     funcWrite( c("#metadata", astrMetadata), strLog )
-    if( length( astrGenetics ) ) {
-      funcWrite( c("#genetics", astrGenetics), strLog ) }
-    funcWrite( c("#samples", rownames( frmeTmp )), strLog ) }
+    if( length( astrGenetics ) )
+    {
+      funcWrite( c("#genetics", astrGenetics), strLog )
+    }
+    funcWrite( c("#samples", rownames( frmeTmp )), strLog )
+  }
+  lmod <- NA
+  #Create a linear additive mode including all metadata or genetics not removed at this iteration
+  strFormula <- paste( "adCur ~", paste( sprintf( "`%s`", astrMetadata ), collapse = " + " ),
+  ifelse( length( astrGenetics ), "+", "" ), paste( astrGenetics, collapse = " + " ), sep = " " )
 
-	lmod <- NA
-	#Create a linear additive mode including all metadata or genetics not removed at this iteration
-	strFormula <- paste( "adCur ~", paste( sprintf( "`%s`", astrMetadata ), collapse = " + " ),
-		ifelse( length( astrGenetics ), "+", "" ), paste( astrGenetics, collapse = " + " ), sep = " " )
-	
-	#Count model selection
-	lsData$lsQCCounts$iBoosts = lsData$lsQCCounts$iBoosts + 1
-	
+  #Count model selection
+  lsData$lsQCCounts$iBoosts = lsData$lsQCCounts$iBoosts + 1
+
 #dTime01 <- proc.time()[3]
 #dTime00 <- dTime01 - dTime00
-	#Boost the model for model selection
-	lmod <- try( gbm( as.formula( strFormula ), data = frmeTmp, distribution = "laplace", verbose = FALSE,
-		n.minobsinnode = min( 10, round( 0.2 * nrow( frmeTmp ) ) ), n.trees = 1000 ) )
+  #Boost the model for model selection
+  lmod <- try( gbm( as.formula( strFormula ), data = frmeTmp, distribution = "laplace", verbose = FALSE,
+    n.minobsinnode = min( 1, round( 0.2 * nrow( frmeTmp ) ) ), n.trees = 1000 ) )
 #dTime02 <- proc.time()[3]
 #dTime01 <- dTime02 - dTime01
-	
-	astrTerms <- c()
-	if( !is.na( lmod ) && ( class( lmod ) != "try-error" ) ) {
-		lsSum <- summary( lmod, plotit = FALSE )
-		if( !is.na( strLog ) ) {
-			funcWrite( "#model-gbm", strLog )
-			funcWrite( lmod$fit, strLog )
-			funcWrite( lmod$train.error, strLog )
-			funcWrite( lmod$Terms, strLog )
-			funcWrite( "#summary-gbm", strLog )
-			funcWrite( lsSum, strLog ) }
-		
-		#For each metadata coefficient
-		#Check selprob in the model summary
-		for( strMetadata in lmod$var.names ) {
-			#If the selprob is less than a certain frequency, skip
-			dSel <- lsSum$rel.inf[which( lsSum$var == strMetadata )] / 100
-			if( is.na(dSel) || ( dSel < c_dFreq ) ) { next }
-			#Get the name of the metadata
-			strTerm <- funcCoef2Col( strMetadata, frmeData, c(astrMetadata, astrGenetics) )
-			
-			#If you should ignore the metadata, continue
-			if( is.null( strTerm ) ) { next }
-			#If you cant find the metadata name, write
-			if( is.na( strTerm ) ) {
-				c_logrMaaslin$error( "Unknown coefficient: %s", strMetadata )
-				next }
-			#Collect metadata names
-			astrTerms <- c(astrTerms, strTerm) }
-	} else {
-		lsData$lsQCCounts$iBoostErrors = lsData$lsQCCounts$iBoostErrors + 1 }
 
-  lmod <- NA
-  if( length( astrTerms ) ) {
-    lsData$lsQCCounts$iLms = lsData$lsQCCounts$iLms + 1
-    strFormula <- paste( "adCur ~", paste( sprintf( "`%s`", astrTerms ), collapse = " + " ), sep = " " )
-	#plain old lm does fine on most data _if_ it's asin-sqrted
-	#in fact, it's the only thing that even comes close on exponential spiked synthetic data
-	lmod <- try( lm( as.formula( strFormula ), data = frmeTmp ) )
-	#Things I've tried:
-	# gaussian - identity = fine on normalish, pukes on exponential;  log = nonsensically bad
-	# binomial - logit = nonsensically bad; log = nonsensically bad
-	# Gamma - makes no sense, also doesn't work (for any link)
-	# poisson - log = identity = nonsensically bad; sqrt doesn't even make sense
-	# quasipoisson - log = fine on normalish data, pukes on exponential (worse than asin-sqrt)
-	# quasi - sqrt = nonsensically bad
-	#lmod <- try( glm( as.formula( strFormula ), data = frmeTmp, family = quasi( link = "sqrt" ) ) )
-	#glm.nb gives silly high p-values for everything
-	#lmod <- try( glm.nb( as.formula( strFormula ), data = frmeTmp ) )
+  astrTerms <- c()
+  if( !is.na( lmod ) && ( class( lmod ) != "try-error" ) )
+  {
+    lsSum <- summary( lmod, plotit = FALSE )
+    if( !is.na( strLog ) )
+    {
+      funcWrite( "#model-gbm", strLog )
+      funcWrite( lmod$fit, strLog )
+      funcWrite( lmod$train.error, strLog )
+      funcWrite( lmod$Terms, strLog )
+      funcWrite( "#summary-gbm", strLog )
+      funcWrite( lsSum, strLog ) }
+
+      #For each metadata coefficient
+      #Check selprob in the model summary
+      for( strMetadata in lmod$var.names )
+      {
+        #If the selprob is less than a certain frequency, skip
+        dSel <- lsSum$rel.inf[which( lsSum$var == strMetadata )] / 100
+        if( is.na(dSel) || ( dSel < dFreq ) ) { next }
+        #Get the name of the metadata
+        strTerm <- funcCoef2Col( strMetadata, frmeData, c(astrMetadata, astrGenetics) )
+
+        #If you should ignore the metadata, continue
+        if( is.null( strTerm ) ) { next }
+        #If you cant find the metadata name, write
+        if( is.na( strTerm ) )
+        {
+          c_logrMaaslin$error( "Unknown coefficient: %s", strMetadata )
+          next
+        }
+        #Collect metadata names
+        astrTerms <- c(astrTerms, strTerm) }
+	} else {
+          lsData$lsQCCounts$iBoostErrors = lsData$lsQCCounts$iBoostErrors + 1
+      }
+    lmod <- NA
+    if( length( astrTerms ) )
+    {
+      lsData$lsQCCounts$iLms = lsData$lsQCCounts$iLms + 1
+      strFormula <- paste( "adCur ~", paste( sprintf( "`%s`", astrTerms ), collapse = " + " ), sep = " " )
+      frml <- as.formula( strFormula )
+      #plain old lm does fine on most data _if_ it's asin-sqrted
+      #in fact, it's the only thing that even comes close on exponential spiked synthetic data
+      #lmod <- try( lm( frml, data = frmeTmp ) )
+      #Things I've tried:
+      # gaussian - identity = fine on normalish, pukes on exponential;  log = quite good, weak on exponential
+      #   Log link in particular seems reasonable on real data, which includes outliers
+      # binomial - logit = nonsensically bad; log = nonsensically bad
+      # Gamma - makes no sense, also doesn't work (for any link)
+      # inverse.gaussian - log, identity = false positives
+      # poisson - log = identity = nonsensically bad; sqrt doesn't even make sense
+      # quasipoisson - log = fine on normalish data, pukes on exponential (worse than asin-sqrt)
+      #   These improve similarly to nb if multiplied by comparable counts
+      #   Prone to false negatives rather than false positives, which is probably good
+      #   identity seems to do best, false positives with log
+      # quasi - sqrt = nonsensically bad
+      #   identity|mu^2 = quite good wt. multiply, particularly with start of 1
+      #     alternatively no multiple, low start (e.g. 1e-6)
+      #   log|mu^2 = lots of false positives wt. multiply
+      #   log|mu, log|constant = false negatives wt. multiply, start doesn't help
+      #   sqrt|constant, sqrt|mu = false negatives wt. multiply, start doesn't help
+      #   sqrt|mu^2 = lots of false positives wt. multiply
+      #lmod <- try( glm( frml, data = frmeTmp, start = rep( 1e-6, length( coef( lmod ) ) ),
+      #	family = quasi( link = "identity", variance = "mu^2" ) ) )
+      # The following is quite good, but over-conservative (want abs, not log)
+      #lmod <- try( glm( frml, data = frmeTmp, start = rep( 1, length( coef( lmod ) ) ),
+      #	family = gaussian( link = "log" ) ) )
+      #lmod <- try( glm( frml, data = frmeTmp, start = rep( 1, length( coef( lmod ) ) ),
+      #	family = quasipoisson( link = "identity" ) ) )
+      # nb - log, identity, sqrt = all silly high p-values for everything as rel. abundances
+      #   They do fine if multiplied by medium-large counts (>=1e3)
+      #   log worst, identity best, all prone to false positives
+      #   Starting values of 1 for identity seem to help a bit, for others make false positives
+      #lmod <- try( glm.nb( frml, data = frmeTmp, start = rep( 1, length( coef( lmod ) ) ), init.theta = 10, link = identity ) )
+      # rlm from MASS and rq from quantreg just error out
+      # lqs from MASS is interesting but doesn't seem to provide a significance value
+      # lmrob and glmrob from robustbase and lmRob and glmRob from robust generate huge false positives
+      lmod <- NA
+      if( ( sum( !adCur, na.rm = TRUE ) / sum( !is.na( adCur ) ) ) >= c_dMinSamp )
+      {
+        adCur <- round( 1e1 * adCur / min( abs( adCur[adCur != 0] ), na.rm = TRUE ) )
+        #adCur <- round( 1e4 * adCur )
+        # Using 'control = zeroinfl.control( method = "Nelder-Mead" )' avoids errors, but doesn't actually improve results and slows it down 
+        lmod <- try( zeroinfl( frml, data = frmeTmp, dist = "negbin", link = "logit" ) )
+        #lmod <- try( hurdle( frml, data = frmeTmp, dist = "negbin", link = "logit" ) )
+        #lmod <- try( zelig( frml, data = frmeTmp, model = "negbin" ) )
+      }
+      if( is.na( lmod ) || ( class( lmod ) == "try-error" ) )
+      {
+        # The following is superb:
+        lmod <- try( ltsReg( frml, data = frmeTmp, nsamp = "best", adjust = TRUE, alpha = 1, mcd = FALSE ) )
+        #lmrob just doesn't work well - I cannot tune bb to give reasonable results without crazy many false positives
+        #lmod <- try( lmrob( frml, data = frmeTmp, control = lmrob.control( bb = 0.25 ) ) )
+      }
+      if( is.na( lmod ) || ( class( lmod ) == "try-error" ) )
+      {
+        # A final fallback:
+        lmod <- try( lm( frml, data = frmeTmp ) )
+      }
   } else {
-    lsData$lsQCCounts$iNoTerms = lsData$lsQCCounts$iNoTerms + 1 }
+    lsData$lsQCCounts$iNoTerms = lsData$lsQCCounts$iNoTerms + 1
+  }
 
 #dTime03 <- proc.time()[3]
 #dTime02 <- dTime03 - dTime02
@@ -265,12 +400,14 @@ funcBugHybrid <- function( iTaxon, frmeData, lsData, aiMetadata, aiGenetics, dSi
 # dSig Significane (float)
 # astrScreen 
 #strData Log file name. NA indicates no logging. No append to previous sessions, file is deleted if old.
-funcBugs <- function( frmeData, lsData, aiMetadata, aiGenetics, aiData, strData, dSig, fInvert, strDirOut = NA, astrScreen = c() ) {
+funcBugs <- function( frmeData, lsData, aiMetadata, aiGenetics, aiData, strData, dFreq, dSig, fInvert, strDirOut = NA, astrScreen = c() ) {
 
   c_logrMaaslin$debug("Start funcBugs")
-  if( is.na( strDirOut ) ) {
-	  strDirOut <- paste( dirname( strData ), "/", sep = "" ) }
-  strBaseOut <- paste( strDirOut, sub( "\\.(\\S+)$", "", basename(strData) ), sep = "/" )
+  if( is.na( strDirOut ) )
+  {
+    strDirOut <- paste( dirname( strData ), "/", sep = "" )
+  }
+  strBaseOut <- paste( strDirOut, sub( "\\.([^.]+)$", "", basename(strData) ), sep = "/" )
   strLog <- paste( strBaseOut, ".txt", sep = "" )
   c_logrMaaslin$info( "Outputting to: %s", strLog )
   unlink( strLog )
@@ -279,18 +416,22 @@ funcBugs <- function( frmeData, lsData, aiMetadata, aiGenetics, aiData, strData,
   #Will contain objects associated with significance
   adP = c()
   lsSig <- list()
-  for( iTaxon in aiData ) {
-    if( !( iTaxon %% 10 ) ) {
-	  c_logrMaaslin$info( "Taxon %d/%d", iTaxon, max( aiData ) ) }
+  for( iTaxon in aiData )
+  {
+    if( !( iTaxon %% 10 ) )
+    {
+      c_logrMaaslin$info( "Taxon %d/%d", iTaxon, max( aiData ) )
+    }
     #Call analysis method
-    lsOne <- funcBugHybrid( iTaxon, frmeData, lsData, aiMetadata, aiGenetics, dSig, adP, lsSig, strLog )
+    lsOne <- funcBugHybrid( iTaxon, frmeData, lsData, aiMetadata, aiGenetics, dFreq, dSig, adP, lsSig, strLog )
 
     #Update pvalue array
     adP <- lsOne$adP
     #lsSig contains data about significant feature v metadata comparisons
     lsSig <- lsOne$lsSig
     #Update the qc data
-    lsData$lsQCCounts = lsOne$lsQCCounts }
+    lsData$lsQCCounts = lsOne$lsQCCounts
+  }
   c_logrMaaslin$debug("lsData$lsQCCounts")
   c_logrMaaslin$debug(format(lsData$lsQCCounts))
 
@@ -301,19 +442,24 @@ funcBugs <- function( frmeData, lsData, aiMetadata, aiGenetics, aiData, strData,
   adQ <- adP
   iTests <- length( intersect( lsData$astrMetadata, colnames( frmeData )[aiMetadata] ) ) * length( aiData )
   #Perform FDR BH
-  for( i in 1:length( aiSig ) ) {
+  for( i in 1:length( aiSig ) )
+  {
     iSig <- aiSig[i]
-    adQ[iSig] <- adP[iSig] * iTests / i }
+    adQ[iSig] <- adP[iSig] * iTests / i
+  }
 
   #
   astrNames <- c()
-  for( i in 1:length( lsSig ) ) {
-    astrNames <- c(astrNames, lsSig[[i]]$name) }
+  for( i in 1:length( lsSig ) )
+  {
+    astrNames <- c(astrNames, lsSig[[i]]$name)
+  }
   astrNames <- unique( astrNames )
 
   # Sets up named label return for MFA
   astrRet <- c()
-  for( j in aiSig ) {
+  for( j in aiSig )
+  {
     if( adQ[j] > dSig ) { next }
     #This allows only c_iMFA count of significant data to be passed to the MFA plot
     #Or in general to be pass out of the function.
@@ -323,17 +469,24 @@ funcBugs <- function( frmeData, lsData, aiMetadata, aiGenetics, aiData, strData,
     astrFactors <- lsCur$factors
     strTaxon <- lsCur$taxon
 	
-    if( length( aiGenetics ) ) {
-      if( length( intersect( astrFactors, colnames( frmeData )[aiGenetics] ) ) ) {
-      	astrRet <- c(astrRet, astrFactors) }
-      } else if( !length( astrScreen ) || sum( astrFactors %in% astrScreen ) ) {
-        astrRet <- c(astrRet, strTaxon) }
-    astrRet <- unique( astrRet ) }
+    if( length( aiGenetics ) )
+    {
+      if( length( intersect( astrFactors, colnames( frmeData )[aiGenetics] ) ) )
+      {
+      	astrRet <- c(astrRet, astrFactors)
+      }
+    } else if( !length( astrScreen ) || sum( astrFactors %in% astrScreen ) ) {
+      astrRet <- c(astrRet, strTaxon)
+    }
+    astrRet <- unique( astrRet )
+  }
 			
-  for( strName in astrNames ) {
+  for( strName in astrNames )
+  {
     strFileTXT <- NA
     strFilePDF <- NA
-    for( j in aiSig ) {
+    for( j in aiSig )
+    {
       lsCur		<- lsSig[[j]]
       strCur		<- lsCur$name
       if( strCur != strName ) { next }
@@ -341,21 +494,27 @@ funcBugs <- function( frmeData, lsData, aiMetadata, aiGenetics, aiData, strData,
       adData		<- lsCur$data
       astrFactors	<- lsCur$factors
       adCur		<- lsCur$metadata
+#	  adY			<- lsCur$quasired
+	  adY <- adData
       if( is.na( strData ) ) { next }
-			
-      if( is.na( strFileTXT ) ) {
+
+      if( is.na( strFileTXT ) )
+      {
         strFileTXT <- sprintf( "%s-%s.txt", strBaseOut, strName )
         unlink(strFileTXT)
-        funcWrite( c("Variable", "Feature", "Value", "Coefficient", "N", "N not 0", "P-value", "Q-value"), strFileTXT ) }
+        funcWrite( c("Variable", "Feature", "Value", "Coefficient", "N", "N not 0", "P-value", "Q-value"), strFileTXT )
+      }
       funcWrite( c(strName, strTaxon, lsCur$orig, lsCur$value, length( adData ), sum( adData > 0 ), adP[j], adQ[j]), strFileTXT )
       if( adQ[j] > dSig ) { next }
 
-      if( is.na( strFilePDF ) ) {
+      if( is.na( strFilePDF ) )
+      {
         strFilePDF <- sprintf( "%s-%s.pdf", strBaseOut, strName )
         pdf( strFilePDF, width = 11, useDingbats=FALSE )
 
         #Invert plots
-        if( fInvert ) {
+        if( fInvert )
+        {
           par( bg = "black", fg = "white", col.axis = "white", col.lab = "white", col.main = "white", col.sub = "white" )
           adColorMin <- c(1, 1, 0)
           adColorMax <- c(0, 1, 1)
@@ -363,48 +522,63 @@ funcBugs <- function( frmeData, lsData, aiMetadata, aiGenetics, aiData, strData,
         } else {
           adColorMin <- c(1, 0, 0)
           adColorMax <- c(0, 1, 0)
-          adColorMed <- c(0, 0, 0) } }
+          adColorMed <- c(0, 0, 0)
+        }
+      }
 
       #Create linear model title data string
       strTitle <- sprintf( "%s (%.3g sd %.3g, p=%.3g, q=%.3g)", lsCur$orig, lsCur$value, lsCur$std, adP[j], adQ[j] )
       adMar <- c(5, 4, 4, 2) + 0.1
       dLine <- NA
-      if( nchar( strTaxon ) > 80 ) {
+      if( nchar( strTaxon ) > 80 )
+      {
         dCEX <- 0.75
         iLen <- nchar( strTaxon )
-        if( iLen > 120 ) {
+        if( iLen > 120 )
+        {
           dLine <- 2.5
           i <- round( iLen / 2 )
           strTaxon <- paste( substring( strTaxon, 0, i ), substring( strTaxon, i + 1 ), sep = "\n" )
-          adMar[2] <- adMar[2] + 1 }
+          adMar[2] <- adMar[2] + 1
+        }
       } else { dCEX = 1 }
 
       #Plot factor data as boxplot
-      if( class( adCur ) == "factor" ) {
-        if( "NA" %in% levels( adCur ) ) {
+      if( class( adCur ) == "factor" )
+      {
+        if( "NA" %in% levels( adCur ) )
+        {
           afNA <- adCur == "NA"
+          adY <- adY[!afNA]
           adData <- adData[!afNA]
           adCur <- adCur[!afNA]
-          adCur <- factor( adCur, levels = setdiff( levels( adCur ), "NA" ) ) }
+          adCur <- factor( adCur, levels = setdiff( levels( adCur ), "NA" ) )
+        }
         astrNames <- c()
         astrColors <- c()
-        dMed <- median( adData[adCur == levels( adCur )[1]], na.rm = TRUE )
-        adIQR <- quantile( adData, probs = c(0.25, 0.75), na.rm = TRUE )
+        dMed <- median( adY[adCur == levels( adCur )[1]], na.rm = TRUE )
+        adIQR <- quantile( adY, probs = c(0.25, 0.75), na.rm = TRUE )
         dIQR <- adIQR[2] - adIQR[1]
-        if( dIQR <= 0 ) {
-          dIQR <- sd( adData, na.rm = TRUE ) }
+        if( dIQR <= 0 )
+        {
+          dIQR <- sd( adY, na.rm = TRUE )
+        }
         dIQR <- dIQR / 2
 
         #Print boxplots/strip charts of raw data. Add model data to it.
-        for( strLevel in levels( adCur ) ) {
-		  c_iLen <- 32
-		  strLevelName <- strLevel
-		  if( nchar( strLevelName ) > c_iLen ) {
-			  iTmp <- ( c_iLen / 2 ) - 2
-			  strLevelName <- paste( substr( strLevelName, 1, iTmp ), substring( strLevelName, nchar( strLevelName ) - iTmp ), sep = "..." ) }
-          astrNames <- c(astrNames, sprintf( "%s (%d)", strLevelName, sum( adCur == strLevel, na.rm = TRUE ) ))
-          astrColors <- c(astrColors, sprintf( "%sAA", funcColor( ( median( adData[adCur == strLevel], na.rm = TRUE ) - dMed ) /
-            dIQR, dMax = 3, dMin = -3, adMax = adColorMin, adMin = adColorMax, adMed = adColorMed ) )) }
+        for( strLevel in levels( adCur ) )
+        {
+          c_iLen <- 32
+          strLength <- strLevel
+          if( nchar( strLength ) > c_iLen )
+          {
+            iTmp <- ( c_iLen / 2 ) - 2
+            strLength <- paste( substr( strLength, 1, iTmp ), substring( strLength, nchar( strLength ) - iTmp ), sep = "..." )
+          }
+          astrNames <- c(astrNames, sprintf( "%s (%d)", strLength, sum( adCur == strLevel, na.rm = TRUE ) ))
+          astrColors <- c(astrColors, sprintf( "%sAA", funcColor( ( median( adY[adCur == strLevel], na.rm = TRUE ) - dMed ) /
+            dIQR, dMax = 3, dMin = -3, adMax = adColorMin, adMin = adColorMax, adMed = adColorMed ) ))
+        }
         #Controls boxplot labels
         #(When there are many factor levels some are skipped and not plotted
         #So this must be reduced)
@@ -414,29 +588,36 @@ funcBugs <- function( frmeData, lsData, aiMetadata, aiGenetics, aiData, strData,
           dBoxPlotLabelCex = dBoxPlotLabelCex * 1.5/(length(astrNames)/8)
         }
         par(cex.axis = dBoxPlotLabelCex)
-        boxplot( adData ~ adCur, notch = TRUE, names = astrNames, mar = adMar, col = astrColors,
+        boxplot( adY ~ adCur, notch = TRUE, names = astrNames, mar = adMar, col = astrColors,
           main = strTitle, xlab = strCur, ylab = NA, cex.lab = dCEX, outpch = 4, outcex = 0.5 )
         par(cex.axis = dCEX)
-        stripchart( adData ~ adCur, add = TRUE, col = astrColors, method = "jitter", vertical = TRUE, pch = 20 )
+        stripchart( adY ~ adCur, add = TRUE, col = astrColors, method = "jitter", vertical = TRUE, pch = 20 )
         title( ylab = strTaxon, cex.lab = dCEX, line = dLine )
       } else {
         #Plot continuous data
         fGenetics <- length( aiGenetics ) && ( class( adCur ) == "integer" ) &&
           length( intersect( astrFactors, colnames( frmeData )[aiGenetics] ) )
-        if( fGenetics ) {
+        if( fGenetics )
+        {
           astrLabels <- c()
-          for( i in 0:2 ) {
-            astrLabels <- c(astrLabels, sprintf( "%d (%d)", i, sum( adCur == i, na.rm = TRUE ) )) }
-          adCur <- adCur + rnorm( length( adCur ), sd = 0.05 ) }
-        plot( adCur, adData, mar = adMar, main = strTitle, xlab = strCur, pch = 20,
+          for( i in 0:2 )
+          {
+            astrLabels <- c(astrLabels, sprintf( "%d (%d)", i, sum( adCur == i, na.rm = TRUE ) ))
+          }
+          adCur <- adCur + rnorm( length( adCur ), sd = 0.05 )
+        }
+        plot( adCur, adY, mar = adMar, main = strTitle, xlab = strCur, pch = 20,
           col = sprintf( "%s99", funcGetColor( ) ), ylab = NA, xaxt = ifelse( fGenetics, "n", "s" ) )
-        if( fGenetics ) {
-          axis( 1, at = 0:2, labels = astrLabels ) }
+        if( fGenetics )
+        {
+          axis( 1, at = 0:2, labels = astrLabels )
+        }
         title( ylab = strTaxon, cex.lab = dCEX )
-        lmod <- lm( adData ~ adCur )
-        dColor <- lmod$coefficients[2] * mean( adCur, na.rm = TRUE ) / mean( adData, na.rm = TRUE )
+        lmod <- lm( adY ~ adCur )
+        dColor <- lmod$coefficients[2] * mean( adCur, na.rm = TRUE ) / mean( adY, na.rm = TRUE )
         strColor <- sprintf( "%sDD", funcColor( dColor, adMax = adColorMin, adMin = adColorMax, adMed = adColorMed ) )
-        abline( reg = lmod, col = strColor, lwd = 3 ) }
+        abline( reg = lmod, col = strColor, lwd = 3 )
+      }
 
       #Now plot residual hat plot
       #Get coefficient names
@@ -461,12 +642,15 @@ funcBugs <- function( frmeData, lsData, aiMetadata, aiGenetics, aiData, strData,
 #      rug(bi, side=2)
     }
 
-    if( dev.cur( ) != 1 ) { dev.off( ) } }
+    if( dev.cur( ) != 1 ) { dev.off( ) }
+  }
 
-  if( length( aiGenetics ) ) {
+  if( length( aiGenetics ) )
+  {
     aiTmp <- aiGenetics
   } else {
-    aiTmp <- aiData }
+    aiTmp <- aiData
+  }
 
   logdebug("End funcBugs", c_logMaaslin)
   aiReturnBugs = aiTmp[colnames( frmeData )[aiTmp] %in% astrRet]
@@ -478,65 +662,95 @@ funcBugs <- function( frmeData, lsData, aiMetadata, aiGenetics, aiData, strData,
 #lmod Linear model information
 #frmeData
 #iTaxon Integer index of taxon (column)
-funcBugResult = function( lmod, frmeData, iTaxon, dSig, adP, lsSig, strLog = NA, lsQCCounts, astrCols = c() ) {
-
+funcBugResult = function( lmod, frmeData, iTaxon, dSig, adP, lsSig, strLog = NA, lsQCCounts, astrCols = c() )
+{
   #Validate parameters
   #Exclude none and errors
-  if( !is.na( lmod ) && ( class( lmod ) != "try-error" ) ) {
+  if( !is.na( lmod ) && ( class( lmod ) != "try-error" ) )
+  {
     #Get the column name of the iTaxon index
     strTaxon = colnames( frmeData )[iTaxon]
     #Get summary information from the linear model
-    lsSum = summary( lmod )
+    lsSum = try( summary( lmod ) )
+    #The following can actually happen when the stranger regressors return broken results
+    if( class( lsSum ) == "try-error" )
+    {
+      return( list(adP=adP, lsSig=lsSig, lsQCCounts=lsQCCounts) )
+    }
     #Write summary information to log file
-    if( !is.na( strLog ) ) {
+    if( !is.na( strLog ) )
+    {
       funcWrite( "#model", strLog )
       funcWrite( lmod, strLog )
       funcWrite( "#summary", strLog )
-      funcWrite( lsSum, strLog ) }
+	  #Unbelievably, some of the more unusual regression methods crash out when _printing_ their results 
+	  try( funcWrite( lsSum, strLog ) )
+    }
 
     #Get the coefficients
-    if( is.null( coefficients( lsSum ) ) ) {
+    frmeCoefs <- try( coefficients( lsSum ) )
+    if( ( class( frmeCoefs ) == "try-error" ) || is.null( frmeCoefs ) )
+    {
       adCoefs = coefficients( lmod )
+      frmeCoefs <- NA
     } else {
-      adCoefs = coefficients( lsSum )[,1] }
+      if( class( frmeCoefs ) == "list" )
+      {
+        frmeCoefs <- frmeCoefs$count
+      }
+      adCoefs = frmeCoefs[,1]
+    }
 
     #Go through each coefficient
     astrRows <- names( adCoefs )
-    for( iMetadata in 1:length( astrRows ) ) {
+    for( iMetadata in 1:length( astrRows ) )
+    {
       #Select 
       strOrig = astrRows[iMetadata]
       #Skip y interscept
-      if( strOrig == "(Intercept)" ) { next }
-      
-      if( "mboost" %in% class( lmod ) ) {
-        if( lsSum$selprob[iMetadata] > dSig ) {
+      if( strOrig %in% c("(Intercept)", "Intercept", "Log(theta)") ) { next }
+
+      if( "mboost" %in% class( lmod ) )
+      {
+        if( lsSum$selprob[iMetadata] > dSig )
+        {
           dP = 1e-10 * ( 1 - lsSum$selprob[iMetadata] ) / ( 1 - dSig )
         } else {
-          dP = 1e-10 + ( ( dSig - lsSum$selprob[iMetadata] ) / dSig ) }
+          dP = 1e-10 + ( ( dSig - lsSum$selprob[iMetadata] ) / dSig )
+        }
         dStd = 0
+      } else if( is.na( frmeCoefs ) ){
+        dP <- NA
       } else {
-        dP = lsSum$coefficients[strOrig,4]
-        dStd = lsSum$coefficients[strOrig,2] }
+        dP = frmeCoefs[strOrig,4]
+        dStd = frmeCoefs[strOrig,2]
+      }
       if( is.na( dP ) ) { next }
 
       dCoef = adCoefs[iMetadata]
-      if( strOrig == "aiAlleles" ) {
+      if( strOrig == "aiAlleles" )
+      {
         strMetadata = strOrig
         adMetadata = aiAlleles
-      } else if( length( grep( ":aiAlleles", strOrig, fixed = TRUE ) ) ) {
+      } else if( length( grep( ":aiAlleles", strOrig, fixed = TRUE ) ) ){
         strMetadata = "interaction"
         adMetadata = aiAlleles
       } else {
         strMetadata = funcCoef2Col( strOrig, frmeData, astrCols )
-        if( is.na( strMetadata ) ) {
+        if( is.na( strMetadata ) )
+        {
           if( substring( strOrig, nchar( strOrig ) - 1 ) == "NA" ) { next }
-		  c_logrMaaslin$error( "Unknown coefficient: %s", strOrig ) }
+          c_logrMaaslin$error( "Unknown coefficient: %s", strOrig )
+        }
         if( substring( strOrig, nchar( strMetadata ) + 1 ) == "NA" ) { next }
-        adMetadata <- frmeData[,strMetadata] }
+        adMetadata <- frmeData[,strMetadata]
+      }
 
       #Bonferonni correct the factor p-values based on the factor levels-1 comparisons
-      if( class( adMetadata ) == "factor" ) {
-        dP <- dP * ( nlevels( adMetadata ) - 1 ) }
+      if( class( adMetadata ) == "factor" )
+      {
+        dP <- dP * ( nlevels( adMetadata ) - 1 )
+      }
 
       adP <- c(adP, dP)
       lsSig[[length( lsSig ) + 1]] <- list(
@@ -548,7 +762,10 @@ funcBugResult = function( lmod, frmeData, iTaxon, dSig, adP, lsSig, strLog = NA,
         metadata	= adMetadata,
         value		= dCoef,
         std		= dStd,
-        allCoefs	= adCoefs) } }
+#		quasired	= predict( lmod, data = adMetadata[!is.na( frmeData[,iTaxon] )] ) + residuals( lmod ),
+        allCoefs	= adCoefs)
+    }
+  }
 
   return( list(adP=adP, lsSig=lsSig, lsQCCounts=lsQCCounts) )
 }
@@ -573,43 +790,51 @@ funcBugResult = function( lmod, frmeData, iTaxon, dSig, adP, lsSig, strLog = NA,
 #StrCoef String coefficient name
 #frmeData Data frame of data
 #aStrCols Column names of interest (if NULL is given, all column names are inspected.
-funcCoef2Col <- function( strCoef, frmeData, astrCols = c() ) {
+funcCoef2Col <- function( strCoef, frmeData, astrCols = c() )
+{
 
   #If the coefficient is the intersept there is no data column to return so return null
-  if( strCoef == "(Intercept)" ) {
-    return( NULL ) }
+  if( strCoef %in% c("(Intercept)", "Intercept") ) { return( NULL ) }
   #Remove ` from coefficient
   strCoef <- gsub( "`", "", strCoef )
 
   #If the coefficient name is not in the data frame
-  if( !( strCoef %in% colnames( frmeData ) ) ) {
+  if( !( strCoef %in% colnames( frmeData ) ) )
+  {
     fHit <- FALSE
     #If the column names are not provided, use the column names of the dataframe.
-    if( is.null( astrCols ) ) {
-      astrCols <- colnames( frmeData ) }
+    if( is.null( astrCols ) )
+    {
+      astrCols <- colnames( frmeData )
+    }
 
     #Search through the different column names (factors)
-    for( strFactor in astrCols ) {
+    for( strFactor in astrCols )
+    {
       #Select a column, if it is not a factor or does not begin with the factor's name then skip
       adCur <- frmeData[,strFactor]
       if( ( class( adCur ) != "factor" ) ||
-        ( substr( strCoef, 1, nchar( strFactor ) ) != strFactor ) ) {
-        next }
+        ( substr( strCoef, 1, nchar( strFactor ) ) != strFactor ) ) { next }
 
       #For the factors, create factor-level name combinations to read in factors
       #Then check to see the factor-level combination is the coeffient of interest
       #If it is then store that factor as the coefficient of interest
       #And break
-      for( strValue in levels( adCur ) ) {
+      for( strValue in levels( adCur ) )
+      {
         strCur <- paste( strFactor, strValue, sep = "" )
-        if( strCur == strCoef ) {
+        if( strCur == strCoef )
+        {
           strCoef <- strFactor
           fHit <- TRUE
-          break } }
+          break
+        }
+      }
 
       #If the factor was found, return
-      if( fHit ) {
-        break } } }
+      if( fHit ){break }
+    }
+  }
 
   #If the original coefficient or the coeficient factor combination name are in the
   #data frame, return the name. Otherwise return NA.

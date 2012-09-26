@@ -1,124 +1,133 @@
 #!/usr/bin/env Rscript
 
-####################################
-# Summary: Core Code for MaAsLin
-# Author: Timothy Tickle
-# Start Date: 10-26-2011
-####################################
+inlinedocs <- function(
+##author<< Curtis Huttenhower <chuttenh@hsph.harvard.edu> and Timothy Tickle <ttickle@hsph.harvard.edu>
+) { return( pArgs ) }
 
+### Logging class
 library( logging )
+### Class for commandline argument processing
 library( optparse )
 
-# Constants
-c_dMinSamp			<- 0.1
-c_dFreq				<- 0.001
-c_fInvert			<- FALSE
-# Input
-c_strMatrixData		<- "Abundance"
-c_strMatrixMetadata	<- "Metadata"
-# Output
-c_iMFA				<- 30
-c_dHeight			<- 9
-# Summary
-c_strKeywordEvaluatedForInclusion	<- "Q-value"
-c_strProcessFunction			<- "processFunction"
-
-c_logrMaaslin	<- getLogger( "maaslin" )
-addHandler( writeToConsole, c_logrMaaslin )
-setLevel( "INFO", c_logrMaaslin )
-
+### Create command line argument parser
 pArgs <- OptionParser( usage = "%prog [options] <output.txt> <data.tsv> <data.read.config> <data.R> [source.R]*" )
+
+# Settings for MaAsLin
+## Maximum false discovery rate
+pArgs <- add_option( pArgs, c("-d", "--fdr"), type="double", action="store", dest="dSignificanceLevel", default=0.25, metavar="significance", help="The threshold to use for significance for the generated q-values (BH FDR). Anything equal to or lower than this is significant.")
+## Minimum feature relative abundance filtering
+pArgs <- add_option( pArgs, c("-r", "--minRelativeAbundance"), type="double", action="store", dest="dMinAbd", default=0.0001, metavar="minRelativeAbundance", help="The minimum relative abundance allowed in the data. Values below this are removed and imputed as the median of the sample data.")
+## Minimum feature prevalence filtering
+pArgs <- add_option( pArgs, c("-p", "--minPrevalence"), type="double", action="store", dest="dMinSamp", default=0.1, metavar="minPrevalence", help="The minimum percentage of samples a feature can have abudance in before being removed.")
+# Arguments used in validation of MaAsLin
+## Argument indicating which method should be ran (enumerate)
+pArgs <- add_option( pArgs, c("-m", "--method"), type="character", action="store", dest="strMethod", default="maaslin", metavar="method", help="Indicates which of the statistical methods to run.")
+
+#Miscellaneouse arguments
+## Argument to control logging (enumerate)
+strDefaultLogging = "INFO"
+pArgs <- add_option( pArgs, c("-v", "--verbosity"), type="character", action="store", dest="fVerbosity", default=strDefaultLogging, metavar="verbosity", help="Logging verbosity")
+### Argument for inverting background to black
+pArgs <- add_option( pArgs, c("-i", "--invert"), type="logical", action="store_true", dest="fInvert", default="FALSE", metavar="invert", help="When given, flag indicates to invert the background of figures to black.")
+### Selection Frequency
+pArgs <- add_option( pArgs, c("-f","--selectionFrequency"), type="double", action="store", dest="dSelectionFrequency", default= NA, metavar="selectionFrequency", help="Selection Frequency")
+
+### Parse arguments
 lsArgs <- parse_args( pArgs, positional_arguments = TRUE )
-if( length( lsArgs$args ) < 4 ) {
-	stop( print_help( pArgs ) ) }
-strOutputTXT	<- lsArgs$args[1]
-strInputTSV		<- lsArgs$args[2]
-strInputRC		<- lsArgs$args[3]
-strInputR		<- lsArgs$args[4]
-astrSourceR		<- lsArgs$args[5:length( lsArgs$args )]
+logdebug("lsArgs", c_logrMaaslin)
+logdebug(paste(lsArgs,sep=" "), c_logrMaaslin)
 
-#Get command line arguments
-inputFile = strInputRC
-outputDirectory = paste(dirname(strOutputTXT), "/", sep = "" )
-customDataProcessFunction = strInputR
+###Default configurations
+#c_astrConfigurationValues <- c("noImpute", "invertPlots", "significanceLevel", "selectionFrequency", "processFunction")
+#c_lsConfigurationDefaults <- list(NULL, lsArgs$options$fInvert, lsArgs$options$dSignificanceLevel, NA, NULL)
 
-strBase <- sub(".read.config", "", basename(strInputRC))
-strSummaryFileName = paste(outputDirectory,strBase,"_Summary.txt",sep="")
+# Constants
+### Minimum Relative Abundance (###TODO fix shadowing)
+c_dMinSamp <- lsArgs$options$dMinSamp
 
-for( strR in astrSourceR ) {
-	source( strR ) }
+#TODO
+xNoImpute = NULL
 
-#Indictate start
-logdebug("Start MaAsLin", c_logrMaaslin)
-logdebug(lsArgs, c_logrMaaslin)
-
-funcSourceScript = function(astrFunctionPath) {
-  #If is specified, set up the custom func clean variable
-  #Check to see if is NA (or not given)
-  if(!is.na(astrFunctionPath)) {
-    #Check to make sure the file exists
-    if(file.exists(astrFunctionPath)) {
-      #Read in the file
-      source(astrFunctionPath)
-      dSigLevel = 0.05
-      fInvert = FALSE
-      aNoImpute = NULL
-      if(exists("noImpute"))
-      {
-        aNoImpute = noImpute
-      }
-      if(exists("c_fInvert"))
-      {
-        fInvert = c_fInvert
-      }
-      if(exists("significanceLevel"))
-      {
-        dSigLevel = significanceLevel
-      }
-      #If the script exists in the file, run.
-      if(exists(c_strProcessFunction,mode="function")) {
-        loginfo(paste("Preprocessing script is loaded and available. Script Name:",c_strProcessFunction," Script File:",astrFunctionPath,sep=""), c_logrMaaslin)
-        return( list(
-          processFunction   = get( c_strProcessFunction ),
-          significanceLevel = dSigLevel,
-          invert            = fInvert,
-          noImpute          = aNoImpute) )
-      } else {
-        print(paste("MaAsLin Error: Attempted to read in function but was not successful. Function Name: ",c_strProcessFunction,sep=""))
-        return(list(
-          processFunction   = NULL,
-          significanceLevel = dSigLevel,
-          invert            = fInvert,
-          noImpute          = aNoImpute)) }
-    #Handle when the file does not exist
-    } else {
-      print(paste("MaAsLin Error: A custom data manipulation script was indicated but was not found at the file path: ",astrFunctionPath,sep=""))
-      return(NULL) } }
+### Allowable values for logging
+c_lsLoggingValues = c("INFO","WARNING","ERROR","CRITICAL","LOG","EXCEPTION")
+#If logging is not an allowable value, inform user and set to INFO
+if(length(intersect(c_lsLoggingValues, c(lsArgs$options$fVerbosity))) == 0)
+{
+  print(paste("Maaslin::Error. Did not understand the value given for logging, please use any of the following: ",c_lsLoggingValues,"."))
+  print(paste("Maaslin::Warning. Setting logging value to \"",strDefaultLogging,"\"."))
 }
 
-if(!file.exists(inputFile))
+### Allowable values for methods
+c_lsMethodValues = c("maaslin")
+#If method is not an allowable value, inform user and stop
+if(length(intersect(c_lsMethodValues, c(lsArgs$options$strMethod))) == 0)
+{stop("Maaslin::Error. Did not understand the value given for the analysis method, please use any of the following: ",c_lsMethodValues,".")}
+
+### Create logger
+c_logrMaaslin <- getLogger( "maaslin" )
+addHandler( writeToConsole, c_logrMaaslin )
+setLevel( lsArgs$options$fVerbosity, c_logrMaaslin )
+
+#Get positional arguments
+if( length( lsArgs$args ) < 4 ) { stop( print_help( pArgs ) ) }
+### Output file name
+strOutputTXT <- lsArgs$args[1]
+### Input TSV data file
+strInputTSV <- lsArgs$args[2]
+### Input Read config file
+strInputRC <- lsArgs$args[3]
+### Input optional R Script
+strInputR <- lsArgs$args[4]
+### External libraries to source
+astrSourceR <- lsArgs$args[5:length( lsArgs$args )]
+### Source all libraries
+for( strR in astrSourceR ){source( strR )}
+
+#Indicate start
+logdebug("Start MaAsLin", c_logrMaaslin)
+#Log commandline arguments
+logdebug("Commandline Arguments", c_logrMaaslin)
+logdebug(lsArgs, c_logrMaaslin)
+
+### Output directory for the study based on the requested output file
+outputDirectory = dirname(strOutputTXT)
+### Base name for the project based on the read.config name
+strBase <- sub(".read.config", "", basename(strInputRC))
+### Summary file name
+strSummaryFileName = file.path(outputDirectory,paste(strBase,"_Summary.txt",sep=""))
+
+### Sources in the custom script
+### If the custom script is not there then
+### defaults are used and no custom scripts are ran
+funcSourceScript <- function(strFunctionPath)
 {
-  print("The following file does not exist please place in the appropriate directory or supply an appriate .pcl file for conversion. File:",inputFile,sep="")
-  return(-1)
+  #If is specified, set up the custom func clean variable
+  #If the custom script is null then return 
+  if(is.null(strFunctionPath)){return(NULL)}
+
+  #Check to make sure the file exists
+  if(file.exists(strFunctionPath))
+  {
+    #Read in the file
+    source(strFunctionPath)
+  } else {
+    #Handle when the file does not exist
+    stop(paste("MaAsLin Error: A custom data manipulation script was indicated but was not found at the file path: ",strFunctionPath,sep=""))
+  }
 }
 
 #Read file
-inputFileData = funcReadMatrices(inputFile, strInputTSV, log=TRUE)
+inputFileData = funcReadMatrices(strInputRC, strInputTSV, log=TRUE)
 
 #Dimensions of the datasets
-metaData = dim(inputFileData[[c_strMatrixMetadata]])
-data = dim(inputFileData[[c_strMatrixData]])
+liMetaData = dim(inputFileData[[c_strMatrixMetadata]])
+liData = dim(inputFileData[[c_strMatrixData]])
 
-#Check data before the merge
-dataToWrite = list(Metadata = inputFileData[[c_strMatrixMetadata]])
-saveToFile = c(paste(outputDirectory,"metadata.tsv",sep=""))
-configFileName = c(paste(outputDirectory,"metadata.read.config",sep=""))
-funcWriteMatrices(dataFrameList=dataToWrite, saveFileList=saveToFile, configureFileName=configFileName, acharDelimiter="\t")
+# Write metadata matrix before merge
+funcWriteMatrices(dataFrameList=list(Metadata = inputFileData[[c_strMatrixMetadata]]), saveFileList=c(file.path(outputDirectory,"QC","metadata.tsv")), configureFileName=c(file.path(outputDirectory,"QC","metadata.read.config")), acharDelimiter="\t")
 
-dataToWrite = list(Data = inputFileData[[c_strMatrixData]])
-saveToFile = c(paste(outputDirectory,"data.tsv",sep=""))
-configFileName = c(paste(outputDirectory,"data.read.config",sep=""))
-funcWriteMatrices(dataFrameList=dataToWrite, saveFileList=saveToFile, configureFileName=configFileName, acharDelimiter="\t")
+# Write data matrix before merge
+funcWriteMatrices(dataFrameList=list(Data = inputFileData[[c_strMatrixData]]), saveFileList=c(file.path(outputDirectory,"QC","data.tsv")), configureFileName=c(file.path(outputDirectory,"QC","data.read.config")), acharDelimiter="\t")
 
 #Merge data files together
 frmeData = merge(inputFileData[[c_strMatrixMetadata]],inputFileData[[c_strMatrixData]],by.x=0,by.y=0)
@@ -128,10 +137,7 @@ row.names(frmeData) = frmeData[[1]]
 frmeData = frmeData[-1]
 
 #Record the data as it has been read
-dataToWrite = list(Merged = frmeData)
-saveToFile = c(paste(outputDirectory,"read-Merged.tsv",sep=""))
-configFileName = c(paste(outputDirectory,"read-Merged.read.config",sep=""))
-funcWriteMatrices(dataFrameList=dataToWrite, saveFileList=saveToFile, configureFileName=configFileName, acharDelimiter="\t")
+funcWriteMatrices(dataFrameList=list(Merged = frmeData), saveFileList=c(file.path(outputDirectory,"QC","read-Merged.tsv")), configureFileName=c(file.path(outputDirectory,"QC","read-Merged.read.config")), acharDelimiter="\t")
 
 #Data needed for the MaAsLin environment
 #List of lists (one entry per file)
@@ -141,13 +147,13 @@ funcWriteMatrices(dataFrameList=dataToWrite, saveFileList=saveToFile, configureF
 lsData = c()
 
 #List of metadata indicies
-aiMetadata = c(1:metaData[2])
+aiMetadata = c(1:liMetaData[2])
 lsData$aiMetadata = aiMetadata
 #List of genetics indicies
 aiGenetics = c()
 lsData$aiGenetics = aiGenetics
 #List of data indicies
-aiData = c(1:data[2])+metaData[2]
+aiData = c(1:liData[2])+liMetaData[2]
 lsData$aiData = aiData
 #Add a list to hold qc metrics and counts
 lsData$lsQCCounts$aiDataInitial = aiData
@@ -156,104 +162,60 @@ lsData$lsQCCounts$aiMetadataInitial = aiMetadata
 #Raw data
 lsData$frmeRaw = frmeData
 
-lsScript = funcSourceScript(customDataProcessFunction)
-print("lsScript")
-print(lsScript)
+#Load script if it exists, stop on error
+funcProcess <- NULL
+if(!is.null(funcSourceScript(strInputR))){funcProcess <- get(c_strCustomProcessFunction)}
+
 #Clean the data and update the current data list to the cleaned data list
-lsRet = funcClean( frmeData=frmeData, funcDataProcess=lsScript$processFunction, aiMetadata=aiMetadata, aiGenetics=aiGenetics, aiData=aiData, lsQCCounts=lsData$lsQCCounts, astrNoImpute=lsScript$noImpute )
+lsRet = funcClean( frmeData=frmeData, funcDataProcess=funcProcess, aiMetadata=aiMetadata, aiGenetics=aiGenetics, aiData=aiData, lsQCCounts=lsData$lsQCCounts, astrNoImpute=xNoImpute )
 logdebug("lsRet", c_logrMaaslin)
 logdebug(format(lsRet), c_logrMaaslin)
 #Update the variables after cleaning
 lsRet$frmeRaw = frmeData
-lsData = lsRet
-frmeData = lsData$frmeData
-aiMetadata = lsData$aiMetadata
-aiGenetics = lsData$aiGenetics
-aiData = lsData$aiData
-lsData$lsQCCounts$aiDataCleaned = aiData
-lsData$lsQCCounts$aiMetadataCleaned = aiMetadata
+lsRet$lsQCCounts$aiDataCleaned = lsRet$aiData
+lsRet$lsQCCounts$aiMetadataCleaned = lsRet$aiMetadata
 
 #Add List of metadata string names
-astrMetadata = colnames(frmeData)[aiMetadata]
-lsData$astrMetadata = astrMetadata
+astrMetadata = colnames(lsRet$frmeData)[lsRet$aiMetadata]
+lsRet$astrMetadata = astrMetadata
 
 #Record the data after cleaning
-dataToWrite = list(Cleaned = frmeData)
-saveToFile = c(paste(outputDirectory,"read_cleaned.tsv",sep=""))
-configFileName = c(paste(outputDirectory,"read_cleaned.read.config",sep=""))
-funcWriteMatrices(dataFrameList=dataToWrite, saveFileList=saveToFile, configureFileName=configFileName, acharDelimiter="\t")
+funcWriteMatrices(dataFrameList=list(Cleaned = lsRet$frmeData), saveFileList=c(file.path(outputDirectory,"QC","read_cleaned.tsv")), configureFileName=c(file.path(outputDirectory,"QC","read_cleaned.read.config")), acharDelimiter="\t")
 
 #Log file
-strData = paste(outputDirectory,strBase,".txt",sep="")
+strData = file.path(outputDirectory,paste(strBase,".txt",sep=""))
 
 #These variables will be used to count how many features get analysed
-lsData$lsQCCounts$iBoosts = 0
-lsData$lsQCCounts$iBoostErrors = 0
-lsData$lsQCCounts$iNoTerms = 0
-lsData$lsQCCounts$iLms = 0
+lsRet$lsQCCounts$iBoosts = 0
+lsRet$lsQCCounts$iBoostErrors = 0
+lsRet$lsQCCounts$iNoTerms = 0
+lsRet$lsQCCounts$iLms = 0
 
 #Run analysis
-alsRetBugs = funcBugs( frmeData, lsData, aiMetadata, aiGenetics, aiData, strData,
-  lsScript$significanceLevel, lsScript$invert, dirname(strOutputTXT), astrScreen = c() )
+alsRetBugs = funcBugs( lsRet$frmeData, lsRet, lsRet$aiMetadata, lsRet$aiGenetics, lsRet$aiData, strData,
+	lsArgs$options$dSelectionFrequency, lsArgs$options$dSignificanceLevel, lsArgs$options$fInvert, dirname(strOutputTXT), astrScreen = c() )
 aiBugs = alsRetBugs$aiReturnBugs
-lsQCCounts = alsRetBugs$lsQCCounts
-
-#Numeric vector of Metadata indexes
-aiUMD <- intersect( aiMetadata, which( colnames( frmeData ) %in% lsData$astrMetadata ) )
 
 #Output a summary file of analysis process
-strProcessFileName = c(paste(outputDirectory,"ProcessQC.txt",sep=""))
-unlink(strProcessFileName)
-funcWrite( paste("Initial Metadata Matrix Size: Rows ",metaData[1],"  Columns ",metaData[2],sep=""), strProcessFileName )
-funcWrite( paste("Initial Data Matrix Size: Rows ",data[1],"  Columns ",data[2],sep=""), strProcessFileName )
-funcWrite( paste("\nInitial Data Count: ",length(lsQCCounts$aiDataInitial),sep=""), strProcessFileName )
-funcWrite( paste("Initial Metadata Count: ",length(lsQCCounts$aiMetadataInitial),sep=""), strProcessFileName )
-funcWrite( paste("Data Count after preprocess: ",length(lsQCCounts$aiAfterPreprocess),sep=""), strProcessFileName )
-funcWrite( paste("Removed for missing metadata: ",length(lsQCCounts$iMissingMetadata),sep=""), strProcessFileName )
-funcWrite( paste("Removed for missing data: ",length(lsQCCounts$iMissingData),sep=""), strProcessFileName )
-funcWrite( paste("Data with outliers: ",length(lsQCCounts$aiSumOutlierPerDatum[lsQCCounts$aiSumOutlierPerDatum>0]),sep=""), strProcessFileName )
-funcWrite( paste("Metadata count which survived clean: ",length(lsQCCounts$aiMetadataCleaned),sep=""), strProcessFileName )
-funcWrite( paste("Data count which survived clean: ",length(lsQCCounts$aiDataCleaned),sep=""), strProcessFileName )
-funcWrite( paste("\nBoostings: ",lsQCCounts$iBoosts,sep=""), strProcessFileName )
-funcWrite( paste("Boosting Errors: ",lsQCCounts$iBoostErrors,sep=""), strProcessFileName )
-funcWrite( paste("LMs with no terms suriving boosting: ",lsQCCounts$iNoTerms,sep=""), strProcessFileName )
-funcWrite( paste("LMs performed: ",lsQCCounts$iLms,sep=""), strProcessFileName )
-if(!is.null(lsQCCounts$lsQCCustom))
-{
-  funcWrite("Custom preprocess QC data: ", strProcessFileName )
-  funcWrite(lsQCCounts$lsQCCustom, strProcessFileName )
-} else {
-  funcWrite("No custom preprocess QC data.", strProcessFileName )
-}
-funcWrite( "\n#Details###########################", strProcessFileName )
-funcWrite("\nInitial Data Count: ", strProcessFileName )
-funcWrite(lsQCCounts$aiDataInitial, strProcessFileName )
-funcWrite("\nInitial Metadata Count: ", strProcessFileName )
-funcWrite(lsQCCounts$aiMetadataInitial, strProcessFileName )
-funcWrite("\nData Count after preprocess: ", strProcessFileName )
-funcWrite(lsQCCounts$aiAfterPreprocess, strProcessFileName )
-funcWrite("\nRemoved for missing metadata: ", strProcessFileName )
-funcWrite(lsQCCounts$iMissingMetadata, strProcessFileName )
-funcWrite("\nRemoved for missing data: ", strProcessFileName )
-funcWrite(lsQCCounts$iMissingData, strProcessFileName )
-funcWrite("\nOutlier Count per Datum: ", strProcessFileName )
-funcWrite(lsQCCounts$aiSumOutlierPerDatum, strProcessFileName )
-funcWrite("\nMetadata which survived clean: ", strProcessFileName )
-funcWrite(lsQCCounts$aiMetadataCleaned, strProcessFileName )
-funcWrite("\nData which survived clean: ", strProcessFileName )
-funcWrite(lsQCCounts$aiDataCleaned, strProcessFileName )
+funcWriteQCReport(strProcessFileName=file.path(outputDirectory,"QC","ProcessQC.txt"), lsQCData=alsRetBugs$lsQCCounts, liDataDim=liData, liMetadataDim=liMetaData)
+
+#Numeric vector of Metadata indexes or MFA
+aiUMD <- intersect( lsRet$aiMetadata, which( colnames( lsRet$frmeData ) %in% lsRet$astrMetadata ) )
 
 #Run MFA and plot covariance of factors
-if( !length( aiBugs ) ) {
-	aiBugs <- aiData }
-if( length( aiBugs ) ) {
-    logdebug("MFA:in", c_logrMaaslin)
-    lsMFA <- funcMFA( frmeData, aiUMD, aiBugs )
-    logdebug("MFA:out", c_logrMaaslin)
-    if( class( lsMFA ) != "try-error" ) {
-        logdebug("PlotMFA:in", c_logrMaaslin)
-        funcPlotMFA( fInvert=lsScript$invert, lsMFA=lsMFA, tempSaveFileName=paste(outputDirectory,strBase,sep=""), funcPlotColors=lsData$funcPlotColors, funcPlotPoints=lsData$funcPlotPoints, funcPlotLegend=lsData$funcPlotLegend )
-        logdebug("PlotMFA:out", c_logrMaaslin) } }
+if( !length( aiBugs ) ) { aiBugs <- lsRet$aiData }
+if( length( aiBugs ) )
+{
+  logdebug("MFA:in", c_logrMaaslin)
+  lsMFA <- funcMFA( lsRet$frmeData, aiUMD, aiBugs )
+  logdebug("MFA:out", c_logrMaaslin)
+  if( class( lsMFA ) != "try-error" )
+  {
+    logdebug("PlotMFA:in", c_logrMaaslin)
+    funcPlotMFA( fInvert=lsArgs$options$fInvert, lsMFA=lsMFA, tempSaveFileName=file.path(outputDirectory,strBase), funcPlotColors=lsRet$funcPlotColors, funcPlotPoints=lsRet$funcPlotPoints, funcPlotLegend=lsRet$funcPlotLegend )
+    logdebug("PlotMFA:out", c_logrMaaslin)
+  }
+}
 
 #Summarize output files based on a keyword and a significance threshold
 #Look for less than or equal to the threshold (approapriate for p-value and q-value type measurements)
@@ -261,4 +223,4 @@ funcSummarizeDirectory(astrOutputDirectory=outputDirectory,
                        strBaseName = strBase,
                        astrSummaryFileName=strSummaryFileName, 
                        astrKeyword=c_strKeywordEvaluatedForInclusion, 
-                       afSignificanceLevel=lsScript$significanceLevel)
+                       afSignificanceLevel=lsArgs$options$dSignificanceLevel)
