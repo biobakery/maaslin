@@ -12,6 +12,55 @@ c_astrNA <- c(""," ","  ","NA","na")
 #Do not report warnings
 options(warn=-1)
 
+### Writes a read config file. Will write over a file by default
+### strConfigureFileName Read Config file to write to 
+### strMatrixName Name of matrix that will be read
+### strRowIndices Rows which will be Read (TSV) by default all will be read
+### strColIndices Cols which will be Read (TSV) by default all will be read
+### strDtCharacter Data columns which will be forced to character data
+### strDtFactoral Data columns which will be forced to factor data
+### strDtInteger Data columns which will be forced to integer data
+### strDtLogical Data columns which will be forced to logical data
+### strDtNumeric Data columns which will be forced to numeric data
+### strDtOrdered Data columns which will be forced to ordered data
+### acharDelimiter Delimiter for the matrix that will be read in\
+### fAppend Append to a current read config file
+funcWriteMatrixToReadConfigFile = function(strConfigureFileName, strMatrixName, strRowIndices = "-", strColIndices "-",
+  strDtCharacter="", strDtFactoral="", strDtInteger="", strDtLogical="", strDtNumeric="", strDtOrdered="",
+  acharDelimiter="\t", fAppend=FALSE)
+{
+  #If no append delete previous file
+  if(!fAppend){unlink(strConfigureFileName)}
+
+  #Make delimiter readable
+  switch(acharDelimiter,
+    "\t" = {acharDelimiter = "TAB"},
+    " " = {acharDelimiter = "SPACE"},
+    "\r" = {acharDelimiter = "RETURN"},
+    "\n" = {acharDelimiter = "ENDLINE"})
+
+  #Required output
+  lsDataLines = c(paste(c_MATRIX_NAME,strMatrixName,sep=" "),
+    paste(c_FILE_NAME,strConfigureFileName,sep=" "),
+    paste(c_DELIMITER,acharDelimiter,sep=" "),
+    paste(c_ID_ROW,"1",sep=" "),
+    paste(c_ID_COLUMN,"1",sep=" "),
+    paste(c_ROWS,strRowIndices,sep=" "),
+    paste(c_COLUMNS,strColIndices,sep=" "))
+
+  #Optional output
+  if(strDtCharacter==""){lsDataLines=c(lsDataLines,paste(c_CHARACTER_DATA_TYPE,strDtCharacter,sep=" "))}
+  if(strDtFactoral==""){lsDataLines=c(lsDataLines,paste(c_FACTOR_DATA_TYPE,strDtFactoral,sep=" "))}
+  if(strDtInteger==""){lsDataLines=c(lsDataLines,paste(c_INTEGER_DATA_TYPE,strDtInteger,sep=" "))}
+  if(strDtLogical==""){lsDataLines=c(lsDataLines,paste(c_LOGICAL_DATA_TYPE,strDtLogical,sep=" "))}
+  if(strDtNumeric==""){lsDataLines=c(lsDataLines,paste(c_NUMERIC_DATA_TYPE,strDtNumeric,sep=" "))}
+  if(strDtOrdered==""){lsDataLines=c(lsDataLines,paste(c_ORDEREDFACTOR_DATA_TYPE,strDtOrdered,sep=" "))}
+  lsDataLines = c(lsDataLines,"\n")
+
+  #Output to file
+  lapply(lsDataLines, cat, file=strConfigureFileName, sep="\n", append=TRUE)
+}
+
 #Write data frame data files with config files
 #dataFrameList is a named list of data frames (what you get directly from the read function)
 #saveFileList File names to save the data matrices in (one name per data frame)
@@ -186,32 +235,10 @@ funcWriteMatrices = function(dataFrameList, saveFileList, configureFileName, ach
     #Write Data to file
     write.table(data, saveFileList[dataIndex], quote = FALSE, sep = acharDelimiter, col.names = NA, row.names = rowNames, na = "NA", append = FALSE)
 
-    #Write read config file
-    #Make delimiter readable
-    if(acharDelimiter == "\t"){
-      acharDelimiter = "TAB"
-    }else if(acharDelimiter == " "){
-      acharDelimiter = "SPACE"
-    }else if(acharDelimiter == "\r"){
-      acharDelimiter = "RETURN"
-    }else if(acharDelimiter == "\n"){
-      acharDelimiter = "ENDLINE"
-    }
-
-    cat(paste(c_MATRIX_NAME," ",dataFrameNames[dataIndex],sep = ""),"\n",file=configureFileName, append=TRUE)
-    cat(paste(c_FILE_NAME," ",saveFileList[dataIndex],sep = ""),"\n",file=configureFileName, append=TRUE)
-    cat(paste(c_DELIMITER," ",acharDelimiter,sep = ""),"\n",file=configureFileName, append=TRUE)
-    cat(paste(c_ID_ROW," ","1",sep = ""),"\n",file=configureFileName, append=TRUE)
-    cat(paste(c_ID_COLUMN," ","1",sep = ""),"\n",file=configureFileName, append=TRUE)
-    cat(paste(c_ROWS," ",rowIndices,sep = ""),"\n",file=configureFileName, append=TRUE)
-    cat(paste(c_COLUMNS," ",colIndices,sep = ""),"\n",file=configureFileName, append=TRUE)
-    cat(paste(c_CHARACTER_DATA_TYPE," ",dtCharacter,sep = ""),"\n",file=configureFileName, append=TRUE)
-    cat(paste(c_FACTOR_DATA_TYPE," ",dtFactoral,sep = ""),"\n",file=configureFileName, append=TRUE)
-    cat(paste(c_INTEGER_DATA_TYPE," ",dtInteger,sep = ""),"\n",file=configureFileName, append=TRUE)
-    cat(paste(c_LOGICAL_DATA_TYPE," ",dtLogical,sep = ""),"\n",file=configureFileName, append=TRUE)
-    cat(paste(c_NUMERIC_DATA_TYPE," ",dtNumeric,sep = ""),"\n",file=configureFileName, append=TRUE)
-    cat(paste(c_ORDEREDFACTOR_DATA_TYPE," ",dtOrdered,sep = ""),"\n",file=configureFileName, append=TRUE)
-    cat("\n",file=configureFileName, append=TRUE)
+    #Write the read config file
+    funcWriteMatrixToReadConfigFile(strConfigureFileName=configureFileName, strMatrixName=dataFrameNames[dataIndex],
+      strRowIndices=rowIndices, strColIndices=colIndices, strDtCharacter=dtCharacter, strDtFactoral=dtFactoral, strDtInteger=dtInteger,
+      strDtLogical=dtLogical, strDtNumeric=dtNumeric, strDtOrdered=dtOrdered, strAcharDelimiter=acharDelimiter, fAppend=TRUE)
   }
   return(TRUE)
 }
@@ -708,125 +735,34 @@ readConfigFile = function(configureFile, defaultFile = NA)
       dtLogical = NA
       dtNumeric = NA
       dtOrderedFactor = NA 
-      
-#      print(paste(c("matrixName = ",matrixName)))
-    } else if(is.na(matrixName)){
       #If is not matrix name and no matrix name is known skip until you find the matrix name
       #IF matrix name is known, continue to collect information about that matrix
-#      print("next")
-      next }
+    } else if(is.na(matrixName)){next}
 
-    #Find file name
-    if(fileDataList[textIndex] == c_FILE_NAME)
-    {
-      textIndex = textIndex + 1
-      fileName = fileDataList[textIndex]
-#      print(paste(c("fileName = ",fileName)))
-      next
-    }
+    #Parse different keywords
+    switch(fileDataList[textIndex],
+      c_FILE_NAME = {fileName = fileDataList[[textIndex + 1]},
+      c_DELIMITER =
+        {
+          switch(fileDataList[textIndex + 1],
+            "TAB" = {delimiter = "\t"},
+            "SPACE" = {delimiter = " "},
+            "RETURN" = {delimiter = "\r"},
+            "ENDLINE" = {delimiter = "\n"})
+        },
+      c_ID_ROW = {idRow = fileDataList[[textIndex + 1]},
+      c_ID_COLUMN = {idCol = fileDataList[[textIndex + 1]},
+      c_ROWS = {rows = fileDataList[[textIndex + 1]},
+      c_COLUMNS = {columns = fileDataList[[textIndex + 1]},
+      c_CHARACTER_DATA_TYPE = {dtCharacter = fileDataList[[textIndex + 1]},
+      c_FACTOR_DATA_TYPE = {dtFactor = fileDataList[[textIndex + 1]},
+      c_INTEGER_DATA_TYPE = {dtInteger = fileDataList[[textIndex + 1]},
+      c_LOGICAL_DATA_TYPE = {dtLogical = fileDataList[[textIndex + 1]},
+      c_NUMERIC_DATA_TYPE = {dtNumeric = fileDataList[[textIndex + 1]},
+      c_ORDEREDFACTOR_DATA_TYPE = {dtOrderedFactor = fileDataList[[textIndex + 1]})
 
-    #Find the row that has the ids for the columns
-    if(fileDataList[textIndex] == c_DELIMITER)
-    {
-      textIndex = textIndex + 1
-      delimiter = fileDataList[textIndex]
-      if(delimiter == "TAB"){delimiter = "\t"
-      }else if(delimiter == "SPACE"){delimiter = " "
-      }else if(delimiter == "RETURN"){delimiter = "\r"
-      }else if(delimiter == "ENDLINE"){delimiter = "\n"}
-#      print(paste(c("Delimiter = ",delimiter)))
-      next
-    }
-
-    #Find the row that has the ids for the columns
-    if(fileDataList[textIndex] == c_ID_ROW)
-    {
-      textIndex = textIndex + 1
-      idRow = fileDataList[textIndex]
-#      print(paste(c("ID row = ",idRow)))
-      next
-    }
-
-    #Find the column that has the ids for the rows
-    if(fileDataList[textIndex] == c_ID_COLUMN)
-    {
-      textIndex = textIndex + 1
-      idCol = fileDataList[textIndex]
-#      print(paste(c("ID col = ",idCol)))
-      next
-    }
-
-    #Find the rows for reading
-    if(fileDataList[textIndex] == c_ROWS)
-    {
-      textIndex = textIndex + 1
-      rows = fileDataList[textIndex]
-#      print(paste(c("Rows = ",rows)))
-      next
-    }
-
-    #Find the columns for reading
-    if(fileDataList[textIndex] == c_COLUMNS)
-    {
-      textIndex = textIndex + 1
-      columns = fileDataList[textIndex]
-#      print(paste(c("Columns = ",columns)))
-      next
-    }
-
-    #Find rows for character data types
-    if(fileDataList[textIndex] == c_CHARACTER_DATA_TYPE)
-    {
-      textIndex = textIndex + 1
-      dtCharacter = fileDataList[textIndex]
-#      print(paste(c("Character Data Type = ",dtCharacter)))
-      next
-    }
-
-    #Find rows for factor data types
-    if(fileDataList[textIndex] == c_FACTOR_DATA_TYPE)
-    {
-      textIndex = textIndex + 1
-      dtFactor = fileDataList[textIndex]
-#      print(paste(c("Factor Data Type = ",dtFactor)))
-      next
-    }
-
-    #Find rows for integer data types
-    if(fileDataList[textIndex] == c_INTEGER_DATA_TYPE)
-    {
-      textIndex = textIndex + 1
-      dtInteger = fileDataList[textIndex]
-#      print(paste(c("Integer Data Type = ",dtInteger)))
-      next
-    }
-
-    #Find rows for logical data types
-    if(fileDataList[textIndex] == c_LOGICAL_DATA_TYPE)
-    {
-      textIndex = textIndex + 1
-      dtLogical = fileDataList[textIndex]
-#      print(paste(c("Logical Data Type = ",dtLogical)))
-      next
-    }
-
-    #Find rows for Numeric data types
-    if(fileDataList[textIndex] == c_NUMERIC_DATA_TYPE)
-    {
-      textIndex = textIndex + 1
-      dtNumeric = fileDataList[textIndex]
-#      print(paste(c("Numeric Data Type = ",dtNumeric)))
-      next
-    }
-
-    #Find rows for ordered data types
-    if(fileDataList[textIndex] == c_ORDEREDFACTOR_DATA_TYPE)
-    {
-      textIndex = textIndex + 1
-      dtOrderedFactor = fileDataList[textIndex]
-#      print(paste(c("Ordered FACTOR Data Type = ",dtOrderedFactor)))
-      next
-    }
+    #Increment
+    testIndex = textIndex + 1
   }
   #If there is matrix information left
   if((!is.na(matrixName)) && (!is.na(fileName)))
@@ -839,63 +775,34 @@ readConfigFile = function(configureFile, defaultFile = NA)
 
 #Take a string of comma or dash seperated integer strings and convert into a vector
 #of integers to use in index slicing
-funcParseIndexSlices = function(indexString)
+#TODO -
+funcParseIndexSlices = function(strIndexString,iLastNumber)
 {
-  #Validate string parameter
-  if(!funcIsValidString(indexString))
-  { 
-    print(paste("Received invalid string to parse as an index, recieved = ",indexString,".",sep=""))
-    return(FALSE)
-  }
-
   #List of indices to return
-  indices = c()
+  viRetIndicies = c()
 
   #Split on commas
-  indexString = strsplit(indexString, c_COMMA)
-  for(indexItem in indexString[[1]])
+  lIndexString = strsplit(strIndexString, c_COMMA)
+  for(strIndexItem in lIndexString[[1]])
   {
-    indexElement = strsplit(indexItem, c_DASH)[[1]]
-    indexElementLength = length(indexElement)
-    #If only one index is recieved
-    if(indexElementLength == 1)
-    {
-      #Change index to numeric and add to index list
-      #OR skip if it is not numeric
-      index = as.numeric(indexElement)
-      if(is.na(index))
-      {
-        print(paste("Index can not be changed to a number, skipped. Index =",index,".",sep = ""))
-      } else {
-        if(index > 0)
-        {
-          indices = c(indices,index)
-        }
-      }
-    #If 2 indices are recieved with a dash
-    #Try to change both to numeric
-    #If they cant be change, skip
-    } else if(indexElementLength == 2) {
-        numericOne = as.numeric(indexElement[1])
-        numericTwo = as.numeric(indexElement[2])
-        if(is.na(numericOne) || is.na(numericTwo))
-        {
-          print(paste("One of the two indices can not be changed to a number, skipped. Before Indices = ",indexElementLength[1]," and ",indexElementLength[2],". After Indices =",numericOne," and ",numericTwo,".",sep = ""))
-        } else {
-          indices = c(indices,c(numericOne:numericTwo))
-        }
-    #If more than 2 indices are found then this is nonsensical and is ignored.
-    } else if(indexElementLength > 2) {
-      print(paste("Error in index, too many dashes, only one is allowed. Index = ",indexItem,sep=""))
-    }
-  }
+    #Split on dash and make sure it makes sense
+    lItemElement = strsplit(strIndexItem, c_DASH)[[1]]
+    if(length(lItemElement)>2){stop("Error in index, too many dashes, only one is allowed. Index = ",strIndexItem,sep="")}
 
-  #Make indices unique
-  indices = unique(indices)
-  #Sort Indices
-  indices = sort(indices)
-  #Return sorted, unique indices
-  return(indices)
+    #Make numeric
+    liItemElement = unlist(lapply(lItemElement, as.numeric))
+
+    #If dash is at the end or the beginning add on the correct number
+    if(substr(strIndexItem,1,1)==c_DASH){liItemElement[1]=0}
+    if(substr(strIndexItem,nchar(strIndexItem),nchar(strIndexItem))==c_DASH){liItemElement[2]=iLastNumber}
+
+    #If multiple numbers turn to a slice
+    if(length(liItemElement)==2){liItemElement = c(liItemElement[1]:liItemElement[2])}
+
+    #Update indices
+    viRetIndicies = c(viRetIndicies, liItemElement)
+  }
+  return(sort(unique(viRetIndicies)))
 }
 
 #Test
