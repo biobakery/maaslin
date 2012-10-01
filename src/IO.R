@@ -14,6 +14,7 @@ options(warn=-1)
 
 ### Writes a read config file. Will write over a file by default
 ### strConfigureFileName Read Config file to write to 
+### strMatrixFile File that will be read
 ### strMatrixName Name of matrix that will be read
 ### strRowIndices Rows which will be Read (TSV) by default all will be read
 ### strColIndices Cols which will be Read (TSV) by default all will be read
@@ -25,7 +26,7 @@ options(warn=-1)
 ### strDtOrdered Data columns which will be forced to ordered data
 ### acharDelimiter Delimiter for the matrix that will be read in\
 ### fAppend Append to a current read config file
-funcWriteMatrixToReadConfigFile = function(strConfigureFileName, strMatrixName, strRowIndices = "-", strColIndices "-",
+funcWriteMatrixToReadConfigFile = function(strConfigureFileName, strMatrixFile, strMatrixName, strRowIndices = "-", strColIndices "-",
   strDtCharacter="", strDtFactoral="", strDtInteger="", strDtLogical="", strDtNumeric="", strDtOrdered="",
   acharDelimiter="\t", fAppend=FALSE)
 {
@@ -41,7 +42,7 @@ funcWriteMatrixToReadConfigFile = function(strConfigureFileName, strMatrixName, 
 
   #Required output
   lsDataLines = c(paste(c_MATRIX_NAME,strMatrixName,sep=" "),
-    paste(c_FILE_NAME,strConfigureFileName,sep=" "),
+    paste(c_FILE_NAME,strMatrixFile,sep=" "),
     paste(c_DELIMITER,acharDelimiter,sep=" "),
     paste(c_ID_ROW,"1",sep=" "),
     paste(c_ID_COLUMN,"1",sep=" "),
@@ -100,16 +101,11 @@ funcWriteMatrices = function(dataFrameList, saveFileList, configureFileName, ach
     #Get row and column names
     rowNames = row.names(data)
     rowNamesString = paste(rowNames,sep="",collapse=",")
-    if(length(rowNamesString)==0)
-    {
-      rowNamesString = NA
-    }
+    if(length(rowNamesString)==0){rowNamesString = NA}
+
     columnNames = colnames(data)
     columnNamesString = paste(columnNames,sep="",collapse=",")
-    if(length(columnNamesString)==0)
-    {
-      columnNamesString = NA
-    }
+    if(length(columnNamesString)==0){columnNamesString = NA}
 
     #Get row indices
     rowStart = 1
@@ -236,7 +232,7 @@ funcWriteMatrices = function(dataFrameList, saveFileList, configureFileName, ach
     write.table(data, saveFileList[dataIndex], quote = FALSE, sep = acharDelimiter, col.names = NA, row.names = rowNames, na = "NA", append = FALSE)
 
     #Write the read config file
-    funcWriteMatrixToReadConfigFile(strConfigureFileName=configureFileName, strMatrixName=dataFrameNames[dataIndex],
+    funcWriteMatrixToReadConfigFile(strConfigureFileName=configureFileName, strMatrixFile=saveFileList[dataIndex], strMatrixName=dataFrameNames[dataIndex],
       strRowIndices=rowIndices, strColIndices=colIndices, strDtCharacter=dtCharacter, strDtFactoral=dtFactoral, strDtInteger=dtInteger,
       strDtLogical=dtLogical, strDtNumeric=dtNumeric, strDtOrdered=dtOrdered, strAcharDelimiter=acharDelimiter, fAppend=TRUE)
   }
@@ -250,8 +246,6 @@ funcReadMatrices = function( configureFile , defaultFile = NA, log = FALSE)
   returnFrames = list()
   #Holds the names of the frames as they are being added
   returnFrameNames = c()
-  #Current Index adding to next
-  returnFramesIndex = 1
 
   #Read in config file info
   configData = readConfigFile(configureFile, defaultFile)
@@ -260,25 +254,13 @@ funcReadMatrices = function( configureFile , defaultFile = NA, log = FALSE)
   for(dataBlock in configData)
   {
     #Read in matrix
-    tempFileName = dataBlock[2]
-    dataMatrix = funcReadMatrix(tempMatrixName=dataBlock[1], tempFileName=tempFileName, tempDelimiter=dataBlock[3], tempIdRow=dataBlock[4], tempIdCol=dataBlock[5], tempRows=dataBlock[6], tempColumns=dataBlock[7], tempDtCharacter=dataBlock[8], tempDtFactor=dataBlock[9], tempDtInteger=dataBlock[10], tempDtLogical=dataBlock[11], tempDtNumeric=dataBlock[12], tempDtOrderedFactor=dataBlock[13], tempLog=log)
-    if(class(dataMatrix)=="data.frame")
-    {
-      #Add data frame
-      returnFrames[[returnFramesIndex]] = dataMatrix
-      returnFramesIndex = returnFramesIndex + 1
-      returnFrameNames = c(returnFrameNames,dataBlock[1])
-    } else {
-      print(paste("Reading from file named ",tempFileName," did not produce a valid data frame.",sep=""))
-      print("Received")
-      print(dataMatrix)
-    }
+    returnFrames[[returnFramesIndex]] = funcReadMatrix(tempMatrixName=dataBlock[1], tempFileName=dataBlock[2], tempDelimiter=dataBlock[3], tempIdRow=dataBlock[4], tempIdCol=dataBlock[5], tempRows=dataBlock[6], tempColumns=dataBlock[7], tempDtCharacter=dataBlock[8], tempDtFactor=dataBlock[9], tempDtInteger=dataBlock[10], tempDtLogical=dataBlock[11], tempDtNumeric=dataBlock[12], tempDtOrderedFactor=dataBlock[13], tempLog=log)
+    returnFrameNames = c(returnFrameNames,dataBlock[1])
   }
   if((length(returnFrames)>0)&&(length(returnFrameNames)>0))
   {
     names(returnFrames) = returnFrameNames
   }
-#  print(returnFrameNames)
   return(returnFrames)
 }
 
@@ -419,7 +401,7 @@ funcReadMatrix = function(tempMatrixName = NA, tempFileName = NA, tempDelimiter 
   if(funcIsValid(tempIdCol))
   {
     columnNameList = as.matrix(dataMatrix[tempIdRow,])
-}
+  }
   if(funcIsValid(tempIdRow))
   {
     rowNameList = dataMatrix[tempIdCol][[1]]
@@ -774,9 +756,9 @@ readConfigFile = function(configureFile, defaultFile = NA)
 }
 
 #Take a string of comma or dash seperated integer strings and convert into a vector
-#of integers to use in index slicing
-#TODO -
-funcParseIndexSlices = function(strIndexString,iLastNumber)
+#of integers to use in index slicing 
+#TODO handle words, should writing th read config be in words?
+funcParseIndexSlices = function(strIndexString,cstrNames)
 {
   #List of indices to return
   viRetIndicies = c()
@@ -785,6 +767,9 @@ funcParseIndexSlices = function(strIndexString,iLastNumber)
   lIndexString = strsplit(strIndexString, c_COMMA)
   for(strIndexItem in lIndexString[[1]])
   {
+    #Handle the - case
+    if(strIndexItem=="-"){strIndexItem = paste(cstrNames[1],"-",cstrNames[nchar(cstrNames)],sep="")}
+  
     #Split on dash and make sure it makes sense
     lItemElement = strsplit(strIndexItem, c_DASH)[[1]]
     if(length(lItemElement)>2){stop("Error in index, too many dashes, only one is allowed. Index = ",strIndexItem,sep="")}
@@ -794,7 +779,7 @@ funcParseIndexSlices = function(strIndexString,iLastNumber)
 
     #If dash is at the end or the beginning add on the correct number
     if(substr(strIndexItem,1,1)==c_DASH){liItemElement[1]=0}
-    if(substr(strIndexItem,nchar(strIndexItem),nchar(strIndexItem))==c_DASH){liItemElement[2]=iLastNumber}
+    if(substr(strIndexItem,nchar(strIndexItem),nchar(strIndexItem))==c_DASH){liItemElement[2]=cstrNames[nchar(cstrNames)]}
 
     #If multiple numbers turn to a slice
     if(length(liItemElement)==2){liItemElement = c(liItemElement[1]:liItemElement[2])}
