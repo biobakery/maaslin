@@ -12,6 +12,7 @@ c_astrNA <- c(""," ","  ","NA","na")
 #Do not report warnings
 options(warn=-1)
 
+#4 Test cases
 ### Writes a read config file. Will write over a file by default
 ### strConfigureFileName Read Config file to write to 
 ### strMatrixFile File that will be read
@@ -26,7 +27,7 @@ options(warn=-1)
 ### strDtOrdered Data columns which will be forced to ordered data
 ### acharDelimiter Delimiter for the matrix that will be read in\
 ### fAppend Append to a current read config file
-funcWriteMatrixToReadConfigFile = function(strConfigureFileName, strMatrixFile, strMatrixName, strRowIndices = "-", strColIndices "-",
+funcWriteMatrixToReadConfigFile = function(strConfigureFileName, strMatrixFile, strMatrixName, strRowIndices="-", strColIndices="-",
   strDtCharacter="", strDtFactoral="", strDtInteger="", strDtLogical="", strDtNumeric="", strDtOrdered="",
   acharDelimiter="\t", fAppend=FALSE)
 {
@@ -50,12 +51,12 @@ funcWriteMatrixToReadConfigFile = function(strConfigureFileName, strMatrixFile, 
     paste(c_COLUMNS,strColIndices,sep=" "))
 
   #Optional output
-  if(strDtCharacter==""){lsDataLines=c(lsDataLines,paste(c_CHARACTER_DATA_TYPE,strDtCharacter,sep=" "))}
-  if(strDtFactoral==""){lsDataLines=c(lsDataLines,paste(c_FACTOR_DATA_TYPE,strDtFactoral,sep=" "))}
-  if(strDtInteger==""){lsDataLines=c(lsDataLines,paste(c_INTEGER_DATA_TYPE,strDtInteger,sep=" "))}
-  if(strDtLogical==""){lsDataLines=c(lsDataLines,paste(c_LOGICAL_DATA_TYPE,strDtLogical,sep=" "))}
-  if(strDtNumeric==""){lsDataLines=c(lsDataLines,paste(c_NUMERIC_DATA_TYPE,strDtNumeric,sep=" "))}
-  if(strDtOrdered==""){lsDataLines=c(lsDataLines,paste(c_ORDEREDFACTOR_DATA_TYPE,strDtOrdered,sep=" "))}
+  if(!strDtCharacter==""){lsDataLines=c(lsDataLines,paste(c_CHARACTER_DATA_TYPE,strDtCharacter,sep=" "))}
+  if(!strDtFactoral==""){lsDataLines=c(lsDataLines,paste(c_FACTOR_DATA_TYPE,strDtFactoral,sep=" "))}
+  if(!strDtInteger==""){lsDataLines=c(lsDataLines,paste(c_INTEGER_DATA_TYPE,strDtInteger,sep=" "))}
+  if(!strDtLogical==""){lsDataLines=c(lsDataLines,paste(c_LOGICAL_DATA_TYPE,strDtLogical,sep=" "))}
+  if(!strDtNumeric==""){lsDataLines=c(lsDataLines,paste(c_NUMERIC_DATA_TYPE,strDtNumeric,sep=" "))}
+  if(!strDtOrdered==""){lsDataLines=c(lsDataLines,paste(c_ORDEREDFACTOR_DATA_TYPE,strDtOrdered,sep=" "))}
   lsDataLines = c(lsDataLines,"\n")
 
   #Output to file
@@ -79,10 +80,7 @@ funcWriteMatrices = function(dataFrameList, saveFileList, configureFileName, ach
 
   #If the save file list length and data frame list length are not equal, abort
   if(!saveFileListLength == dataFrameListLength)
-  {
-    print(paste("Received a length of save files (",saveFileListLength,") that are different from the count of data frames (",dataFrameListLength,"). Stopped and returned false."),sep="")
-    return(FALSE)
-  }
+  {stop(paste("Received a length of save files (",saveFileListLength,") that are different from the count of data frames (",dataFrameListLength,"). Stopped and returned false."),sep="")}
 
   #Delete the old config file
   unlink(configureFileName)
@@ -93,10 +91,8 @@ funcWriteMatrices = function(dataFrameList, saveFileList, configureFileName, ach
     #Current data frame
     data = dataFrameList[[dataIndex]]
 
-    #Get row and column count
-    dataDimension = dim(data)
-    rowCount = dataDimension[1]
-    columnCount = dataDimension[2]
+    #Get column count
+    columnCount = ncol(dataDimension)
 
     #Get row and column names
     rowNames = row.names(data)
@@ -109,8 +105,8 @@ funcWriteMatrices = function(dataFrameList, saveFileList, configureFileName, ach
 
     #Get row indices
     rowStart = 1
-    if(!is.na(rowNamesString)){  rowStart = 2}
-    rowEnd = rowCount+rowStart - 1
+    if(!is.na(rowNamesString)){rowStart = 2}
+    rowEnd = nrow(dataDimension)+rowStart - 1
     rowIndices = paste(c(rowStart:rowEnd),sep="",collapse=",")
 
     #Get col indices
@@ -240,6 +236,7 @@ funcWriteMatrices = function(dataFrameList, saveFileList, configureFileName, ach
 }
 
 #Dynamically Read a Matrix/Matrices from a configure file
+#TODO If there is no row or column values then read the full matrix
 funcReadMatrices = function( configureFile , defaultFile = NA, log = FALSE)
 {
   #Named vector to return data frames read
@@ -248,7 +245,7 @@ funcReadMatrices = function( configureFile , defaultFile = NA, log = FALSE)
   returnFrameNames = c()
 
   #Read in config file info
-  configData = readConfigFile(configureFile, defaultFile)
+  configData = funcReadConfigFile(configureFile, defaultFile)
 
   #Read each data block extracted from the config file
   for(dataBlock in configData)
@@ -265,7 +262,7 @@ funcReadMatrices = function( configureFile , defaultFile = NA, log = FALSE)
 }
 
 #Read one matrix
-funcReadMatrix = function(tempMatrixName = NA, tempFileName = NA, tempDelimiter = NA, tempIdRow = NA, tempIdCol = NA, tempRows = NA, tempColumns = NA, tempDtCharacter = NA, tempDtFactor = NA, tempDtInteger = NA, tempDtLogical = NA, tempDtNumeric = NA, tempDtOrderedFactor = NA, tempLog = FALSE)
+funcReadMatrix = function(tempMatrixName = NA, tempFileName = NA, tempDelimiter = NA, tempIdRow = NA, tempIdCol = NA, tempRows = "-", tempColumns = "-", tempDtCharacter = NA, tempDtFactor = NA, tempDtInteger = NA, tempDtLogical = NA, tempDtNumeric = NA, tempDtOrderedFactor = NA, tempLog = FALSE)
 {
   print("Start funcReadMatrix.")
   #Check parameter and make sure not NA
@@ -673,9 +670,10 @@ funcReadMatrix = function(tempMatrixName = NA, tempFileName = NA, tempDelimiter 
   return(dataMatrix)
 }
 
+#2 Testcases
 #Reads in configure file and extracts the pieces needed for reading in a matrix
 #Configure file = string path to configure file
-readConfigFile = function(configureFile, defaultFile = NA)
+funcReadConfigFile = function(configureFile, defaultFile = NA)
 {
   #Read configure file
   fileDataList <- scan( file = configureFile, what = character())
@@ -690,7 +688,6 @@ readConfigFile = function(configureFile, defaultFile = NA)
   {
     #Start at the Matrix name
     #Keep this if statement first so that you scan through until you find a matrix block
-#    print(fileDataList[textIndex])
     if(fileDataList[textIndex] == c_MATRIX_NAME)
     {
       #If the file name is not NA then that is sufficient for a matrix, store
@@ -702,8 +699,7 @@ readConfigFile = function(configureFile, defaultFile = NA)
       }
 
       #Get the matrix name and store
-      textIndex = textIndex + 1
-      matrixName = fileDataList[textIndex]
+      matrixName = fileDataList[textIndex + 1]
 
       fileName = defaultFile
       delimiter = "\t"
@@ -718,33 +714,32 @@ readConfigFile = function(configureFile, defaultFile = NA)
       dtNumeric = NA
       dtOrderedFactor = NA 
       #If is not matrix name and no matrix name is known skip until you find the matrix name
-      #IF matrix name is known, continue to collect information about that matrix
+      #If matrix name is known, continue to collect information about that matrix
     } else if(is.na(matrixName)){next}
 
     #Parse different keywords
-    switch(fileDataList[textIndex],
-      c_FILE_NAME = {fileName = fileDataList[[textIndex + 1]},
-      c_DELIMITER =
-        {
-          switch(fileDataList[textIndex + 1],
-            "TAB" = {delimiter = "\t"},
-            "SPACE" = {delimiter = " "},
-            "RETURN" = {delimiter = "\r"},
-            "ENDLINE" = {delimiter = "\n"})
-        },
-      c_ID_ROW = {idRow = fileDataList[[textIndex + 1]},
-      c_ID_COLUMN = {idCol = fileDataList[[textIndex + 1]},
-      c_ROWS = {rows = fileDataList[[textIndex + 1]},
-      c_COLUMNS = {columns = fileDataList[[textIndex + 1]},
-      c_CHARACTER_DATA_TYPE = {dtCharacter = fileDataList[[textIndex + 1]},
-      c_FACTOR_DATA_TYPE = {dtFactor = fileDataList[[textIndex + 1]},
-      c_INTEGER_DATA_TYPE = {dtInteger = fileDataList[[textIndex + 1]},
-      c_LOGICAL_DATA_TYPE = {dtLogical = fileDataList[[textIndex + 1]},
-      c_NUMERIC_DATA_TYPE = {dtNumeric = fileDataList[[textIndex + 1]},
-      c_ORDEREDFACTOR_DATA_TYPE = {dtOrderedFactor = fileDataList[[textIndex + 1]})
-
-    #Increment
-    testIndex = textIndex + 1
+    strParseKey = fileDataList[textIndex]
+    if(strParseKey == c_FILE_NAME){fileName=fileDataList[textIndex+1]}
+    else if(strParseKey==c_ID_ROW){idRow=fileDataList[textIndex+1]}
+    else if(strParseKey==c_FILE_NAME){fileName=fileDataList[textIndex+1]}
+    else if(strParseKey==c_ID_ROW){idRow=fileDataList[textIndex+1]}
+    else if(strParseKey==c_ID_COLUMN){idCol=fileDataList[textIndex+1]}
+    else if(strParseKey==c_ROWS){rows=fileDataList[textIndex+1]}
+    else if(strParseKey==c_COLUMNS){columns=fileDataList[textIndex+1]}
+    else if(strParseKey==c_CHARACTER_DATA_TYPE){dtCharacter=fileDataList[textIndex+1]}
+    else if(strParseKey==c_FACTOR_DATA_TYPE){dtFactor=fileDataList[textIndex+1]}
+    else if(strParseKey==c_INTEGER_DATA_TYPE){dtInteger=fileDataList[textIndex+1]}
+    else if(strParseKey==c_LOGICAL_DATA_TYPE){dtLogical=fileDataList[textIndex+1]}
+    else if(strParseKey==c_NUMERIC_DATA_TYPE){dtNumeric=fileDataList[textIndex+1]}
+    else if(strParseKey==c_ORDEREDFACTOR_DATA_TYPE){dtOrderedFactor=fileDataList[textIndex+1]}
+    else if(strParseKey==c_DELIMITER)
+    {
+        switch(fileDataList[textIndex + 1],
+        "TAB" = {delimiter = "\t"},
+        "SPACE" = {delimiter = " "},
+        "RETURN" = {delimiter = "\r"},
+        "ENDLINE" = {delimiter = "\n"})
+    }
   }
   #If there is matrix information left
   if((!is.na(matrixName)) && (!is.na(fileName)))
@@ -755,9 +750,10 @@ readConfigFile = function(configureFile, defaultFile = NA)
   return(matrixInformationList)
 }
 
+#16 Test cases
 #Take a string of comma or dash seperated integer strings and convert into a vector
-#of integers to use in index slicing 
-#TODO handle words, should writing th read config be in words?
+#of integers to use in index slicing
+#TODO Should writing the read config be in words
 funcParseIndexSlices = function(strIndexString,cstrNames)
 {
   #List of indices to return
@@ -768,18 +764,25 @@ funcParseIndexSlices = function(strIndexString,cstrNames)
   for(strIndexItem in lIndexString[[1]])
   {
     #Handle the - case
-    if(strIndexItem=="-"){strIndexItem = paste(cstrNames[1],"-",cstrNames[nchar(cstrNames)],sep="")}
-  
+    if(strIndexItem=="-"){strIndexItem = paste("1-",length(cstrNames),sep="")}
+
     #Split on dash and make sure it makes sense
     lItemElement = strsplit(strIndexItem, c_DASH)[[1]]
     if(length(lItemElement)>2){stop("Error in index, too many dashes, only one is allowed. Index = ",strIndexItem,sep="")}
+
+    #Switch names to numbers
+    aiIndices = which(is.na(as.numeric(lItemElement)))
+    for( iIndex in aiIndices )
+    {
+      lItemElement[iIndex] = which(cstrNames==lItemElement[iIndex])[1]
+    }
 
     #Make numeric
     liItemElement = unlist(lapply(lItemElement, as.numeric))
 
     #If dash is at the end or the beginning add on the correct number
-    if(substr(strIndexItem,1,1)==c_DASH){liItemElement[1]=0}
-    if(substr(strIndexItem,nchar(strIndexItem),nchar(strIndexItem))==c_DASH){liItemElement[2]=cstrNames[nchar(cstrNames)]}
+    if(substr(strIndexItem,1,1)==c_DASH){liItemElement[1]=1}
+    if(substr(strIndexItem,nchar(strIndexItem),nchar(strIndexItem))==c_DASH){liItemElement[2]=length(cstrNames)}
 
     #If multiple numbers turn to a slice
     if(length(liItemElement)==2){liItemElement = c(liItemElement[1]:liItemElement[2])}
@@ -789,10 +792,3 @@ funcParseIndexSlices = function(strIndexString,cstrNames)
   }
   return(sort(unique(viRetIndicies)))
 }
-
-#Test
-#readConfigureFile = "./Test/TestReadMatrices.read.config"
-#writeConfigureFile = "./Test/TestWriteMatrices.read.config"
-#writeDataFiles = c("./Test/TestWriteMatrices.pcl")
-#data = funcReadMatrices(configureFile = readConfigureFile, log = FALSE)
-#funcWriteMatrices(dataFrameList = data, saveFileList = writeDataFiles, configureFileName = writeConfigureFile, log = FALSE)
