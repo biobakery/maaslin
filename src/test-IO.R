@@ -87,20 +87,49 @@ test_that("Test readConfigFile reads in files correctly.",{
   expect_equal(lsAllRC,lsAllListAnswer)
 })
 
-#contest("Test funcReadMatrix")
+contest("Test funcReadMatrix")
 #tempMatrixName = NA, tempFileName = NA, tempDelimiter = NA, tempIdRow = NA, tempIdCol = NA, tempRows = NA, tempColumns = NA, tempDtCharacter = NA, tempDtFactor = NA, tempDtInteger = NA, tempDtLogical = NA, tempDtNumeric = NA, tempDtOrderedFactor = NA, tempLog = FALSE
 
 #Read in config files
-#dfSimpleRead = funcReadMatrix("SimpleMatrix",strFileMatrix,1,1,"7,3,5","2,4,6","7","3","5")
-#dfUseAllParametersRead = funcReadMatrix("AllMatrix",strFileMatrix,1,1,"7,3,5","2,4,6",NA,NA,NA,"7","3","5")
+dfSimpleRead = funcReadMatrix("SimpleMatrix",strFileMatrix,1,1,"7,3,5","2,4,6","7","3","5")
+dfUseAllParametersRead = funcReadMatrix("AllMatrix",strFileMatrix,1,1,"7,3,5","2,4,6",NA,NA,NA,"7","3","5")
 
-#dfSimpleReadCorrect = as.data.frame()
-#dfUseAllReadCorrect = as.data.frame()
+#TODO
+dfSimpleReadCorrect = as.data.frame()
+#TODO
+dfUseAllReadCorrect = as.data.frame()
 
-#test_that("Matrix file is read correctly.",{
-#  expect_equal(dfSimpleRead,dfSimpleReadCorrect)
-#  expect_equal(dfUseAllParametersRead,dfUseAllREadCorrect)
-#})
+test_that("Matrix file is read correctly.",{
+  expect_equal(dfSimpleRead,dfSimpleReadCorrect)
+  expect_equal(dfUseAllParametersRead,dfUseAllReadCorrect)
+})
 
-#context("Test funcWriteMatrices")
-#context("Test funcReadMatrices")
+context("Test funcReadMatrices")
+#Read one matrix
+ldfRet1 = funcReadMatrices(configureFile=sConfigureFile1Matrix)
+#TODO
+ldfRet1Answer = NA
+#Read two matrices
+ldfRet2 = funcReadMatrices(configureFile=sConfigureFile2Matrix)
+#TODO
+ldfRet2Answer = NA
+#Read three matrices from two different files
+ldfRet3 = funcReadMatrices(configureFile=sConfigureFile3Matrix)
+#TODO
+ldfRet3Answer = NA
+
+test_that("Test funcReadMatrices read in the correct matrices not matter the number or source",{
+  expect_equals(ldfRet1,ldRet1Answer)
+  expect_equals(ldfRet2,ldRet2Answer)
+  expect_equals(ldfRet3,ldRet3Answer)
+})
+
+context("Test funcWriteMatrices")
+#funcWriteMatrices = function(dataFrameList, saveFileList, configureFileName, acharDelimiter=",", log = FALSE)
+
+funcWriteMatrices(dataFrameList=, saveFileList, configureFileName, 
+
+test_that("Test that writing to a file occurs correctly, for both matrix and configure file.",{
+  expect_equals(readLines(),readLines())
+
+})

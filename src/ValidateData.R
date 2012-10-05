@@ -11,11 +11,7 @@
 funcIsValid <- function(tempData = NA)
 {
   #If the data is not na or null return true
-  if(!(is.na(tempData)) && !(is.null(tempData)))
-  {
-    return(TRUE)
-  }
-  return(FALSE)
+  return(if((!(is.na(tempData)) && !(is.null(tempData)))), TRUE, FALSE)
 }
 
 # Requires a data to not be NA, not be NULL, and to be of type Character
@@ -38,17 +34,17 @@ funcIsValidString <- function(tempData = NA)
   return(FALSE)
 }
 
-# Requires a data to not be NA, not be NULL, and to be of class Character
-# And to point to an existing file
+# Requires a data to not be NA, not be NULL, and to be a valid string
+# which points to an existing file
 # Returns True on meeting these requirements, returns false otherwise
 # Parameter tempData Is evaluated as a file name
 # Return boolean Indicator of identity as a file name
-funcIsValidFileName <- function(tempData = NA)
+funcIsValidFileName <- function(tempData = NA, fVerbose=FALSE)
 {
   #If is not valid string return false
   if(!(funcIsValidString(tempData)))
   {
-    print(paste("FunctIsValidFileName: InvalidString. Value=",tempData,sep=""))
+    if(fVerbose){print(paste("FunctIsValidFileName: InvalidString. Value=",tempData,sep=""))}
     return(FALSE)
   }
   #If is a valid string and points to a file
@@ -56,7 +52,7 @@ funcIsValidFileName <- function(tempData = NA)
   {
     return(TRUE)
   }
-  print(paste("FunctIsValidFileName: Path does not exist. Value=",tempData,sep=""))
+  if(fVerbose){print(paste("FunctIsValidFileName: Path does not exist. Value=",tempData,sep=""))}
   return(FALSE)
 }
 

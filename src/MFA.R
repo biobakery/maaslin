@@ -281,21 +281,21 @@ funcPlotMFA <- function(lsMFA, fInvert = FALSE, tempSaveFileName="MFA", funcPlot
 
 #Modifies taxa names for plotting
 #@params tempTaxaNames A list of string taxa names
-funcRenameTaxa = function(tempTaxaNames)
-{
-  returnList=c()
-  newName=""
-  for( name in tempTaxaNames )
-  {
-    modifiedName=strsplit(name, "\\|")[[1]]
-    i=length(modifiedName)
-    if((modifiedName[i] == "unclassified") || !is.na(as.numeric(modifiedName[i])))
-    {
-      newName=paste(modifiedName[(i-1):i], collapse = "|")
-    }else{
-      newName=modifiedName[i]
-    }
-    returnList=c(returnList, newName)
-  }
-  return(returnList)
-}
+#funcRenameTaxa = function(tempTaxaNames)
+#{
+#  returnList=c()
+#  newName=""
+#  for( name in tempTaxaNames )
+#  {
+#    modifiedName=strsplit(name, "\\|")[[1]]
+#    i=length(modifiedName)
+#    if((modifiedName[i] == "unclassified") || !is.na(as.numeric(modifiedName[i])))
+#    {
+#      newName=paste(modifiedName[(i-1):i], collapse = "|")
+#    }else{
+#      newName=modifiedName[i]
+#    }
+#    returnList=c(returnList, newName)
+#  }
+#  return(returnList)
+#}

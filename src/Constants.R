@@ -15,7 +15,9 @@ c_DELIMITER = "Delimiter:"
 c_ID_ROW = "Name_Row_Number:"
 c_ID_COLUMN = "Name_Column_Number:"
 c_ROWS = "Read_Rows:"
+c_TSVROWS = "Read_TSV_Rows:"
 c_COLUMNS = "Read_Columns:"
+c_TSVCOLUMNS = "Read_TSV_Columns:"
 c_CHARACTER_DATA_TYPE = "DT_Character:"
 c_FACTOR_DATA_TYPE = "DT_Factor:"
 c_INTEGER_DATA_TYPE = "DT_Integer:"
@@ -35,6 +37,14 @@ c_strKeywordEvaluatedForInclusion <- "Q.value"
 #The name of the custom process function
 c_strCustomProcessFunction = "processFunction"
 
+#Delimiters
+#Feature name delimiter
+c_cFeatureDelim = "|"
+c_cFeatureDelimREx = "\\|"
+
+#The word used for unclassified
+c_strUnclassified = "unclassified"
+
 #Outlier related constants
 c_dFence <- 0
 c_dPOutlier <- 0.05
@@ -50,3 +60,13 @@ c_strTestingDirectory = "testing"
 c_strCorrectAnswers = "answers"
 c_strTemporaryFiles = "tmp"
 c_strTestingInput = "input"
+
+#Reading matrix defaults
+c_strDefaultMatrixDelimiter = "\t"
+c_strDefaultMatrixRowID = "1"
+c_strDefaultMatrixColID = "1"
+c_strDefaultReadRows = "-"
+c_strDefaultReadCols = "-"
+
+#Separator used when collapsing factor names
+c_sFactorNameSep = ""
