@@ -27,8 +27,7 @@ options(warn=-1)
 ### acharDelimiter Delimiter for the matrix that will be read in\
 ### fAppend Append to a current read config file
 funcWriteMatrixToReadConfigFile = function(strConfigureFileName, strMatrixFile, strMatrixName, strRowIndices=NA, strColIndices=NA,
-  strDtCharacter=NA, strDtFactoral=NA, strDtInteger=NA, strDtLogical=NA, strDtNumeric=NA, strDtOrdered=NA,
-  acharDelimiter="\t", fAppend=FALSE)
+  strDtCharacter=NA, strDtFactoral=NA, strDtInteger=NA, strDtLogical=NA, strDtNumeric=NA, strDtOrdered=NA, acharDelimiter=c_strDefaultMatrixDelimiter, fAppend=FALSE)
 {
   #If no append delete previous file
   if(!fAppend){unlink(strConfigureFileName)}
@@ -49,8 +48,8 @@ funcWriteMatrixToReadConfigFile = function(strConfigureFileName, strMatrixFile, 
     paste(c_DELIMITER,acharDelimiter,sep=" "),
     paste(c_ID_ROW,"1",sep=" "),
     paste(c_ID_COLUMN,"1",sep=" "),
-    paste(c_ROWS,strRowIndices,sep=" "),
-    paste(c_COLUMNS,strColIndices,sep=" "))
+    paste(c_TSVROWS,strRowIndices,sep=" "),
+    paste(c_TSVCOLUMNS,strColIndices,sep=" "))
 
   #Optional output
   if(!is.na(strMatrixFile)){lsDataLines=c(lsDataLines,paste(c_FILE_NAME,strMatrixFile,sep=" "))}
@@ -95,7 +94,7 @@ funcWriteMatrices = function(dataFrameList, saveFileList, configureFileName, ach
     data = dataFrameList[[dataIndex]]
 
     #Get column count
-    columnCount = ncol(dataDimension)
+    columnCount = ncol(data)
 
     #Get row and column names
     rowNames = row.names(data)
@@ -108,7 +107,7 @@ funcWriteMatrices = function(dataFrameList, saveFileList, configureFileName, ach
     #Get row indices
     rowStart = 1
     if(!is.na(rowNamesString)){rowStart = 2}
-    rowEnd = nrow(dataDimension)+rowStart - 1
+    rowEnd = nrow(data)+rowStart - 1
     rowIndices = paste(c(rowStart:rowEnd),sep="",collapse=",")
 
     #Get col indices
@@ -188,12 +187,13 @@ funcWriteMatrices = function(dataFrameList, saveFileList, configureFileName, ach
     } else {dtOrdered=""}
 
     #Write Data to file
+    print(saveFileList[dataIndex])
     write.table(data, saveFileList[dataIndex], quote = FALSE, sep = acharDelimiter, col.names = NA, row.names = rowNames, na = "NA", append = FALSE)
 
     #Write the read config file
     funcWriteMatrixToReadConfigFile(strConfigureFileName=configureFileName, strMatrixFile=saveFileList[dataIndex], strMatrixName=dataFrameNames[dataIndex],
       strRowIndices=rowIndices, strColIndices=colIndices, strDtCharacter=dtCharacter, strDtFactoral=dtFactoral, strDtInteger=dtInteger,
-      strDtLogical=dtLogical, strDtNumeric=dtNumeric, strDtOrdered=dtOrdered, strAcharDelimiter=acharDelimiter, fAppend=TRUE)
+      strDtLogical=dtLogical, strDtNumeric=dtNumeric, strDtOrdered=dtOrdered, acharDelimiter=acharDelimiter, fAppend=TRUE)
   }
   return(TRUE)
 }
@@ -213,7 +213,7 @@ funcReadMatrices = function( configureFile , defaultFile = NA, log = FALSE)
   for(dataBlock in funcReadConfigFile(configureFile, defaultFile))
   {
     #Read in matrix
-    returnFrames[[returnFramesIndex]] = funcReadMatrix(tempMatrixName=dataBlock[1], tempFileName=dataBlock[2], tempDelimiter=dataBlock[3], tempIdRow=dataBlock[4], tempIdCol=dataBlock[5], tempRows=dataBlock[6], tempColumns=dataBlock[7], tempDtCharacter=dataBlock[8], tempDtFactor=dataBlock[9], tempDtInteger=dataBlock[10], tempDtLogical=dataBlock[11], tempDtNumeric=dataBlock[12], tempDtOrderedFactor=dataBlock[13], tempLog=log)
+    returnFrames[[returnFramesIndex]] = funcReadMatrix(tempMatrixName=dataBlock[1], tempFileName=dataBlock[2], tempDelimiter=dataBlock[3], tempRows=dataBlock[4], tempColumns=dataBlock[5], tempDtCharacter=dataBlock[6], tempDtFactor=dataBlock[7], tempDtInteger=dataBlock[8], tempDtLogical=dataBlock[9], tempDtNumeric=dataBlock[10], tempDtOrderedFactor=dataBlock[11], tempLog=log)
     returnFrameNames = c(returnFrameNames,dataBlock[1])
     returnFramesIndex = returnFramesIndex + 1
   }
@@ -222,100 +222,71 @@ funcReadMatrices = function( configureFile , defaultFile = NA, log = FALSE)
 }
 
 #Read one matrix
-funcReadMatrix = function(tempMatrixName, tempFileName, tempDelimiter=c_strDefaultMatrixDelimiter, tempIdRow=c_strDefaultMatrixRowID, tempIdCol=c_strDefaultMatrixColID, tempRows=c_strDefaultReadRows, tempColumns=c_strDefaultReadCols, tempDtCharacter=NA, tempDtFactor=NA, tempDtInteger=NA, tempDtLogical=NA, tempDtNumeric=NA, tempDtOrderedFactor=NA, tempLog=FALSE)
+#ID rows and columns are assumed to be 1
+funcReadMatrix = function(tempMatrixName, tempFileName, tempDelimiter=c_strDefaultMatrixDelimiter, tempRows=c_strDefaultReadRows, tempColumns=c_strDefaultReadCols, tempDtCharacter=NA, tempDtFactor=NA, tempDtInteger=NA, tempDtLogical=NA, tempDtNumeric=NA, tempDtOrderedFactor=NA, tempLog=FALSE)
 {
-  print("Start funcReadMatrix.")
   #Check parameter and make sure not NA
   if(!funcIsValid(tempMatrixName)){stop(paste("Did not receive a valid matrix name, received ",tempMatrixName,"."))}
 
   #Check to make sure there is a file name for the matrix
-  if(!funcIsValid(tempFileName))
-  {stop(paste("No file name is given for the matrix ",tempMatrixName,". Please add a file name to read the matrix from.", sep=""))}
+  if(! funcIsValidFileName(tempFileName))
+  {stop(paste("No valid file name is given for the matrix ",tempMatrixName,". Please add a valid file name to read the matrix from.", sep=""))}
+
+  #Read in superset matrix and give names if indicated 
+  #Read in matrix
+  dataMatrix = read.table(tempFileName, sep = tempDelimiter, as.is = TRUE, na.strings=c_astrNA, quote = "", comment.char = "")
+  dataFrameDimension = dim(dataMatrix)
+  #Get column names
+  columnNameList = columnNameList = as.matrix(dataMatrix[1,])
+  rowNameList = dataMatrix[1][[1]]
 
   #Convert characters to vectors of indices
-  tempIdRow = funcParseIndexSlices(tempIdRow)
-  tempIdCol = funcParseIndexSlices(tempIdCol)
-  tempRows = funcParseIndexSlices(tempRows)
-  tempColumns = funcParseIndexSlices(tempColumns)
-  tempDtCharacter = funcParseIndexSlices(tempDtCharacter)
-  tempDtFactor = funcParseIndexSlices(tempDtFactor)
-  tempDtOrderedFactor = funcParseIndexSlices(tempDtOrderedFactor)
-  tempDtInteger = funcParseIndexSlices(tempDtInteger)
-  tempDtLogical = funcParseIndexSlices(tempDtLogical)
-  tempDtNumeric = funcParseIndexSlices(tempDtNumeric)
+  tempRows = funcParseIndexSlices(ifelse(is.na(tempRows),"-",tempRows), rowNameList)
+  tempColumns = funcParseIndexSlices(ifelse(is.na(tempColumns),"-",tempColumns), columnNameList)
+  tempDtCharacter = funcParseIndexSlices(tempDtCharacter, columnNameList)
+  tempDtFactor = funcParseIndexSlices(tempDtFactor, columnNameList)
+  tempDtOrderedFactor = funcParseIndexSlices(tempDtOrderedFactor, columnNameList)
+  tempDtInteger = funcParseIndexSlices(tempDtInteger, columnNameList)
+  tempDtLogical = funcParseIndexSlices(tempDtLogical, columnNameList)
+  tempDtNumeric = funcParseIndexSlices(tempDtNumeric, columnNameList)
 
-  print("Initial indices check.")
   #Check indices
   #Check to make sure valid id col/rows and data col/rows
-  if(!funcIsValid(tempIdRow) or if(!funcIsValid(tempIdCol)) or if(!funcIsValid(tempRows)) or if(!funcIsValid(tempCols)))
-  {stop(paste("Received invalid row id, col id, row or col. Row id=",tempIdCol," Col id=",tempIdCol," Rows=",tempRows," Cols=",tempColumns))
+  if((!funcIsValid(tempRows)) || (!funcIsValid(tempColumns)))
+  {stop(paste("Received invalid row or col. Rows=",tempRows," Cols=",tempColumns))}
 
   #Check to make sure only 1 row id is given and it is not repeated in the data rows
-  if(!length(tempIdRow) == 1)
-  {stop(paste("The indices for the row containing the ids for the column should be of length 1, received=",tempIdRow,sep=""))}
-  if(length(intersect(tempIdRow,tempRows)) == 1)
-  {stop(paste("Index indicated as an id row but was found in the data row indices, can not be both. Index=",tempIdRow," Data indices=",tempRows,sep=""))}
+  if(length(intersect(1,tempRows)) == 1)
+  {stop(paste("Index indicated as an id row but was found in the data row indices, can not be both. Index=1 Data indices=",tempRows,sep=""))}
 
   #Check to make sure only one col id is given and it is not repeated in the data columns
-  if(!length(tempIdCol) == 1)
-  {stop(paste("The indices for the col containing the ids for the rows should be of length 1, received=",tempIdCol,sep=""))}
   #Id row/col should not be in data row/col
-  if(length(intersect(tempIdCol,tempColumns)) == 1)
-  {print(paste("Index indicated as an id column but was found in the data column indices, can not be both. ID Index=",tempIdCol," Data Indices=",tempColumns,".",sep=""))}
+  if(length(intersect(1,tempColumns)) == 1)
+  {stop(paste("Index indicated as an id column but was found in the data column indices, can not be both. ID Index=1 Data Indices=",tempColumns,".",sep=""))}
 
-  #Variable to indicate an initial skipping of rows if not all the initial rows 
-  #are needed (where to start reading). 0 indicates no skipping
-  #Make sure it is non-negative and less than the idRow and row data indices
-  #If there is a id row before where data will start reading, read before this row
-  #Additionally read in rows will be removed later in the process
-  startSkip = if(tempIdRow<=tempRows[1]-1) tempIdRow-1 else tempRows[1]-1
-  if(startSkip < 0){startSkip == 0}
-
-  #Read in superset matrix and give names if indicated
-  print("Read data.")
-  if(!file.exists(tempFileName))
-  {stop(paste("The file given does not exist, could not read data. File:",tempFileName,sep=""))}
-
-  #Read in matrix
-  dataMatrix = read.table(tempFileName, sep = tempDelimiter, as.is = TRUE, skip = startSkip, na.strings=c_astrNA, quote = "", comment.char = "")
-  
-  #Get column names
-  print("Reading ID column/row.")
-  columnNameList = columnNameList = as.matrix(dataMatrix[tempIdRow,])
-  rowNameList = dataMatrix[tempIdCol][[1]]
-
-  dataFrameDimension = dim(dataMatrix)
   #If the row names have the same length as the column count and has column names 
   #it is assumed that the tempIdCol index item is associated with the column names.
   #Visa versa for rows, either way it is removed
-  print("Removing Row ID Column.")
-  if(length(rowNameList)==ncol(dataMatrix))
-  {
-    #Remove ids from name vector
-    rowNameList = rowNameList[(-1*tempIdCol)]
-    #Remove ids from data
-    dataMatrix = dataMatrix[(-1*tempIdRow)]
-    #Adjust row ids given the removal of the id row
-    tempRows[tempRows>tempIdRow]=(tempRows-1)
-    if(funcIsValid(tempDtCharacter)){ tempDtCharacter[tempDtCharacter>tempIdRow]=(tempDtCharacter-1)}
-    if(funcIsValid(tempDtFactor)){ tempDtFactor[tempDtFactor>tempIdRow]=(tempDtFactor-1)}
-    if(funcIsValid(tempDtInteger)){ tempDtInteger[tempDtInteger>tempIdRow]=(tempDtInteger-1)}
-    if(funcIsValid(tempDtLogical)){ tempDtLogical[tempDtLogical>tempIdRow]=(tempDtLogical-1)}
-    if(funcIsValid(tempDtNumeric)){ tempDtNumeric[tempDtNumeric>tempIdRow]=(tempDtNumeric-1)}
-    if(funcIsValid(tempDtOrderedFactor)){ tempDtOrderedFactor[tempDtOrderedFactor>tempIdRow]=(tempDtOrderedFactor-1)}
-  }
+  #Remove ids from name vector
+  rowNameList = rowNameList[(-1)]
+  #Remove ids from data
+  dataMatrix = dataMatrix[(-1)]
+  #Adjust row ids given the removal of the id row
+  tempRows=(tempRows-1)
+  if(funcIsValid(tempDtCharacter)){ tempDtCharacter=(tempDtCharacter-1)}
+  if(funcIsValid(tempDtFactor)){ tempDtFactor=(tempDtFactor-1)}
+  if(funcIsValid(tempDtInteger)){ tempDtInteger=(tempDtInteger-1)}
+  if(funcIsValid(tempDtLogical)){ tempDtLogical=(tempDtLogical-1)}
+  if(funcIsValid(tempDtNumeric)){ tempDtNumeric=(tempDtNumeric-1)}
+  if(funcIsValid(tempDtOrderedFactor)){ tempDtOrderedFactor=(tempDtOrderedFactor-1)}
 
-  print("Removing Column ID Row.")
-  if(length(columnNameList)==nrow(dataMatrix))
-  {
-    #Remove ids from vector
-    columnNameList = columnNameList[(-1*tempIdRow)]
-    #Remove ids from data
-    dataMatrix = dataMatrix[(-1*tempIdCol),]
-    #Adjust column ids given the removal of the id column
-    tempColumns[tempColumns>tempIdCol]=(tempColumns-1)
-  }
-
+  ## Remove id rows/columns and set row/col names
+  #Remove ids from vector
+  columnNameList = columnNameList[(-1)]
+  #Remove ids from data
+  dataMatrix = dataMatrix[(-1),]
+  #Adjust column ids given the removal of the id column
+  tempColumns=(tempColumns-1)
   #Add row and column names
   row.names(dataMatrix) = as.character(rowNameList)
   colnames(dataMatrix) = as.character(columnNameList)
@@ -355,7 +326,7 @@ funcReadMatrix = function(tempMatrixName, tempFileName, tempDelimiter=c_strDefau
         tryCatch({
         dataMatrix[factorIndex] = as.factor(as.character(dataMatrix[[factorIndex]]))
         }, error = function(ex) {
-          stop(paste("IO::Index ",factorIndex," could not be converted to a factor vector."dataMatrix[factorIndex], sep=""))}, finally={})
+          stop(paste("IO::Index ",factorIndex," could not be converted to a factor vector.",dataMatrix[factorIndex], sep=""))}, finally={})
       }
     }
     if (funcIsValid(tempDtInteger))
@@ -366,7 +337,7 @@ funcReadMatrix = function(tempMatrixName, tempFileName, tempDelimiter=c_strDefau
         tryCatch({
         dataMatrix[integerIndex] = as.integer(as.character(dataMatrix[[integerIndex]]))
         }, error = function(ex) {
-          stop(paste("IO::Index ",integerIndex," could not be converted to an integer vector."dataMatrix[integerIndex], sep=""))}, finally={})
+          stop(paste("IO::Index ",integerIndex," could not be converted to an integer vector.",dataMatrix[integerIndex], sep=""))}, finally={})
       }
     }
     if (funcIsValid(tempDtLogical))
@@ -376,7 +347,7 @@ funcReadMatrix = function(tempMatrixName, tempFileName, tempDelimiter=c_strDefau
       {
         tryCatch({
         dataMatrix[logicalIndex] = sapply(dataMatrix[[logicalIndex]],
-          function(x){if(is.logical(x)) as.logical(as.character(x)) else as.logical(as.numeric(as.character(x)))}
+          function(x){ifelse(is.logical(x), as.logical(as.character(x)), as.logical(as.numeric(as.character(x))))})
         }, error = function(ex) {
           stop(paste("IO::Index ",logicalIndex," could not be converted to a logical vector.",dataMatrix[logicalIndex], sep=""))}, finally={})
       }
@@ -407,10 +378,9 @@ funcReadMatrix = function(tempMatrixName, tempFileName, tempDelimiter=c_strDefau
 
   #Reduce matrix
   #Account for when both column ranges and row ranges are given or just a column or a row range is given
-  dataMatrix = dataMatrix[tempRows,tempColumns, drop=FALSE]
+  dataMatrix = dataMatrix[tempRows, tempColumns, drop=FALSE]
 
-  print("Completed reading matrix.")
-  if(tempLog){funcLogMatrixRead()}
+#  if(tempLog){funcLogMatrixRead()}
   
   #Return matrix
   return(dataMatrix)
@@ -423,7 +393,7 @@ funcReadMatrix = function(tempMatrixName, tempFileName, tempDelimiter=c_strDefau
 funcReadConfigFile = function(configureFile, defaultFile = NA)
 {
   #Read configure file
-  fileDataList <- scan( file = configureFile, what = character())
+  fileDataList <- scan( file = configureFile, what = character(), quiet=TRUE)
   matrixName <- NA
   fileName <- defaultFile
 
@@ -441,7 +411,7 @@ funcReadConfigFile = function(configureFile, defaultFile = NA)
       #Either way reset
       if(funcIsValid(fileName)&&funcIsValid(matrixName))
       {
-        matrixInformationList[[matrixInformationListCount]] = c(matrixName,fileName,delimiter,idRow,idCol,rows,columns,dtCharacter,dtFactor,dtInteger,dtLogical,dtNumeric,dtOrderedFactor)
+        matrixInformationList[[matrixInformationListCount]] = c(matrixName,fileName,delimiter,rows,columns,dtCharacter,dtFactor,dtInteger,dtLogical,dtNumeric,dtOrderedFactor)
         matrixInformationListCount = matrixInformationListCount + 1
       }
 
@@ -450,8 +420,6 @@ funcReadConfigFile = function(configureFile, defaultFile = NA)
 
       fileName = defaultFile
       delimiter = "\t"
-      idRow = 1
-      idCol = 1
       rows = NA
       columns = NA
       dtCharacter = NA
@@ -467,12 +435,9 @@ funcReadConfigFile = function(configureFile, defaultFile = NA)
     #Parse different keywords
     strParseKey = fileDataList[textIndex]
     if(strParseKey == c_FILE_NAME){fileName=fileDataList[textIndex+1]}
-    else if(strParseKey==c_ID_ROW){idRow=fileDataList[textIndex+1]}
     else if(strParseKey==c_FILE_NAME){fileName=fileDataList[textIndex+1]}
-    else if(strParseKey==c_ID_ROW){idRow=fileDataList[textIndex+1]}
-    else if(strParseKey==c_ID_COLUMN){idCol=fileDataList[textIndex+1]}
-    else if(strParseKey==c_ROWS){rows=fileDataList[textIndex+1]}
-    else if(strParseKey==c_COLUMNS){columns=fileDataList[textIndex+1]}
+    else if(strParseKey %in% c(c_TSVROWS,c_PCLCOLUMNS,c_COLUMNS)){rows=fileDataList[textIndex+1]}
+    else if(strParseKey %in% c(c_TSVCOLUMNS,c_PCLROWS,c_ROWS)){columns=fileDataList[textIndex+1]}
     else if(strParseKey==c_CHARACTER_DATA_TYPE){dtCharacter=fileDataList[textIndex+1]}
     else if(strParseKey==c_FACTOR_DATA_TYPE){dtFactor=fileDataList[textIndex+1]}
     else if(strParseKey==c_INTEGER_DATA_TYPE){dtInteger=fileDataList[textIndex+1]}
@@ -491,7 +456,7 @@ funcReadConfigFile = function(configureFile, defaultFile = NA)
   #If there is matrix information left
   if((!is.na(matrixName)) && (!is.na(fileName)))
   {
-    matrixInformationList[[matrixInformationListCount]] = c(matrixName,fileName,delimiter,idRow,idCol,rows,columns,dtCharacter,dtFactor,dtInteger,dtLogical,dtNumeric,dtOrderedFactor)
+    matrixInformationList[[matrixInformationListCount]] = c(matrixName,fileName,delimiter,rows,columns,dtCharacter,dtFactor,dtInteger,dtLogical,dtNumeric,dtOrderedFactor)
     matrixInformationListCount = matrixInformationListCount + 1
   }
   return(matrixInformationList)
@@ -504,7 +469,7 @@ funcReadConfigFile = function(configureFile, defaultFile = NA)
 funcParseIndexSlices = function(strIndexString,cstrNames)
 {
   #If the slices are NA then return
-  if(is.na(strIndexString)){return strIndexString}
+  if(is.na(strIndexString)){return(strIndexString)}
 
   #List of indices to return
   viRetIndicies = c()
@@ -514,7 +479,7 @@ funcParseIndexSlices = function(strIndexString,cstrNames)
   for(strIndexItem in lIndexString[[1]])
   {
     #Handle the - case
-    if(strIndexItem=="-"){strIndexItem = paste("1-",length(cstrNames),sep="")}
+    if(strIndexItem=="-"){strIndexItem = paste("2-",length(cstrNames),sep="")}
 
     #Split on dash and make sure it makes sense
     lItemElement = strsplit(strIndexItem, c_DASH)[[1]]
@@ -531,7 +496,7 @@ funcParseIndexSlices = function(strIndexString,cstrNames)
     liItemElement = unlist(lapply(lItemElement, as.numeric))
 
     #If dash is at the end or the beginning add on the correct number
-    if(substr(strIndexItem,1,1)==c_DASH){liItemElement[1]=1}
+    if(substr(strIndexItem,1,1)==c_DASH){liItemElement[1]=2}
     if(substr(strIndexItem,nchar(strIndexItem),nchar(strIndexItem))==c_DASH){liItemElement[2]=length(cstrNames)}
 
     #If multiple numbers turn to a slice
@@ -540,6 +505,6 @@ funcParseIndexSlices = function(strIndexString,cstrNames)
     #Update indices
     viRetIndicies = c(viRetIndicies, liItemElement)
   }
-  if(length(viRetIndicies)==0){return NA}
+  if(length(viRetIndicies)==0){return(NA)}
   return(sort(unique(viRetIndicies)))
 }

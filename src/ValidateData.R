@@ -11,7 +11,12 @@
 funcIsValid <- function(tempData = NA)
 {
   #If the data is not na or null return true
-  return(if((!(is.na(tempData)) && !(is.null(tempData)))), TRUE, FALSE)
+  if(!is.null(tempData))
+  {
+    if(length(tempData)==1){ return(!is.na(tempData)) }
+    return(TRUE)
+  }
+  return(FALSE)
 }
 
 # Requires a data to not be NA, not be NULL, and to be of type Character
@@ -25,9 +30,8 @@ funcIsValidString <- function(tempData = NA)
   {
     return(FALSE)
   }
-
   #If is a string return true
-  if(class(tempData)=="character")
+  if((class(tempData)=="character")&&(length(tempData)==1))
   {
     return(TRUE)
   }
@@ -53,65 +57,5 @@ funcIsValidFileName <- function(tempData = NA, fVerbose=FALSE)
     return(TRUE)
   }
   if(fVerbose){print(paste("FunctIsValidFileName: Path does not exist. Value=",tempData,sep=""))}
-  return(FALSE)
-}
-
-# Requires a data frame to not be NA, not be NULL, and to be of class matrix
-# Returns True on meeting these requirements, returns false otherwise
-# Parameter tempData Is evaluated as a matrix
-# Return boolean Indicator of identity as a matrix
-funcIsValidMatrix <- function(tempData = NA)
-{
-  #If is not a valid data return false
-  if(!funcIsValid(tempData))
-  {
-    return(FALSE)
-  }
-
-  #If is a string return true
-  if(class(tempData)=="matrix")
-  {
-    return(TRUE)
-  }
-  return(FALSE)
-}
-
-# Requires a data to not be NA, not be NULL, and to be of class vector
-# Returns True on meeting these requirements, returns false otherwise
-# Parameter tempData Is evaluated as a vector
-# Return boolean Indicator of identity as a vector
-funcIsValidVector <- function(tempData = NA)
-{
-  #If is not a valid data return false
-  if(!funcIsValid(tempData))
-  {
-    return(FALSE)
-  }
-
-  #If is a string return true
-  if(class(tempData)=="vector")
-  {
-    return(TRUE)
-  }
-  return(FALSE)
-}
-
-# Requires a data frame to not be NA, not be NULL, and to be of class data frame
-# Returns True on meeting these requirements, returns false otherwise
-# Parameter tempData Is evaluated as a data frame
-# Return boolean Indicator of identity as a data frame
-funcIsValidDataFrame <- function(tempData = NA)
-{
-  #If is not a valid data return false
-  if(!funcIsValid(tempData))
-  {
-    return(FALSE)
-  }
-
-  #If is a string return true
-  if(class(tempData)=="data.frame")
-  {
-    return(TRUE)
-  }
   return(FALSE)
 }

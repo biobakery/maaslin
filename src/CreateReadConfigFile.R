@@ -5,9 +5,9 @@ inlinedocs <- function(
 ) { return( pArgs ) }
 
 ### Logging class
-library( logging )
+suppressMessages(library( logging, warn.conflicts=False, quietly=TRUE, verbose=FALSE))
 ### Class for commandline argument processing
-library( optparse )
+suppressMessages(library( optparse, warn.conflicts=False, quietly=TRUE, verbose=FALSE))
 
 ### Source the IO.R for the script
 source("IO.R")

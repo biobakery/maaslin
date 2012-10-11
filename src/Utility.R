@@ -24,23 +24,23 @@ funcRename <- function( astrNames )
 
 #0 Tests
 #Generates a given number of random colors
-tempNumberColors Number of colors to generate
+#tempNumberColors Number of colors to generate
 funcGetRandomColors=function(tempNumberColors=1)
 {
-  return sapply(1:tempNumberColors, function(x){
+  adRet = c()
+  return(sapply(1:tempNumberColors, function(x){
     adRGB <- ( runif( 3 ) * 0.66 ) + 0.33
     adRet <- c(adRet, rgb( adRGB[1], adRGB[2], adRGB[3] ))
-  })
+  }))
 }
 
-### Searches through a daraframe and looksd for a column that would match the coefficient
-### Name of a factor data of a specific level
+### Searches through a dataframe and looks for a column that would match the coefficient
+### by the name of the column or the column name and level appended together.
 ### StrCoef String coefficient name
 ### frmeData Data frame of data
 ### aStrCols Column names of interest (if NULL is given, all column names are inspected.
 funcCoef2Col <- function( strCoef, frmeData, astrCols = c() )
 {
-
   #If the coefficient is the intercept there is no data column to return so return null
   if( strCoef %in% c("(Intercept)", "Intercept") ) { return( NULL ) }
   #Remove ` from coefficient
@@ -95,7 +95,7 @@ funcColorHelper <- function( dMax = 1, dMin = -1, dMed = NA )
   #Make sure max is max and min is min
   vSort = sort(c(dMin,dMax))
 
-  return( list( dMin = vSort[1], dMax = vSort[2], dMed = ifelse((is.na(dMed)), (dMin+dMax)/2.0, dMed ) ) }
+  return( list( dMin = vSort[1], dMax = vSort[2], dMed = ifelse((is.na(dMed)), (dMin+dMax)/2.0, dMed ) )) }
 
 #0 TestCases
 ### Generate a color based on a number that is forced to be between a min and max range.
@@ -135,19 +135,19 @@ funcColor <- function( dX, dMax = 1, dMin = -1, dMed = NA, adMax = c(1, 1, 0), a
   return( rgb( adCur[1], adCur[2], adCur[3] ) )
 }
 
-#funcColors <- function( dMax = 1, dMin = -1, dMed = NA, adMax = c(1, 1, 0), adMin = c(0, 0, 1), adMed = c(0, 0, 0), iSteps = 64 )
-#{
-#  lsTmp <- funcColorHelper( dMax, dMin, dMed )
-#  dMax <- lsTmp$dMax
-#  dMin <- lsTmp$dMin
-#  dMed <- lsTmp$dMed
-#  aRet <- c ()
-#  for( dCur in seq( dMin, dMax, ( dMax - dMin ) / ( iSteps - 1 ) ) )
-#  {
-#    aRet <- c(aRet, funcColor( dCur, dMax, dMin, dMed, adMax, adMin, adMed ))
-#  }
-#  return( aRet )
-#}
+funcColors <- function( dMax = 1, dMin = -1, dMed = NA, adMax = c(1, 1, 0), adMin = c(0, 0, 1), adMed = c(0, 0, 0), iSteps = 64 )
+{
+  lsTmp <- funcColorHelper( dMax, dMin, dMed )
+  dMax <- lsTmp$dMax
+  dMin <- lsTmp$dMin
+  dMed <- lsTmp$dMed
+  aRet <- c ()
+  for( dCur in seq( dMin, dMax, ( dMax - dMin ) / ( iSteps - 1 ) ) )
+  {
+    aRet <- c(aRet, funcColor( dCur, dMax, dMin, dMed, adMax, adMin, adMed ))
+  }
+  return( aRet )
+}
 
 #0 Testcases
 ### Get a color based on col parameter
@@ -171,12 +171,14 @@ funcTrim=function(tempString)
 ### strFile String name of file
 funcWrite <- function( pOut, strFile )
 {
-#  write( pOut, strFile, ncolumns = length( astrOut ), append = TRUE ) }
-  if( length( intersect( class( pOut ), c("character", "numeric") ) ) )
+  if(!is.na(strFile))
   {
-    write.table( t(pOut), strFile, quote = FALSE, sep = c_cTableDelimiter, col.names = FALSE, row.names = FALSE, na = "", append = TRUE )
-  } else {
-    capture.output( print( pOut ), file = strFile, append = TRUE )
+    if( length( intersect( class( pOut ), c("character", "numeric") ) ) )
+    {
+      write.table( t(pOut), strFile, quote = FALSE, sep = c_cTableDelimiter, col.names = FALSE, row.names = FALSE, na = "", append = TRUE )
+    } else {
+      capture.output( print( pOut ), file = strFile, append = TRUE )
+    }
   }
 }
 
@@ -322,4 +324,4 @@ funcWriteTable <- function( frmeTable, strFile, fAppend = FALSE )
 #    print(paste("The row names of the matrix are ",paste(row.names(dataMatrix),collapse=","),".", sep=""))
 #    if(modeError == TRUE){ print("Please note errors occured on converting data modes of some rows. Please check output, unsuccessful conversion leaves data as default (character mode).")}
 #  }
-}
+#}

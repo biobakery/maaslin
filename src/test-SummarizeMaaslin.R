@@ -3,9 +3,9 @@ source("Constants.R")
 source("SummarizeMaaslin.R")
 
 context("Test funcSummarizeDirectory")
-strDirectoryNone = file.path(c_strTemporaryFiles,"funcSummarizeDirectory","None")
-strDirectory1 = file.path(c_strTemporaryFiles,"funcSummarizeDirectory","1")
-strDirectory3 = file.path(c_strTemporaryFiles,"funcSummarizeDirectory","3")
+strDirectoryNone = file.path(c_strTestingDirectory,c_strTestingInput,"funcSummarizeDirectory","None")
+strDirectory1 = file.path(c_strTestingDirectory,c_strTestingInput,"funcSummarizeDirectory","1")
+strDirectory3 = file.path(c_strTestingDirectory,c_strTestingInput,"funcSummarizeDirectory","3")
 strFileBase1 = "FileBase1.txt"
 strFileBase2 = "FileBase2.txt"
 
@@ -26,9 +26,9 @@ unlink(sNoFileResult)
 sCorrectResults1File = file.path(c_strTestingDirectory,c_strTemporaryFiles,"FuncSummarizeDirectory-1FileResult.txt")
 sCorrectResults1FileAltKeyword = file.path(c_strTestingDirectory,c_strTemporaryFiles,"FuncSummarizeDirectory-1FileAltKeyResult.txt")
 sCorrectResults1FileAltSig = file.path(c_strTestingDirectory,c_strTemporaryFiles,"FuncSummarizeDirectory-1FileAltSigResult.txt")
-sCorrectResults1FileAnswer = file.path(c_strTestingDirectory,c_strCorrectAnswers,"FuncSummarizeDirectory-1FileAnswer.txt")
-sCorrectResults1FileAnswerAltKeyword = file.path(c_strTestingDirectory,c_strCorrectAnswers,"FuncSummarizeDirectory-1FileAltKeyAnswer.txt")
-sCorrectResults1FileAnswerAltSig = file.path(c_strTestingDirectory,c_strCorrectAnswers,"FuncSummarizeDirectory-1FileAltSigAnswer.txt")
+sCorrectResults1FileAnswer = file.path(c_strTestingDirectory,c_strCorrectAnswers,"FuncSummarizeDirectory-1FileResult.txt")
+sCorrectResults1FileAnswerAltKeyword = file.path(c_strTestingDirectory,c_strCorrectAnswers,"FuncSummarizeDirectory-1FileAltKeyResult.txt")
+sCorrectResults1FileAnswerAltSig = file.path(c_strTestingDirectory,c_strCorrectAnswers,"FuncSummarizeDirectory-1FileAltSigResult.txt")
 unlink(sCorrectResults1File)
 sCorrectResults3Files = file.path(c_strTestingDirectory,c_strTemporaryFiles,"FuncSummarizeDirectory-3FileResult.txt")
 sCorrectResults3FilesAltKeyword = file.path(c_strTestingDirectory,c_strTemporaryFiles,"FuncSummarizeDirectory-3FileAltKeyResult.txt")
@@ -36,7 +36,7 @@ sCorrectResults3FilesAltSig = file.path(c_strTestingDirectory,c_strTemporaryFile
 sCorrectResults3FilesAnswer = file.path(c_strTestingDirectory,c_strCorrectAnswers,"FuncSummarizeDirectory-3FileResult.txt")
 sCorrectResults3FilesAnswerAltKeyword = file.path(c_strTestingDirectory,c_strCorrectAnswers,"FuncSummarizeDirectory-3FileAltKeyResult.txt")
 sCorrectResults3FilesAnswerAltSig = file.path(c_strTestingDirectory,c_strCorrectAnswers,"FuncSummarizeDirectory-3FileAltSigResult.txt")
-unlink(sCorrectResults4Files)
+unlink(sCorrectResults3Files)
 
 #Run tests
 funcSummarizeDirectory(astrOutputDirectory=strDirectoryNone, strBaseName=sBaseName, astrSummaryFileName=sNoFileResult, astrKeyword=sKeyword, afSignificanceLevel="0.25")
@@ -47,9 +47,9 @@ funcSummarizeDirectory(astrOutputDirectory=strDirectoryNone, strBaseName=sBaseNa
 funcSummarizeDirectory(astrOutputDirectory=strDirectory1, strBaseName=sBaseName, astrSummaryFileName=sCorrectResults1FileAltKeyword, astrKeyword=sAltKeyword, afSignificanceLevel="0.25")
 funcSummarizeDirectory(astrOutputDirectory=strDirectory3, strBaseName=sBaseName, astrSummaryFileName=sCorrectResults3FilesAltKeyword, astrKeyword=sAltKeyword, afSignificanceLevel="0.25")
 
-funcSummarizeDirectory(astrOutputDirectory=strDirectoryNone, strBaseName=sBaseName, astrSummaryFileName=sNoFileResultAltSig, astrKeyword=sAltSig, afSignificanceLevel=sAltSignificance)
-funcSummarizeDirectory(astrOutputDirectory=strDirectory1, strBaseName=sBaseName, astrSummaryFileName=sCorrectResults1FileAltSig, astrKeyword=sAltSig, afSignificanceLevel=sAltSignificance)
-funcSummarizeDirectory(astrOutputDirectory=strDirectory3, strBaseName=sBaseName, astrSummaryFileName=sCorrectResults3FilesAltSig, astrKeyword=sAltSig, afSignificanceLevel=sAltSignificance)
+funcSummarizeDirectory(astrOutputDirectory=strDirectoryNone, strBaseName=sBaseName, astrSummaryFileName=sNoFileResultAltSig, astrKeyword= sKeyword, afSignificanceLevel=sAltSignificance)
+funcSummarizeDirectory(astrOutputDirectory=strDirectory1, strBaseName=sBaseName, astrSummaryFileName=sCorrectResults1FileAltSig, astrKeyword= sKeyword, afSignificanceLevel=sAltSignificance)
+funcSummarizeDirectory(astrOutputDirectory=strDirectory3, strBaseName=sBaseName, astrSummaryFileName=sCorrectResults3FilesAltSig, astrKeyword= sKeyword, afSignificanceLevel=sAltSignificance)
 
 test_that("Check the cases where no, and real summary files exist.",{
   expect_equal(readLines(sNoFileResult),readLines(sNoFileResultAnswer))
@@ -57,14 +57,14 @@ test_that("Check the cases where no, and real summary files exist.",{
   expect_equal(readLines(sCorrectResults3Files),readLines(sCorrectResults3FilesAnswer))
 })
 
-test_that("Check that changing the significance threshold effects inclusion.",{
-  expect_equal(readLines(sNoFileResult),readLines(sNoFileResultAnswerAltSig))
-  expect_equal(readLines(sCorrectResults1File),readLines(sCorrectResults1FileAnswerAltSig))
-  expect_equal(readLines(sCorrectResults3Files),readLines(sCorrectResults3FilesAnswerAltSig))
+test_that("Check changing the keyword.",{
+  expect_equal(readLines(sNoFileResultAltKeyword),readLines(sNoFileResultAnswerAltKeyword))
+  expect_equal(readLines(sCorrectResults1FileAltKeyword),readLines(sCorrectResults1FileAnswerAltKeyword))
+  expect_equal(readLines(sCorrectResults3FilesAltKeyword),readLines(sCorrectResults3FilesAnswerAltKeyword))
 })
 
-test_that("Check changing the keyword.",{
-  expect_equal(readLines(sNoFileResult),readLines(sNoFileResultAnswerAltKey))
-  expect_equal(readLines(sCorrectResults1File),readLines(sCorrectResults1FileAnswerAltKey))
-  expect_equal(readLines(sCorrectResults3Files),readLines(sCorrectResults3FilesAnswerAltKey))
+test_that("Check that changing the significance threshold effects inclusion.",{
+  expect_equal(readLines(sNoFileResultAltSig),readLines(sNoFileResultAnswerAltSig))
+  expect_equal(readLines(sCorrectResults1FileAltSig),readLines(sCorrectResults1FileAnswerAltSig))
+  expect_equal(readLines(sCorrectResults3FilesAltSig),readLines(sCorrectResults3FilesAnswerAltSig))
 })

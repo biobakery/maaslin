@@ -5,9 +5,9 @@ inlinedocs <- function(
 ) { return( pArgs ) }
 
 ### Logging class
-library( logging )
+suppressMessages(library( logging, warn.conflicts=False, quietly=TRUE, verbose=FALSE))
 ### Class for commandline argument processing
-library( optparse )
+suppressMessages(library( optparse, warn.conflicts=False, quietly=TRUE, verbose=FALSE))
 
 ### Create command line argument parser
 pArgs <- OptionParser( usage = "%prog [options] <output.txt> <data.tsv> <data.read.config> <data.R> [source.R]*" )
@@ -93,8 +93,6 @@ logdebug(lsArgs, c_logrMaaslin)
 outputDirectory = dirname(strOutputTXT)
 ### Base name for the project based on the read.config name
 strBase <- sub(".read.config", "", basename(strInputRC))
-### Summary file name
-strSummaryFileName = file.path(outputDirectory,paste(strBase,"_Summary.txt",sep=""))
 
 ### Sources in the custom script
 ### If the custom script is not there then
@@ -124,6 +122,7 @@ liMetaData = dim(inputFileData[[c_strMatrixMetadata]])
 liData = dim(inputFileData[[c_strMatrixData]])
 
 # Write metadata matrix before merge
+print("Write input data")
 funcWriteMatrices(dataFrameList=list(Metadata = inputFileData[[c_strMatrixMetadata]]), saveFileList=c(file.path(outputDirectory,"QC","metadata.tsv")), configureFileName=c(file.path(outputDirectory,"QC","metadata.read.config")), acharDelimiter="\t")
 
 # Write data matrix before merge
@@ -197,7 +196,7 @@ alsRetBugs = funcBugs( lsRet$frmeData, lsRet, lsRet$aiMetadata, lsRet$aiGenetics
 aiBugs = alsRetBugs$aiReturnBugs
 
 #Output a summary file of analysis process
-funcWriteQCReport(strProcessFileName=file.path(outputDirectory,"QC","ProcessQC.txt"), lsQCData=alsRetBugs$lsQCCounts, liDataDim=liData, liMetadataDim=liMetaData)
+#funcWriteQCReport(strProcessFileName=file.path(outputDirectory,"QC","ProcessQC.txt"), lsQCData=alsRetBugs$lsQCCounts, liDataDim=liData, liMetadataDim=liMetaData)
 
 #Numeric vector of Metadata indexes or MFA
 aiUMD <- intersect( lsRet$aiMetadata, which( colnames( lsRet$frmeData ) %in% lsRet$astrMetadata ) )
@@ -221,6 +220,6 @@ if( length( aiBugs ) )
 #Look for less than or equal to the threshold (approapriate for p-value and q-value type measurements)
 funcSummarizeDirectory(astrOutputDirectory=outputDirectory,
                        strBaseName = strBase,
-                       astrSummaryFileName=strSummaryFileName, 
+                       astrSummaryFileName= strOutputTXT, 
                        astrKeyword=c_strKeywordEvaluatedForInclusion, 
                        afSignificanceLevel=lsArgs$options$dSignificanceLevel)

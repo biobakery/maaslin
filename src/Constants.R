@@ -14,9 +14,11 @@ c_FILE_NAME = "File:"
 c_DELIMITER = "Delimiter:"
 c_ID_ROW = "Name_Row_Number:"
 c_ID_COLUMN = "Name_Column_Number:"
-c_ROWS = "Read_Rows:"
+c_ROWS = "Read_Rows"
+c_PCLROWS = "Read_PCL_Rows:"
 c_TSVROWS = "Read_TSV_Rows:"
 c_COLUMNS = "Read_Columns:"
+c_PCLCOLUMNS = "Read_PCL_Columns:"
 c_TSVCOLUMNS = "Read_TSV_Columns:"
 c_CHARACTER_DATA_TYPE = "DT_Character:"
 c_FACTOR_DATA_TYPE = "DT_Factor:"
@@ -48,6 +50,10 @@ c_strUnclassified = "unclassified"
 #Outlier related constants
 c_dFence <- 0
 c_dPOutlier <- 0.05
+
+#Maaslincore settings
+#If a metadata does not have more than count of unique values, it is changed to factor data mode.
+c_iNonFactorLevelThreshold = 3
 
 #Extensions
 c_DETAIL_FILE_SUFFIX = ".txt"

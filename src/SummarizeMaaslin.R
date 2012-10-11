@@ -10,7 +10,8 @@ inlinedocs <- function(
 ) { return( pArgs ) }
 
 #Logging class
-library(logging)
+suppressMessages(library(logging, warn.conflicts=False, quietly=TRUE, verbose=FALSE))
+source("Utility.R")
 
 # Get logger
 c_logrMaaslin	<- getLogger( "maaslin" )
@@ -36,13 +37,12 @@ funcSummarizeDirectory = function(astrOutputDirectory, strBaseName, astrSummaryF
     #Read in data and reduce to significance
     dfDetails = read.table(astrFile, header=TRUE, sep=c_cTableDelimiter)
     dfDetails = dfDetails[which(dfDetails[astrKeyword] <= afSignificanceLevel),]
-
     #Combine with other data if it exists
     if(is.null(dfSignificantData))
     {
       dfSignificantData = dfDetails
     } else {
-      dfSignficantData = rbind(dfSignificantData,dfDetails)
+      dfSignificantData = rbind(dfSignificantData,dfDetails)
     }
   }
   #Write data to file
