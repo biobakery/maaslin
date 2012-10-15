@@ -1,6 +1,9 @@
 library(testthat)
-source("Constants.R")
-source("Utility.R")
+source(file.path("input","maaslin","src","Constants.R"))
+source(file.path("input","maaslin","src","Utility.R"))
+
+#source("Constants.R")
+#source("Utility.R")
 
 context("Test funcRename")
 test_that("Test that unclassified and none otus are represented as 2 terminal clades and others are 1",{

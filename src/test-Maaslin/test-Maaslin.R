@@ -1,19 +1,29 @@
 library(testthat)
-source("Constants.R")
-#source("Maaslin.R")
+source(file.path("input","maaslin","src","Constants.R"))
+
+#source("Constants.R")
 
 context("Test Run From Commandline")
 
 #Input files and directories
 #Scripts
-sScriptBoostGLM = file.path("BoostGLM.R")
-sScriptConstants = file.path("Constants.R")
-sScriptIO = file.path("IO.R")
-sScriptMaaslin = file.path("./Maaslin.R")
-sScriptMFA = file.path("MFA.R")
-sScriptSummarizeMaaslin = file.path("SummarizeMaaslin.R")
-sScriptUtility = file.path("Utility.R")
-sScriptValidateData = file.path("ValidateData.R")
+#sScriptBoostGLM = file.path("input","maaslin","src","BoostGLM.R")
+#sScriptConstants = file.path("input","maaslin","src","Constants.R")
+#sScriptIO = file.path("input","maaslin","src","IO.R")
+#sScriptMaaslin = file.path("input","maaslin","src","Maaslin.R")
+#sScriptMFA = file.path("input","maaslin","src","MFA.R")
+#sScriptSummarizeMaaslin = file.path("input","maaslin","src","SummarizeMaaslin.R")
+#sScriptUtility = file.path("input","maaslin","src","Utility.R")
+#sScriptValidateData = file.path("input","maaslin","src","ValidateData.R")
+
+sScriptBoostGLM = "BoostGLM.R"
+sScriptConstants = "Constants.R"
+sScriptIO = "IO.R"
+sScriptMaaslin = "./Maaslin.R"
+sScriptMFA = "MFA.R"
+sScriptSummarizeMaaslin = "SummarizeMaaslin.R"
+sScriptUtility = "Utility.R"
+sScriptValidateData = "ValidateData.R"
 #Input Files
 sTestReadConfig = file.path(c_strTestingDirectory, c_strTestingInput, "TestMaaslin.read.config")
 sTestCustomR = file.path(c_strTestingDirectory, c_strTestingInput, "TestMaaslin.R")
@@ -30,6 +40,7 @@ dir.create(sTestMaaslinDirectory)
 dir.create(file.path(sTestMaaslinDirectory,"QC"))
 
 sCommand = paste(sScriptMaaslin, "-v", "ERROR", "-d", "0.25", "-r", "0.0001", "-p", "0.1", sTestOutput, sTestTSV, sTestReadConfig, sTestCustomR, sScriptBoostGLM, sScriptConstants, sScriptIO, sScriptMFA, sScriptSummarizeMaaslin, sScriptUtility, sScriptValidateData, sep=" ")
+print(sCommand)
 system(sCommand)
 
 sExpectedTitle = "\tVariable\tFeature\tValue\tCoefficient\tN\tN.not.0\tP.value\tQ.value"

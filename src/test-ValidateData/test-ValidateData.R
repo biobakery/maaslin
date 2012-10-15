@@ -1,6 +1,9 @@
 library(testthat)
-source("Constants.R")
-source("ValidateData.R")
+source(file.path("input","maaslin","src","Constants.R"))
+source(file.path("input","maaslin","src","ValidateData.R"))
+
+#source("Constants.R")
+#source("ValidateData.R")
 
 context("Test funcIsValid")
 test_that("NA and NUll are false, all others are true",{

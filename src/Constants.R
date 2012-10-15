@@ -14,7 +14,7 @@ c_FILE_NAME = "File:"
 c_DELIMITER = "Delimiter:"
 c_ID_ROW = "Name_Row_Number:"
 c_ID_COLUMN = "Name_Column_Number:"
-c_ROWS = "Read_Rows"
+c_ROWS = "Read_Rows:"
 c_PCLROWS = "Read_PCL_Rows:"
 c_TSVROWS = "Read_TSV_Rows:"
 c_COLUMNS = "Read_Columns:"
@@ -62,7 +62,7 @@ c_DETAIL_FILE_SUFFIX = ".txt"
 c_cTableDelimiter="\t"
 
 #Testing Related
-c_strTestingDirectory = "testing"
+c_strTestingDirectory = file.path("testing")
 c_strCorrectAnswers = "answers"
 c_strTemporaryFiles = "tmp"
 c_strTestingInput = "input"

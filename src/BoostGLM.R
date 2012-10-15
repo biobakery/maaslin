@@ -5,14 +5,16 @@
 ####################################
 
 ### Load libraries quietly
-suppressMessages(library( gam, warn.conflicts=False, quietly=TRUE, verbose=FALSE))
-suppressMessages(library( gbm, warn.conflicts=False, quietly=TRUE, verbose=FALSE))
-suppressMessages(library( logging, warn.conflicts=False, quietly=TRUE, verbose=FALSE))
-suppressMessages(library( outliers, warn.conflicts=False, quietly=TRUE, verbose=FALSE))
-suppressMessages(library( robustbase, warn.conflicts=False, quietly=TRUE, verbose=FALSE))
-suppressMessages(library( pscl, warn.conflicts=False, quietly=TRUE, verbose=FALSE))
+suppressMessages(library( gam, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
+suppressMessages(library( gbm, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
+suppressMessages(library( logging, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
+suppressMessages(library( outliers, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
+suppressMessages(library( robustbase, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
+suppressMessages(library( pscl, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
 
 ### Get constants
+#source(file.path("input","maaslin","src","Constants.R"))
+
 source("Constants.R")
 
 ## Get logger
@@ -52,7 +54,7 @@ funcClean <- function( frmeData, funcDataProcess, aiMetadata, aiGenetics, aiData
   {
     if( ( class( frmeData[,i] ) %in% c("integer", "numeric", "logical") ) &&
       ( length( unique( frmeData[,i] ) ) < c_iNonFactorLevelThreshold ) ) {
-      c_logrMaaslin$debug(paste("Changing metadatum from numeric/integer/logical to factor",colnames(frmeData)[i],sep="=")
+      c_logrMaaslin$debug(paste("Changing metadatum from numeric/integer/logical to factor",colnames(frmeData)[i],sep="="))
       frmeData[,i] = factor( frmeData[,i] )
     }
   }
@@ -581,9 +583,9 @@ funcBugHybrid <- function( iTaxon, frmeData, lsData, aiMetadata, aiGenetics, dFr
   # Document the model
   funcWrite( c("#taxon", colnames( frmeData )[iTaxon]), strLog )
   funcWrite( c("#metadata", astrMetadata), strLog )
-  funcWrite( c("#Genetics", ifelse(length(astrGenetics),astrGenetics,"Not Genetics"), strLog )
+  funcWrite( c("#Genetics", ifelse(length(astrGenetics),astrGenetics,"Not Genetics")), strLog )
   funcWrite( c("#samples", rownames( frmeTmp )), strLog )
-  funcWrite( c("#Boost formula", strFormula, strLog )
+  funcWrite( c("#Boost formula", strFormula), strLog )
 
   #Count boost attempts
   lsData$lsQCCounts$iBoosts = lsData$lsQCCounts$iBoosts + 1

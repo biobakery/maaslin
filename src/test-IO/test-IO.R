@@ -1,9 +1,13 @@
 library(testthat)
-source("Constants.R")
-source("IO.R")
-source("ValidateData.R")
+source(file.path("input","maaslin","src","Constants.R"))
+source(file.path("input","maaslin","src","IO.R"))
+source(file.path("input","maaslin","src","ValidateData.R"))
 
-context("Test funcParseIndexSlices")
+#source("Constants.R")
+#source("IO.R")
+#source("ValidateData.R")
+
+expect_equal(funcParseIndexSlices("1",cNames),c(1))
 
 cNames = c("One","Two","Three","Four","Five","Six","Seven","Eight","Nine","Ten","Eleven",
   "Twelve","Thirteen","Fourteen","Fifteen")
@@ -90,8 +94,8 @@ test_that("Test readConfigFile reads in files correctly.",{
 context("Test funcReadMatrix")
 
 #Read in config files
-dfSimpleRead = funcReadMatrix("SimpleMatrix",strFileMatrix,"\t","7,3,5","2,4,5","2","4","5")
-dfUseAllParametersRead = funcReadMatrix("AllMatrix",strFileMatrix,"\t","6,2,4","2,3,4",NA,NA,NA,"2","3","4")
+dfSimpleRead = funcReadMatrix("SimpleMatrix",strFileMatrix,"\t","2,4,5","7,3,5","2","4","5")
+dfUseAllParametersRead = funcReadMatrix("AllMatrix",strFileMatrix,"\t","2,3,4","6,2,4",NA,NA,NA,"2","3","4")
 
 dfSimpleReadCorrect = as.data.frame(as.matrix(rbind(c(21,23,24),c(41,43,44),c(61,63,64))))
 rownames(dfSimpleReadCorrect) = c("Feature2", "Feature4", "Feature6")
@@ -121,7 +125,6 @@ mtxOne = as.data.frame(as.matrix(rbind(c(11,12,13,14,15),c(21,22,23,24,25),c(31,
 rownames(mtxOne) = c("Feature1","Feature2","Feature3","Feature4","Feature5","Feature6","Feature7","Feature8","Feature9","Feature10",
                      "Feature11","Feature12","Feature13","Feature14","Feature15")
 colnames(mtxOne) = c("Sample1","Sample2","Sample3","Sample4","Sample5")
-
 sConfigureFile2Matrix = file.path(c_strTestingDirectory,c_strTestingInput,"2Matrix.read.config")
 mtxTwo = as.data.frame(as.matrix(rbind(c(11,12,13),c(21,22,23),c(31,32,33))))
 rownames(mtxTwo) = c("Feature1","Feature2","Feature3")

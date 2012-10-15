@@ -5,11 +5,13 @@ inlinedocs <- function(
 ) { return( pArgs ) }
 
 ### Logging class
-suppressMessages(library( logging, warn.conflicts=False, quietly=TRUE, verbose=FALSE))
+suppressMessages(library( logging, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
 ### Class for commandline argument processing
-suppressMessages(library( optparse, warn.conflicts=False, quietly=TRUE, verbose=FALSE))
+suppressMessages(library( optparse, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
 
 ### Source the IO.R for the script
+#source(file.path("input","maaslin","src","IO.R"))
+
 source("IO.R")
 
 ### Create command line argument parser

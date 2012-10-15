@@ -1,6 +1,9 @@
 library(testthat)
-source("Constants.R")
-source("SummarizeMaaslin.R")
+source(file.path("input","maaslin","src","Constants.R"))
+source(file.path("input","maaslin","src","SummarizeMaaslin.R"))
+
+#source("Constants.R")
+#source("SummarizeMaaslin.R")
 
 context("Test funcSummarizeDirectory")
 strDirectoryNone = file.path(c_strTestingDirectory,c_strTestingInput,"funcSummarizeDirectory","None")

@@ -5,7 +5,7 @@
 ####################################
 
 #Import library
-suppressMessages(library( FactoMineR, warn.conflicts=False, quietly=TRUE, verbose=FALSE))
+suppressMessages(library( FactoMineR, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
 
 ### 
 ### frmeData: Data
@@ -15,7 +15,8 @@ funcMFA = function( frmeData, aiMetadata, aiBugs, aiGenes = c() )
 {
   #Update aiBugs with factor and gene data that is being plotted
   #If a custom plotting function is given, then use, otherwise give defaults
-  lsFeatures = ifelse(exists("funcPlotFeatures",mode="function")), funcPlotFeatures(),c())
+  lsFeatures = c()
+  if(exists("funcPlotFeatures",mode="function")){lsFeatures = funcPlotFeatures()}
   lsasMetadata = ifelse(exists("funcPlotMetadata",mode="function"), funcPlotMetadata(), c(list(asNames=c(),asLabels=c())))
 
   #Get indicies of data to plot and add to those given as parameters
@@ -180,7 +181,7 @@ funcPlotMFA <- function(lsMFA, fInvert = FALSE, tempSaveFileName="MFA", funcPlot
   dY2 = min( lsPCA$ind$coord[,2] ) / min( lsPCA$var$coord[,2] )
 
   #Scale the metadate labels so they are viewable
-  dScaleFactor = ifelse(exists("funcGetMetadataScale",mode="function"),1)
+  dScaleFactor = ifelse(exists("funcGetMetadataScale",mode="function"),funcMetadataScale(),1)
 
   #Scale feature and metadata text locations so they are on the page
   dScale = dScaleFactor * min( abs( c(dX1, dX2, dY1, dY2) ) )
@@ -198,7 +199,7 @@ funcPlotMFA <- function(lsMFA, fInvert = FALSE, tempSaveFileName="MFA", funcPlot
   afLabels = lsasMetadata$asLabels
 
   #Get feature names
-  lsFeaturesToPlot = ifelse(exists("funcPlotFeatures",mode="function")),funcPlotFeatures(),lsMFA$summary.quanti$variable)
+  lsFeaturesToPlot = ifelse(exists("funcPlotFeatures",mode="function"),funcPlotFeatures(),lsMFA$summary.quanti$variable)
   afFeatures = rownames(lsPCA$var$coord) %in% lsFeaturesToPlot
 
   #Order the metadata

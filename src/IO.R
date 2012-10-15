@@ -187,7 +187,6 @@ funcWriteMatrices = function(dataFrameList, saveFileList, configureFileName, ach
     } else {dtOrdered=""}
 
     #Write Data to file
-    print(saveFileList[dataIndex])
     write.table(data, saveFileList[dataIndex], quote = FALSE, sep = acharDelimiter, col.names = NA, row.names = rowNames, na = "NA", append = FALSE)
 
     #Write the read config file
@@ -213,7 +212,7 @@ funcReadMatrices = function( configureFile , defaultFile = NA, log = FALSE)
   for(dataBlock in funcReadConfigFile(configureFile, defaultFile))
   {
     #Read in matrix
-    returnFrames[[returnFramesIndex]] = funcReadMatrix(tempMatrixName=dataBlock[1], tempFileName=dataBlock[2], tempDelimiter=dataBlock[3], tempRows=dataBlock[4], tempColumns=dataBlock[5], tempDtCharacter=dataBlock[6], tempDtFactor=dataBlock[7], tempDtInteger=dataBlock[8], tempDtLogical=dataBlock[9], tempDtNumeric=dataBlock[10], tempDtOrderedFactor=dataBlock[11], tempLog=log)
+    returnFrames[[returnFramesIndex]] = funcReadMatrix(tempMatrixName=dataBlock[1], tempFileName=dataBlock[2], tempDelimiter=dataBlock[3], tempColumns=dataBlock[5], tempRows=dataBlock[4], tempDtCharacter=dataBlock[6], tempDtFactor=dataBlock[7], tempDtInteger=dataBlock[8], tempDtLogical=dataBlock[9], tempDtNumeric=dataBlock[10], tempDtOrderedFactor=dataBlock[11], tempLog=log)
     returnFrameNames = c(returnFrameNames,dataBlock[1])
     returnFramesIndex = returnFramesIndex + 1
   }
@@ -223,7 +222,7 @@ funcReadMatrices = function( configureFile , defaultFile = NA, log = FALSE)
 
 #Read one matrix
 #ID rows and columns are assumed to be 1
-funcReadMatrix = function(tempMatrixName, tempFileName, tempDelimiter=c_strDefaultMatrixDelimiter, tempRows=c_strDefaultReadRows, tempColumns=c_strDefaultReadCols, tempDtCharacter=NA, tempDtFactor=NA, tempDtInteger=NA, tempDtLogical=NA, tempDtNumeric=NA, tempDtOrderedFactor=NA, tempLog=FALSE)
+funcReadMatrix = function(tempMatrixName, tempFileName, tempDelimiter=c_strDefaultMatrixDelimiter, tempColumns=c_strDefaultReadCols, tempRows=c_strDefaultReadRows, tempDtCharacter=NA, tempDtFactor=NA, tempDtInteger=NA, tempDtLogical=NA, tempDtNumeric=NA, tempDtOrderedFactor=NA, tempLog=FALSE)
 {
   #Check parameter and make sure not NA
   if(!funcIsValid(tempMatrixName)){stop(paste("Did not receive a valid matrix name, received ",tempMatrixName,"."))}
@@ -236,13 +235,15 @@ funcReadMatrix = function(tempMatrixName, tempFileName, tempDelimiter=c_strDefau
   #Read in matrix
   dataMatrix = read.table(tempFileName, sep = tempDelimiter, as.is = TRUE, na.strings=c_astrNA, quote = "", comment.char = "")
   dataFrameDimension = dim(dataMatrix)
+
   #Get column names
   columnNameList = columnNameList = as.matrix(dataMatrix[1,])
   rowNameList = dataMatrix[1][[1]]
 
   #Convert characters to vectors of indices
-  tempRows = funcParseIndexSlices(ifelse(is.na(tempRows),"-",tempRows), rowNameList)
   tempColumns = funcParseIndexSlices(ifelse(is.na(tempColumns),"-",tempColumns), columnNameList)
+  tempRows = funcParseIndexSlices(ifelse(is.na(tempRows),"-", tempRows), rowNameList)
+  
   tempDtCharacter = funcParseIndexSlices(tempDtCharacter, columnNameList)
   tempDtFactor = funcParseIndexSlices(tempDtFactor, columnNameList)
   tempDtOrderedFactor = funcParseIndexSlices(tempDtOrderedFactor, columnNameList)
@@ -252,17 +253,17 @@ funcReadMatrix = function(tempMatrixName, tempFileName, tempDelimiter=c_strDefau
 
   #Check indices
   #Check to make sure valid id col/rows and data col/rows
-  if((!funcIsValid(tempRows)) || (!funcIsValid(tempColumns)))
-  {stop(paste("Received invalid row or col. Rows=",tempRows," Cols=",tempColumns))}
+  if((!funcIsValid(tempColumns)) || (!funcIsValid(tempRows)))
+  {stop(paste("Received invalid row or col. Rows=",tempRows," Cols=", tempColumns))}
 
   #Check to make sure only 1 row id is given and it is not repeated in the data rows
-  if(length(intersect(1,tempRows)) == 1)
-  {stop(paste("Index indicated as an id row but was found in the data row indices, can not be both. Index=1 Data indices=",tempRows,sep=""))}
+  if(length(intersect(1,tempColumns)) == 1)
+  {stop(paste("Index indicated as an id row but was found in the data row indices, can not be both. Index=1 Data indices=",tempColumns,sep=""))}
 
   #Check to make sure only one col id is given and it is not repeated in the data columns
   #Id row/col should not be in data row/col
-  if(length(intersect(1,tempColumns)) == 1)
-  {stop(paste("Index indicated as an id column but was found in the data column indices, can not be both. ID Index=1 Data Indices=",tempColumns,".",sep=""))}
+  if(length(intersect(1, tempRows)) == 1)
+  {stop(paste("Index indicated as an id column but was found in the data column indices, can not be both. ID Index=1 Data Indices=", tempRows,".",sep=""))}
 
   #If the row names have the same length as the column count and has column names 
   #it is assumed that the tempIdCol index item is associated with the column names.
@@ -272,7 +273,7 @@ funcReadMatrix = function(tempMatrixName, tempFileName, tempDelimiter=c_strDefau
   #Remove ids from data
   dataMatrix = dataMatrix[(-1)]
   #Adjust row ids given the removal of the id row
-  tempRows=(tempRows-1)
+  tempColumns=(tempColumns-1)
   if(funcIsValid(tempDtCharacter)){ tempDtCharacter=(tempDtCharacter-1)}
   if(funcIsValid(tempDtFactor)){ tempDtFactor=(tempDtFactor-1)}
   if(funcIsValid(tempDtInteger)){ tempDtInteger=(tempDtInteger-1)}
@@ -286,7 +287,7 @@ funcReadMatrix = function(tempMatrixName, tempFileName, tempDelimiter=c_strDefau
   #Remove ids from data
   dataMatrix = dataMatrix[(-1),]
   #Adjust column ids given the removal of the id column
-  tempColumns=(tempColumns-1)
+  tempRows =(tempRows-1)
   #Add row and column names
   row.names(dataMatrix) = as.character(rowNameList)
   colnames(dataMatrix) = as.character(columnNameList)
