@@ -126,7 +126,6 @@ strQCDir = file.path(outputDirectory,"QC")
 dir.create(strQCDir, showWarnings = FALSE)
 
 # Write metadata matrix before merge
-print("Write input data")
 funcWriteMatrices(dataFrameList=list(Metadata = inputFileData[[c_strMatrixMetadata]]), saveFileList=c(file.path(strQCDir,"metadata.tsv")), configureFileName=c(file.path(strQCDir,"metadata.read.config")), acharDelimiter="\t")
 
 # Write data matrix before merge
