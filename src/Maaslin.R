@@ -121,12 +121,16 @@ inputFileData = funcReadMatrices(strInputRC, strInputTSV, log=TRUE)
 liMetaData = dim(inputFileData[[c_strMatrixMetadata]])
 liData = dim(inputFileData[[c_strMatrixData]])
 
+# If the QC internal file does not exist, make
+strQCDir = file.path(outputDirectory,"QC")
+dir.create(strQCDir, showWarnings = FALSE)
+
 # Write metadata matrix before merge
 print("Write input data")
-funcWriteMatrices(dataFrameList=list(Metadata = inputFileData[[c_strMatrixMetadata]]), saveFileList=c(file.path(outputDirectory,"QC","metadata.tsv")), configureFileName=c(file.path(outputDirectory,"QC","metadata.read.config")), acharDelimiter="\t")
+funcWriteMatrices(dataFrameList=list(Metadata = inputFileData[[c_strMatrixMetadata]]), saveFileList=c(file.path(strQCDir,"metadata.tsv")), configureFileName=c(file.path(strQCDir,"metadata.read.config")), acharDelimiter="\t")
 
 # Write data matrix before merge
-funcWriteMatrices(dataFrameList=list(Data = inputFileData[[c_strMatrixData]]), saveFileList=c(file.path(outputDirectory,"QC","data.tsv")), configureFileName=c(file.path(outputDirectory,"QC","data.read.config")), acharDelimiter="\t")
+funcWriteMatrices(dataFrameList=list(Data = inputFileData[[c_strMatrixData]]), saveFileList=c(file.path(strQCDir,"data.tsv")), configureFileName=c(file.path(strQCDir,"data.read.config")), acharDelimiter="\t")
 
 #Merge data files together
 frmeData = merge(inputFileData[[c_strMatrixMetadata]],inputFileData[[c_strMatrixData]],by.x=0,by.y=0)
@@ -136,7 +140,7 @@ row.names(frmeData) = frmeData[[1]]
 frmeData = frmeData[-1]
 
 #Record the data as it has been read
-funcWriteMatrices(dataFrameList=list(Merged = frmeData), saveFileList=c(file.path(outputDirectory,"QC","read-Merged.tsv")), configureFileName=c(file.path(outputDirectory,"QC","read-Merged.read.config")), acharDelimiter="\t")
+funcWriteMatrices(dataFrameList=list(Merged = frmeData), saveFileList=c(file.path(strQCDir,"read-Merged.tsv")), configureFileName=c(file.path(strQCDir,"read-Merged.read.config")), acharDelimiter="\t")
 
 #Data needed for the MaAsLin environment
 #List of lists (one entry per file)
@@ -179,7 +183,7 @@ astrMetadata = colnames(lsRet$frmeData)[lsRet$aiMetadata]
 lsRet$astrMetadata = astrMetadata
 
 #Record the data after cleaning
-funcWriteMatrices(dataFrameList=list(Cleaned = lsRet$frmeData), saveFileList=c(file.path(outputDirectory,"QC","read_cleaned.tsv")), configureFileName=c(file.path(outputDirectory,"QC","read_cleaned.read.config")), acharDelimiter="\t")
+funcWriteMatrices(dataFrameList=list(Cleaned = lsRet$frmeData), saveFileList=c(file.path(strQCDir,"read_cleaned.tsv")), configureFileName=c(file.path(strQCDir,"read_cleaned.read.config")), acharDelimiter="\t")
 
 #Log file
 strData = file.path(outputDirectory,paste(strBase,".txt",sep=""))
@@ -196,7 +200,7 @@ alsRetBugs = funcBugs( lsRet$frmeData, lsRet, lsRet$aiMetadata, lsRet$aiGenetics
 aiBugs = alsRetBugs$aiReturnBugs
 
 #Output a summary file of analysis process
-#funcWriteQCReport(strProcessFileName=file.path(outputDirectory,"QC","ProcessQC.txt"), lsQCData=alsRetBugs$lsQCCounts, liDataDim=liData, liMetadataDim=liMetaData)
+#funcWriteQCReport(strProcessFileName=file.path(strQCDir,"ProcessQC.txt"), lsQCData=alsRetBugs$lsQCCounts, liDataDim=liData, liMetadataDim=liMetaData)
 
 #Numeric vector of Metadata indexes or MFA
 aiUMD <- intersect( lsRet$aiMetadata, which( colnames( lsRet$frmeData ) %in% lsRet$astrMetadata ) )

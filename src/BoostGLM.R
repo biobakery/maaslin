@@ -14,8 +14,7 @@ suppressMessages(library( pscl, warn.conflicts=FALSE, quietly=TRUE, verbose=FALS
 
 ### Get constants
 #source(file.path("input","maaslin","src","Constants.R"))
-
-source("Constants.R")
+#source("Constants.R")
 
 ## Get logger
 c_logrMaaslin <- getLogger( "maaslin" )

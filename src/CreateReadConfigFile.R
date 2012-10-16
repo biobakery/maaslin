@@ -11,8 +11,7 @@ suppressMessages(library( optparse, warn.conflicts=FALSE, quietly=TRUE, verbose=
 
 ### Source the IO.R for the script
 #source(file.path("input","maaslin","src","IO.R"))
-
-source("IO.R")
+#source("IO.R")
 
 ### Create command line argument parser
 ### The TSV (tab seperated value (column major, samples are rows) file that will be read in

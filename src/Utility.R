@@ -1,6 +1,5 @@
-#source(file.path("input","maaslin","src","Constants.R"))
 
-source("Constants.R")
+#source("Constants.R")
 
 ### Modifies labels for plotting
 ### If the name is not an otu collapse to the last two clades

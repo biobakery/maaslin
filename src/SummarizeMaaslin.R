@@ -12,8 +12,7 @@ inlinedocs <- function(
 #Logging class
 suppressMessages(library(logging, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
 #source(file.path("input","maaslin","src","Utility.R"))
-
-source("Utility.R")
+#source("Utility.R")
 
 # Get logger
 c_logrMaaslin	<- getLogger( "maaslin" )

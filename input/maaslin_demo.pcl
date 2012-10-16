@@ -7,10 +7,6 @@ Sex	0	1	0	1	1	0	1	0
 Smoking	0	0	1	0	1	1	1	0
 Star_Trek_Fan	1	1	0	0	1	0	0	1
 Weight	151	258	195	172	202	210	139	140
-sort smoking	7	6	2	5	1	4	3	8
-sort_age	7	6	2	1	4	3	5	8
-sort_diet	3	8	5	4	6	7	2	1
-sort_weight	7	1	5	3	2	4	6	8
 Bacteria	1	1	1	1	1	1	1	1
 Bacteria|Actinobacteria|Actinobacteria	0.0153631	0.0752624	0.252927	0.0312822	0.0403053	0.0342707	0.0234667	0.0193229
 Bacteria|Actinobacteria|Actinobacteria|Bifidobacteriales|Bifidobacteriaceae|Bifidobacterium	0.0153631	0.0115984	0.0334258	0.0272717	0.029157	0.0342707	0.0211131	0.0193229
