@@ -437,8 +437,8 @@ funcReadConfigFile = function(configureFile, defaultFile = NA)
     strParseKey = fileDataList[textIndex]
     if(strParseKey == c_FILE_NAME){fileName=fileDataList[textIndex+1]}
     else if(strParseKey==c_FILE_NAME){fileName=fileDataList[textIndex+1]}
-    else if(strParseKey %in% c(c_TSVROWS,c_PCLCOLUMNS,c_COLUMNS)){rows=fileDataList[textIndex+1]}
-    else if(strParseKey %in% c(c_TSVCOLUMNS,c_PCLROWS,c_ROWS)){columns=fileDataList[textIndex+1]}
+    else if(strParseKey %in% c(c_TSVROWS,c_PCLCOLUMNS,c_ROWS)){rows=fileDataList[textIndex+1]}
+    else if(strParseKey %in% c(c_TSVCOLUMNS,c_PCLROWS,c_COLUMNS)){columns=fileDataList[textIndex+1]}
     else if(strParseKey==c_CHARACTER_DATA_TYPE){dtCharacter=fileDataList[textIndex+1]}
     else if(strParseKey==c_FACTOR_DATA_TYPE){dtFactor=fileDataList[textIndex+1]}
     else if(strParseKey==c_INTEGER_DATA_TYPE){dtInteger=fileDataList[textIndex+1]}

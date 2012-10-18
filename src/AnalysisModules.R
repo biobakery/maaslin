@@ -141,8 +141,8 @@ funcGetAnalysisMethods <- function(sModelSelectionKey,sTransformKey,sMethodKey)
 
   #Insert analysis
   lRetMethods[[c_iAnalysis]] = switch(sMethodKey,
-    lm = funcMultiStepLM,
-#    lm = funcLM,
+#    lm = funcMultiStepLM,
+    lm = funcLM,
     none = NULL)
 
   return(lRetMethods)

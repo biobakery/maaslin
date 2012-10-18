@@ -21,9 +21,9 @@ pArgs <- add_option( pArgs, c("-r", "--minRelativeAbundance"), type="double", ac
 pArgs <- add_option( pArgs, c("-p", "--minPrevalence"), type="double", action="store", dest="dMinSamp", default=0.1, metavar="minPrevalence", help="The minimum percentage of samples a feature can have abudance in before being removed.")
 
 # Arguments used in validation of MaAsLin
-## Model selection (enumerate) c("none","boost","lasso","forward","backward")
+## Model selection (enumerate) c("none","boost","forward","backward")
 pArgs <- add_option( pArgs, c("-s", "--selection"), type="character", action="store", dest="strModelSelection", default="boost", metavar="model selection", help="Indicates which of the model selection techniques to use.")
-## Argument indicating which method should be ran (enumerate) c("lefse","wilcoxon","spearman","gunifrac","lm")
+## Argument indicating which method should be ran (enumerate) c("lefse","wilcoxon","spearman","gunifrac","lm","lasso")
 pArgs <- add_option( pArgs, c("-m", "--method"), type="character", action="store", dest="strMethod", default="lm", metavar="method", help="Indicates which of the statistical analysis methods to run.")
 ## Argument indicating which link function is used c("none","neg_binomial","quasi","asinsqrt")
 pArgs <- add_option( pArgs, c("-l", "--link"), type="character", action="store", dest="strTransform", default="asinsqrt", metavar="method", help="Indicates which link or transformation to use with a glm, if glm is not selected this argument will be set to none.")
@@ -85,20 +85,36 @@ for( strR in astrSourceR ){source( strR )}
 # Get analysis method options
 # includes data transformations, model selection/regularization, regression models/links
 lsArgs$options$strModelSelection = tolower(lsArgs$options$strModelSelection)
-if(!lsArgs$options$strModelSelection %in% c("none","boost","lasso","forward","backward"))
-{logerror(paste("Received an invalid value for the selection argument, received '",lsArgs$options$strModelSelection,"'"), c_logrMaaslin)}
+if(!lsArgs$options$strModelSelection %in% c("none","boost","forward","backward"))
+{
+  logerror(paste("Received an invalid value for the selection argument, received '",lsArgs$options$strModelSelection,"'"), c_logrMaaslin)
+  stop( print_help( pArgs ) )
+}
 lsArgs$options$strMethod = tolower(lsArgs$options$strMethod)
-if(!lsArgs$options$strMethod %in% c("wilcoxon","spearman","lm"))
-{logerror(paste("Received an invalid value for the method argument, received '",lsArgs$options$strMethod,"'"), c_logrMaaslin)}
+if(!lsArgs$options$strMethod %in% c("wilcoxon","spearman","lm","lasso"))
+{
+  logerror(paste("Received an invalid value for the method argument, received '",lsArgs$options$strMethod,"'"), c_logrMaaslin)
+  stop( print_help( pArgs ) )
+}
 lsArgs$options$strTransform = tolower(lsArgs$options$strTransform)
 if(!lsArgs$options$strTransform %in% c("none","neg_binomial","quasi","asinsqrt"))
-{logerror(paste("Received an invalid value for the transform/link argument, received '",lsArgs$options$strTransform,"'"), c_logrMaaslin)}
-# Make sure that the link/transform happens for lm only
-if(!lsArgs$options$strMethod == "lm")
 {
-  logdebug(paste("Analysis method selected was not lm, the transform/link option was not used."), c_logrMaaslin)
-  lsArgs$options$strMethod = "none"
+  logerror(paste("Received an invalid value for the transform/link argument, received '",lsArgs$options$strTransform,"'"), c_logrMaaslin)
+  stop( print_help( pArgs ) )
 }
+# Make sure that the link happens for lm only
+if(!lsArgs$options$strMethod == "lm" && lsArgs$options$strTransform %in% c("neg_binomial","quasi"))
+{
+  logdebug(paste("Analysis method selected was not lm, the link option '",lsArgs$options$strTransform,"' was not used.", sep=""), c_logrMaaslin)
+  lsArgs$options$strTransform = "none"
+}
+# If lasso is selected, do not use a regularization technique. This will happen in the lasso call
+if(lsArgs$options$strMethod == "lasso")
+{
+  logdebug(paste("Lasso was selected so no model selection ocurred outside the lasso call."), c_logrMaaslin)
+  llsArgs$options$strModelSelection = "none"
+}
+
 # Get analysis modules
 afuncVariableAnalysis = funcGetAnalysisMethods(lsArgs$options$strModelSelection,lsArgs$options$strTransform,lsArgs$options$strMethod)
 

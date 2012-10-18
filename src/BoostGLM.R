@@ -364,7 +364,7 @@ funcBugs <- function( frmeData, lsData, aiMetadata, aiGenetics, aiData, strData,
       ## If the significance meets the threshold
       ## Write PDF file output
       if( adQ[j] > dSig ) { next }
-      funcPDF( lsCur=lsCur, curPValue=adP[j], curQValue=adQ[j], strFilePDF=strFilePDF, strBaseOut=strBaseOut, strName=strName, fInvert=fInvert )
+      strFilePDF = funcPDF( lsCur=lsCur, curPValue=adP[j], curQValue=adQ[j], strFilePDF=strFilePDF, strBaseOut=strBaseOut, strName=strName, fInvert=fInvert )
     }
 
     if( dev.cur( ) != 1 ) { dev.off( ) }

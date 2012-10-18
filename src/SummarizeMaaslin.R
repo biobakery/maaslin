@@ -25,7 +25,6 @@ c_logrMaaslin	<- getLogger( "maaslin" )
 ### afSignificanceLevel The value of significance the data must be at or below to be included in the summary (0.0 is most significant; like p-values)
 funcSummarizeDirectory = function(astrOutputDirectory, strBaseName, astrSummaryFileName, astrKeyword, afSignificanceLevel)
 {
-  print(paste(c(astrOutputDirectory, strBaseName, astrSummaryFileName, astrKeyword, afSignificanceLevel),sep=", "))
   #Store significant data elements
   dfSignificantData = NULL
 

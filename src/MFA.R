@@ -181,7 +181,7 @@ funcPlotMFA <- function(lsMFA, fInvert = FALSE, tempSaveFileName="MFA", funcPlot
   dY2 = min( lsPCA$ind$coord[,2] ) / min( lsPCA$var$coord[,2] )
 
   #Scale the metadate labels so they are viewable
-  dScaleFactor = ifelse(exists("funcGetMetadataScale",mode="function"),funcMetadataScale(),1)
+  dScaleFactor = ifelse(exists("funcGetMetadataScale",mode="function"),funcGetMetadataScale(),1)
 
   #Scale feature and metadata text locations so they are on the page
   dScale = dScaleFactor * min( abs( c(dX1, dX2, dY1, dY2) ) )

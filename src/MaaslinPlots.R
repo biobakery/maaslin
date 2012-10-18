@@ -6,19 +6,18 @@ funcPDF <- function( lsCur, curPValue, curQValue, strFilePDF, strBaseOut, strNam
   {
     strFilePDF <- sprintf( "%s-%s.pdf", strBaseOut, strName )
     pdf( strFilePDF, width = 11, useDingbats=FALSE )
-
-    #Invert plots
-    if( fInvert )
-    {
-      par( bg = "black", fg = "white", col.axis = "white", col.lab = "white", col.main = "white", col.sub = "white" )
-      adColorMin <- c(1, 1, 0)
-      adColorMax <- c(0, 1, 1)
-      adColorMed <- c(1, 1, 1)
-    } else {
-      adColorMin <- c(1, 0, 0)
-      adColorMax <- c(0, 1, 0)
-      adColorMed <- c(0, 0, 0)
-    }
+  }
+  
+  #Invert plots
+  adColorMin <- c(1, 0, 0)
+  adColorMax <- c(0, 1, 0)
+  adColorMed <- c(0, 0, 0)
+  if( fInvert )
+  {
+    par( bg = "black", fg = "white", col.axis = "white", col.lab = "white", col.main = "white", col.sub = "white" )
+    adColorMin <- c(1, 1, 0)
+    adColorMax <- c(0, 1, 1)
+    adColorMed <- c(1, 1, 1)
   }
 
   #Create linear model title data string
@@ -118,6 +117,7 @@ funcPDF <- function( lsCur, curPValue, curQValue, strFilePDF, strBaseOut, strNam
     strColor <- sprintf( "%sDD", funcColor( dColor, adMax = adColorMin, adMin = adColorMax, adMed = adColorMed ) )
     abline( reg = lmod, col = strColor, lwd = 3 )
   }
+  return(strFilePDF)
 }
 
 #funcPlotDeconfounded <- function()
