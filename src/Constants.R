@@ -48,7 +48,6 @@ c_cFeatureDelimRex = "\\|"
 c_strUnclassified = "unclassified"
 
 #Outlier related constants
-c_dFence <- 0
 c_dPOutlier <- 0.05
 
 #Maaslincore settings

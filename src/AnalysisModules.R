@@ -14,7 +14,7 @@ suppressMessages(library( gbm, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE
 
 # Input data and formula, output model?
 # Gradient Boosting
-funcBoostModel <- function(strFormula, frmeTmp, adCur, lsForced=NA)
+funcBoostModel <- function(strFormula, frmeTmp, adCur, lsForced=NULL)
 {
   return( try( gbm( as.formula( strFormula ), data=frmeTmp, distribution="laplace", verbose=FALSE, n.minobsinnode=min(1, round(0.2 * nrow( frmeTmp ) ) ), n.trees=1000 ) ))
 }

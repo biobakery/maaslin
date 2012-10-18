@@ -19,6 +19,8 @@ pArgs <- add_option( pArgs, c("-d", "--fdr"), type="double", action="store", des
 pArgs <- add_option( pArgs, c("-r", "--minRelativeAbundance"), type="double", action="store", dest="dMinAbd", default=0.0001, metavar="minRelativeAbundance", help="The minimum relative abundance allowed in the data. Values below this are removed and imputed as the median of the sample data.")
 ## Minimum feature prevalence filtering
 pArgs <- add_option( pArgs, c("-p", "--minPrevalence"), type="double", action="store", dest="dMinSamp", default=0.1, metavar="minPrevalence", help="The minimum percentage of samples a feature can have abudance in before being removed.")
+## Fence for outlier, if not set Grubbs test is used
+pArgs <- add_option( pArgs, c("-o", "--outlierFence"), type="double", action="store", dest="dOutlierFence", default=3.0, metavar="outlierFence", help="Outliers are defined as this number times the interquartile range added/subtracted from the 3rd/1st quartiles respectively. If set to 0, outliers are defined by the Grubbs test.")
 
 # Arguments used in validation of MaAsLin
 ## Model selection (enumerate) c("none","boost","forward","backward")
@@ -49,6 +51,7 @@ logdebug(paste(lsArgs,sep=" "), c_logrMaaslin)
 # Constants
 ### Minimum Relative Abundance (###TODO fix shadowing)
 c_dMinSamp <- lsArgs$options$dMinSamp
+c_dFence <- lsArgs$options$dOutlierFence
 
 #TODO
 xNoImpute = NULL

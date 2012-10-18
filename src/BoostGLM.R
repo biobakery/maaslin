@@ -111,8 +111,10 @@ funcClean <- function( frmeData, funcDataProcess, aiMetadata, aiGenetics, aiData
   # c_dFence * the interquartile range + or - the 3rd and first quartile respectively.
   # If not the gibbs test is used.
   aiSumOutlierPerDatum = c()
-  if( c_dFence )
+  print(paste("FENCE",c_dFence,sep=":"))
+  if( c_dFence > 0.0 )
   {
+    print("OUTLIERS: Using fence")
     # For each sample measurements
     for( iData in aiData )
     {
@@ -150,6 +152,7 @@ funcClean <- function( frmeData, funcDataProcess, aiMetadata, aiGenetics, aiData
     }
   #Do not use the fence, use the Gibbs test
   } else {
+    print("OUTLIERS: Using Grubbs")
     for( iData in aiData )
     {
       adData <- frmeData[,iData]
