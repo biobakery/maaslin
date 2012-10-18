@@ -42,7 +42,7 @@ c_strCustomProcessFunction = "processFunction"
 #Delimiters
 #Feature name delimiter
 c_cFeatureDelim = "|"
-c_cFeatureDelimREx = "\\|"
+c_cFeatureDelimRex = "\\|"
 
 #The word used for unclassified
 c_strUnclassified = "unclassified"
@@ -56,7 +56,8 @@ c_dPOutlier <- 0.05
 c_iNonFactorLevelThreshold = 3
 
 #Extensions
-c_DETAIL_FILE_SUFFIX = ".txt"
+c_sDetailFileSuffix = ".txt"
+c_sSummaryFileSuffix = "_Summary.txt"
 
 #Delimiter for output tables
 c_cTableDelimiter="\t"
@@ -76,3 +77,8 @@ c_strDefaultReadCols = "-"
 
 #Separator used when collapsing factor names
 c_sFactorNameSep = ""
+
+#Analysis Module list positioning
+c_iSelection = 1
+c_iTransform = 2
+c_iAnalysis = 3

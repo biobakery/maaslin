@@ -8,7 +8,7 @@ c_strSufRC		= ".read.config"
 c_fileDirSrc		= Dir( sfle.d( os.path.dirname( sfle.current_file( ) ), sfle.c_strDirSrc ) )
 c_fileProgMaaslin	= File( sfle.d( c_fileDirSrc, "Maaslin.R" ) )
 c_afileProgRs		= [File( sfle.d( c_fileDirSrc, s ) ) for s in
-	("BoostGLM.R", "Constants.R", "IO.R", "MFA.R", "SummarizeMaaslin.R", "Utility.R", "ValidateData.R")]
+	("AnalysisModules.R","BoostGLM.R", "Constants.R", "IO.R", "MaaslinPlots.R", "MFA.R", "SummarizeMaaslin.R", "Utility.R", "ValidateData.R")]
 
 def funcMaaslin( target, source, env ):
 	strT, astrSs = sfle.ts( target, source )

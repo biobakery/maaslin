@@ -25,11 +25,12 @@ c_logrMaaslin	<- getLogger( "maaslin" )
 ### afSignificanceLevel The value of significance the data must be at or below to be included in the summary (0.0 is most significant; like p-values)
 funcSummarizeDirectory = function(astrOutputDirectory, strBaseName, astrSummaryFileName, astrKeyword, afSignificanceLevel)
 {
+  print(paste(c(astrOutputDirectory, strBaseName, astrSummaryFileName, astrKeyword, afSignificanceLevel),sep=", "))
   #Store significant data elements
   dfSignificantData = NULL
 
   #Get detail files in output directory
-  astrlsDetailFiles = list.files(astrOutputDirectory, pattern=paste(strBaseName,"-","[0-9A-Za-z]*",c_DETAIL_FILE_SUFFIX,sep=""), full.names=TRUE)
+  astrlsDetailFiles = list.files(astrOutputDirectory, pattern=paste(strBaseName,"-","[0-9A-Za-z]*",c_sDetailFileSuffix,sep=""), full.names=TRUE)
   logdebug(format(astrlsDetailFiles),c_logrMaaslin)
 
   #For each file after the first file

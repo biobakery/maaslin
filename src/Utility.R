@@ -10,7 +10,7 @@ funcRename <- function( astrNames )
   astrRet <- c()
   for( strName in astrNames )
   {
-    astrName <- strsplit( strName, c_cFeatureDelimREx )[[1]]
+    astrName <- strsplit( strName, c_cFeatureDelimRex )[[1]]
     i <- length( astrName )
     if( ( astrName[i] == c_strUnclassified ) || !is.na( as.numeric( astrName[i] ) ) )
     {

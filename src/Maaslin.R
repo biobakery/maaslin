@@ -19,9 +19,14 @@ pArgs <- add_option( pArgs, c("-d", "--fdr"), type="double", action="store", des
 pArgs <- add_option( pArgs, c("-r", "--minRelativeAbundance"), type="double", action="store", dest="dMinAbd", default=0.0001, metavar="minRelativeAbundance", help="The minimum relative abundance allowed in the data. Values below this are removed and imputed as the median of the sample data.")
 ## Minimum feature prevalence filtering
 pArgs <- add_option( pArgs, c("-p", "--minPrevalence"), type="double", action="store", dest="dMinSamp", default=0.1, metavar="minPrevalence", help="The minimum percentage of samples a feature can have abudance in before being removed.")
+
 # Arguments used in validation of MaAsLin
-## Argument indicating which method should be ran (enumerate)
-pArgs <- add_option( pArgs, c("-m", "--method"), type="character", action="store", dest="strMethod", default="maaslin", metavar="method", help="Indicates which of the statistical methods to run.")
+## Model selection (enumerate) c("none","boost","lasso","forward","backward")
+pArgs <- add_option( pArgs, c("-s", "--selection"), type="character", action="store", dest="strModelSelection", default="boost", metavar="model selection", help="Indicates which of the model selection techniques to use.")
+## Argument indicating which method should be ran (enumerate) c("lefse","wilcoxon","spearman","gunifrac","lm")
+pArgs <- add_option( pArgs, c("-m", "--method"), type="character", action="store", dest="strMethod", default="lm", metavar="method", help="Indicates which of the statistical analysis methods to run.")
+## Argument indicating which link function is used c("none","neg_binomial","quasi","asinsqrt")
+pArgs <- add_option( pArgs, c("-l", "--link"), type="character", action="store", dest="strTransform", default="asinsqrt", metavar="method", help="Indicates which link or transformation to use with a glm, if glm is not selected this argument will be set to none.")
 
 #Miscellaneouse arguments
 ## Argument to control logging (enumerate)
@@ -57,12 +62,6 @@ if(length(intersect(c_lsLoggingValues, c(lsArgs$options$fVerbosity))) == 0)
   print(paste("Maaslin::Warning. Setting logging value to \"",strDefaultLogging,"\"."))
 }
 
-### Allowable values for methods
-c_lsMethodValues = c("maaslin")
-#If method is not an allowable value, inform user and stop
-if(length(intersect(c_lsMethodValues, c(lsArgs$options$strMethod))) == 0)
-{stop("Maaslin::Error. Did not understand the value given for the analysis method, please use any of the following: ",c_lsMethodValues,".")}
-
 ### Create logger
 c_logrMaaslin <- getLogger( "maaslin" )
 addHandler( writeToConsole, c_logrMaaslin )
@@ -82,6 +81,26 @@ strInputR <- lsArgs$args[4]
 astrSourceR <- lsArgs$args[5:length( lsArgs$args )]
 ### Source all libraries
 for( strR in astrSourceR ){source( strR )}
+
+# Get analysis method options
+# includes data transformations, model selection/regularization, regression models/links
+lsArgs$options$strModelSelection = tolower(lsArgs$options$strModelSelection)
+if(!lsArgs$options$strModelSelection %in% c("none","boost","lasso","forward","backward"))
+{logerror(paste("Received an invalid value for the selection argument, received '",lsArgs$options$strModelSelection,"'"), c_logrMaaslin)}
+lsArgs$options$strMethod = tolower(lsArgs$options$strMethod)
+if(!lsArgs$options$strMethod %in% c("wilcoxon","spearman","lm"))
+{logerror(paste("Received an invalid value for the method argument, received '",lsArgs$options$strMethod,"'"), c_logrMaaslin)}
+lsArgs$options$strTransform = tolower(lsArgs$options$strTransform)
+if(!lsArgs$options$strTransform %in% c("none","neg_binomial","quasi","asinsqrt"))
+{logerror(paste("Received an invalid value for the transform/link argument, received '",lsArgs$options$strTransform,"'"), c_logrMaaslin)}
+# Make sure that the link/transform happens for lm only
+if(!lsArgs$options$strMethod == "lm")
+{
+  logdebug(paste("Analysis method selected was not lm, the transform/link option was not used."), c_logrMaaslin)
+  lsArgs$options$strMethod = "none"
+}
+# Get analysis modules
+afuncVariableAnalysis = funcGetAnalysisMethods(lsArgs$options$strModelSelection,lsArgs$options$strTransform,lsArgs$options$strMethod)
 
 #Indicate start
 logdebug("Start MaAsLin", c_logrMaaslin)
@@ -195,7 +214,9 @@ lsRet$lsQCCounts$iLms = 0
 
 #Run analysis
 alsRetBugs = funcBugs( lsRet$frmeData, lsRet, lsRet$aiMetadata, lsRet$aiGenetics, lsRet$aiData, strData,
-	lsArgs$options$dSelectionFrequency, lsArgs$options$dSignificanceLevel, lsArgs$options$fInvert, dirname(strOutputTXT), astrScreen = c() )
+	lsArgs$options$dSelectionFrequency, lsArgs$options$dSignificanceLevel, lsArgs$options$fInvert,
+        outputDirectory, astrScreen = c(), funcReg=afuncVariableAnalysis[[c_iSelection]],
+        funcAnalysis=afuncVariableAnalysis[[c_iAnalysis]] )
 aiBugs = alsRetBugs$aiReturnBugs
 
 #Output a summary file of analysis process
@@ -222,7 +243,7 @@ if( length( aiBugs ) )
 #Summarize output files based on a keyword and a significance threshold
 #Look for less than or equal to the threshold (approapriate for p-value and q-value type measurements)
 funcSummarizeDirectory(astrOutputDirectory=outputDirectory,
-                       strBaseName = strBase,
-                       astrSummaryFileName= strOutputTXT, 
+                       strBaseName=strBase,
+                       astrSummaryFileName=file.path(outputDirectory,paste(strBase,c_sSummaryFileSuffix, sep="")), 
                        astrKeyword=c_strKeywordEvaluatedForInclusion, 
                        afSignificanceLevel=lsArgs$options$dSignificanceLevel)
