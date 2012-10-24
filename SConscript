@@ -3,7 +3,7 @@ import sfle
 Import( "*" )
 
 sRExtention = ".R"
-lsTestedScriptNames = []#"SummarizeMaaslin","ValidateData","Utility","IO","Maaslin"]
+lsTestedScriptNames = []#"SummarizeMaaslin"]#,"ValidateData","Utility","IO","Maaslin"]
 
 for sScriptName in lsTestedScriptNames:
   #Testing summary file

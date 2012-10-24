@@ -25,9 +25,9 @@ pArgs <- add_option( pArgs, c("-o", "--outlierFence"), type="double", action="st
 # Arguments used in validation of MaAsLin
 ## Model selection (enumerate) c("none","boost","forward","backward")
 pArgs <- add_option( pArgs, c("-s", "--selection"), type="character", action="store", dest="strModelSelection", default="boost", metavar="model selection", help="Indicates which of the model selection techniques to use.")
-## Argument indicating which method should be ran (enumerate) c("lefse","wilcoxon","spearman","gunifrac","lm","lasso")
+## Argument indicating which method should be ran (enumerate) c("wilcoxon","spearman","lm","lasso","neg_binomial","quasi")
 pArgs <- add_option( pArgs, c("-m", "--method"), type="character", action="store", dest="strMethod", default="lm", metavar="method", help="Indicates which of the statistical analysis methods to run.")
-## Argument indicating which link function is used c("none","neg_binomial","quasi","asinsqrt")
+## Argument indicating which link function is used c("none","asinsqrt")
 pArgs <- add_option( pArgs, c("-l", "--link"), type="character", action="store", dest="strTransform", default="asinsqrt", metavar="method", help="Indicates which link or transformation to use with a glm, if glm is not selected this argument will be set to none.")
 
 #Miscellaneouse arguments
@@ -83,6 +83,8 @@ strInputR <- lsArgs$args[4]
 ### External libraries to source
 astrSourceR <- lsArgs$args[5:length( lsArgs$args )]
 ### Source all libraries
+print("getwd")
+print(getwd())
 for( strR in astrSourceR ){source( strR )}
 
 # Get analysis method options
@@ -94,28 +96,22 @@ if(!lsArgs$options$strModelSelection %in% c("none","boost","forward","backward")
   stop( print_help( pArgs ) )
 }
 lsArgs$options$strMethod = tolower(lsArgs$options$strMethod)
-if(!lsArgs$options$strMethod %in% c("wilcoxon","spearman","lm","lasso"))
+if(!lsArgs$options$strMethod %in% c("wilcoxon","spearman","lm","lasso","neg_binomial","quasi"))
 {
   logerror(paste("Received an invalid value for the method argument, received '",lsArgs$options$strMethod,"'"), c_logrMaaslin)
   stop( print_help( pArgs ) )
 }
 lsArgs$options$strTransform = tolower(lsArgs$options$strTransform)
-if(!lsArgs$options$strTransform %in% c("none","neg_binomial","quasi","asinsqrt"))
+if(!lsArgs$options$strTransform %in% c("none","asinsqrt"))
 {
   logerror(paste("Received an invalid value for the transform/link argument, received '",lsArgs$options$strTransform,"'"), c_logrMaaslin)
   stop( print_help( pArgs ) )
-}
-# Make sure that the link happens for lm only
-if(!lsArgs$options$strMethod == "lm" && lsArgs$options$strTransform %in% c("neg_binomial","quasi"))
-{
-  logdebug(paste("Analysis method selected was not lm, the link option '",lsArgs$options$strTransform,"' was not used.", sep=""), c_logrMaaslin)
-  lsArgs$options$strTransform = "none"
 }
 # If lasso is selected, do not use a regularization technique. This will happen in the lasso call
 if(lsArgs$options$strMethod == "lasso")
 {
   logdebug(paste("Lasso was selected so no model selection ocurred outside the lasso call."), c_logrMaaslin)
-  llsArgs$options$strModelSelection = "none"
+  lsArgs$options$strModelSelection = "none"
 }
 
 # Get analysis modules
@@ -207,7 +203,7 @@ funcProcess <- NULL
 if(!is.null(funcSourceScript(strInputR))){funcProcess <- get(c_strCustomProcessFunction)}
 
 #Clean the data and update the current data list to the cleaned data list
-lsRet = funcClean( frmeData=frmeData, funcDataProcess=funcProcess, aiMetadata=aiMetadata, aiGenetics=aiGenetics, aiData=aiData, lsQCCounts=lsData$lsQCCounts, astrNoImpute=xNoImpute )
+lsRet = funcClean( frmeData=frmeData, funcDataProcess=funcProcess, aiMetadata=aiMetadata, aiGenetics=aiGenetics, aiData=aiData, lsQCCounts=lsData$lsQCCounts, astrNoImpute=xNoImpute, funcTransform=afuncVariableAnalysis[[c_iTransform]])
 logdebug("lsRet", c_logrMaaslin)
 logdebug(format(lsRet), c_logrMaaslin)
 #Update the variables after cleaning

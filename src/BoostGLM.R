@@ -29,7 +29,7 @@ c_logrMaaslin <- getLogger( "maaslin" )
 ### aiData: Indices of column in frmeData which are (abundance) data for analysis.
 ### lsQCCounts: List that will hold the quality control information which is written in the output directory.
 ### astrNoImpute: An array of column names of frmeData not to impute.
-funcClean <- function( frmeData, funcDataProcess, aiMetadata, aiGenetics, aiData, lsQCCounts, astrNoImpute = c() ) {
+funcClean <- function( frmeData, funcDataProcess, aiMetadata, aiGenetics, aiData, lsQCCounts, astrNoImpute = c(), funcTransform ) {
 
   # Call the custom script and set current data and indicies to the processes data and indicies.
   c_logrMaaslin$debug( "Start Clean")
@@ -37,7 +37,7 @@ funcClean <- function( frmeData, funcDataProcess, aiMetadata, aiGenetics, aiData
   {
     c_logrMaaslin$debug("Additional preprocess function attempted.")
 
-    pTmp <- funcDataProcess( frmeData=frmeData, aiMetadata=aiMetadata, aiGenetics=aiGenetics, aiData=aiData)
+    pTmp <- funcDataProcess( frmeData=frmeData, aiMetadata=aiMetadata, aiGenetics=aiGenetics, aiData=aiData, funcTransform)
     frmeData = pTmp$frmeData
     aiMetadata = pTmp$aiMetadata
     aiGenetics = pTmp$aiGenetics
@@ -111,7 +111,6 @@ funcClean <- function( frmeData, funcDataProcess, aiMetadata, aiGenetics, aiData
   # c_dFence * the interquartile range + or - the 3rd and first quartile respectively.
   # If not the gibbs test is used.
   aiSumOutlierPerDatum = c()
-  print(paste("FENCE",c_dFence,sep=":"))
   if( c_dFence > 0.0 )
   {
     print("OUTLIERS: Using fence")
@@ -152,7 +151,6 @@ funcClean <- function( frmeData, funcDataProcess, aiMetadata, aiGenetics, aiData
     }
   #Do not use the fence, use the Gibbs test
   } else {
-    print("OUTLIERS: Using Grubbs")
     for( iData in aiData )
     {
       adData <- frmeData[,iData]
@@ -392,7 +390,7 @@ funcBugs <- function( frmeData, lsData, aiMetadata, aiGenetics, aiData, strData,
 ### lsData: List of all associated data
 ### aiMetadata: Numeric vector of indices
 ### aiGenetics: Numeric vector of genetics data
-### dFreq: Used to select metadata from the boosting, selected refrequerncy must be larger than this
+### dFreq: Used to select metadata from the boosting, selected refrequency must be larger than this
 ### dSig: Numeric significance threshold for q-value cut off
 ### adP: List of pvalues from associations
 ### lsSig: List which serves as a cache of data about significant associations
@@ -462,7 +460,9 @@ funcBugHybrid <- function( iTaxon, frmeData, lsData, aiMetadata, aiGenetics, dFr
   funcWrite( c("#Genetics", ifelse(length(astrGenetics),astrGenetics,"Not Genetics")), strLog )
   funcWrite( c("#samples", rownames( frmeTmp )), strLog )
   #TODO need to make variable with if boosting , regularization occured, can I
-  funcWrite( c("#Boost formula", strFormula), strLog )
+
+  # Regularisation terms
+  astrTerms <- c()
 
   # Attempt model selection
   lmod <- NA
@@ -471,50 +471,14 @@ funcBugHybrid <- function( iTaxon, frmeData, lsData, aiMetadata, aiGenetics, dFr
     #Count model selection method attempts
     lsData$lsQCCounts$iBoosts = lsData$lsQCCounts$iBoosts + 1
     #Perform model selection
-    lmod <- funcReg(strFormula, frmeTmp, adCur, NA)
-  }
+    astrTerms <- funcReg(strFormula, frmeTmp, adCur, list(dFreq=dFreq), strLog)
+    #If the boosting is set to None, set all terms of the model to all the metadata
+  } else { astrTerms = astrMetadata }
 
-  #TODO Need to make block variable with if boosting/reg occurs
   #Get look through the boosting results to get a model
   #Holds the predictors in the predictors in the model that were selected by the boosting
-  astrTerms <- c()
-  if( !is.na( lmod ) && ( class( lmod ) != "try-error" ) )
-  {
-    #Get boosting summary results
-    lsSum <- summary( lmod, plotit = FALSE )
-
-    #Document
-    funcWrite( "#model-gbm", strLog )
-    funcWrite( lmod$fit, strLog )
-    funcWrite( lmod$train.error, strLog )
-    funcWrite( lmod$Terms, strLog )
-    funcWrite( "#summary-gbm", strLog )
-    funcWrite( lsSum, strLog )
-
-    #For each metadata coefficient
-    #Check the frequency of selection and skip if not selected more than set threshold dFreq
-    for( strMetadata in lmod$var.names )
-    {
-      #If the selprob is less than a certain frequency, skip
-      dSel <- lsSum$rel.inf[which( lsSum$var == strMetadata )] / 100
-      if( is.na(dSel) || ( dSel < dFreq ) ) { next }
-      #Get the name of the metadata
-      strTerm <- funcCoef2Col( strMetadata, frmeData, c(astrMetadata, astrGenetics) )
-
-      #If you should ignore the metadata, continue
-      if( is.null( strTerm ) ) { next }
-      #If you cant find the metadata name, write
-      if( is.na( strTerm ) )
-      {
-        c_logrMaaslin$error( "Unknown coefficient: %s", strMetadata )
-        next
-      }
-      #Collect metadata names
-      astrTerms <- c(astrTerms, strTerm)
-    }
-  } else {
-    lsData$lsQCCounts$iBoostErrors = lsData$lsQCCounts$iBoostErrors + 1
-  }
+  if(is.na( astrTerms ))
+  {lsData$lsQCCounts$iBoostErrors = lsData$lsQCCounts$iBoostErrors + 1}
 
   #Run association analysis if predictors exist and an analysis function is specified
   #Reset model for the glm
@@ -527,7 +491,6 @@ funcBugHybrid <- function( iTaxon, frmeData, lsData, aiMetadata, aiGenetics, dFr
     strFormula <- paste( "adCur ~", paste( sprintf( "`%s`", astrTerms ), collapse = " + " ), sep = " " )
     #Run the association
     lmod <- funcAnalysis(strFormula, frmeTmp, adCur)
-
   } else {
     lsData$lsQCCounts$iNoTerms = lsData$lsQCCounts$iNoTerms + 1
   }

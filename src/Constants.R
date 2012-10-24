@@ -81,3 +81,6 @@ c_sFactorNameSep = ""
 c_iSelection = 1
 c_iTransform = 2
 c_iAnalysis = 3
+
+
+c_strNA_Action = "na.omit"

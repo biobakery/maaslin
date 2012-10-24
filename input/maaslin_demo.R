@@ -1,13 +1,11 @@
-library(fossil)
-library(vegan)
 
 #Arcsin sqrt transform data
-processFunction = function( frmeData, aiMetadata, aiGenetics, aiData )
+processFunction = function( frmeData, aiMetadata, aiGenetics, aiData, funcTransform )
 {
-  #AsinSqrt data
+  #Transform data
   for(aiDatum in aiData)
   {
-    frmeData[,aiDatum] = asin(sqrt(frmeData[,aiDatum]))
+    frmeData[,aiDatum] = funcTransform(frmeData[,aiDatum])
   }
   return( list(frmeData = frmeData, aiMetadata = aiMetadata, aiGenetics = aiGenetics, aiData = aiData, lsQCCounts=list()) )
 }
