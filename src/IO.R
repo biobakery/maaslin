@@ -52,13 +52,13 @@ funcWriteMatrixToReadConfigFile = function(strConfigureFileName, strMatrixFile, 
     paste(c_TSVCOLUMNS,strColIndices,sep=" "))
 
   #Optional output
-  if(!is.na(strMatrixFile)){lsDataLines=c(lsDataLines,paste(c_FILE_NAME,strMatrixFile,sep=" "))}
-  if(!is.na(strDtCharacter)){lsDataLines=c(lsDataLines,paste(c_CHARACTER_DATA_TYPE,strDtCharacter,sep=" "))}
-  if(!is.na(strDtFactoral)){lsDataLines=c(lsDataLines,paste(c_FACTOR_DATA_TYPE,strDtFactoral,sep=" "))}
-  if(!is.na(strDtInteger)){lsDataLines=c(lsDataLines,paste(c_INTEGER_DATA_TYPE,strDtInteger,sep=" "))}
-  if(!is.na(strDtLogical)){lsDataLines=c(lsDataLines,paste(c_LOGICAL_DATA_TYPE,strDtLogical,sep=" "))}
-  if(!is.na(strDtNumeric)){lsDataLines=c(lsDataLines,paste(c_NUMERIC_DATA_TYPE,strDtNumeric,sep=" "))}
-  if(!is.na(strDtOrdered)){lsDataLines=c(lsDataLines,paste(c_ORDEREDFACTOR_DATA_TYPE,strDtOrdered,sep=" "))}
+  if(!is.na(strMatrixFile) && !is.null(strMatrixFile)){lsDataLines=c(lsDataLines,paste(c_FILE_NAME,strMatrixFile,sep=" "))}
+  if(!is.na(strDtCharacter) && !is.null(strDtCharacter)){lsDataLines=c(lsDataLines,paste(c_CHARACTER_DATA_TYPE,strDtCharacter,sep=" "))}
+  if(!is.na(strDtFactoral) && !is.null(strDtFactoral)){lsDataLines=c(lsDataLines,paste(c_FACTOR_DATA_TYPE,strDtFactoral,sep=" "))}
+  if(!is.na(strDtInteger) && !is.null(strDtInteger)){lsDataLines=c(lsDataLines,paste(c_INTEGER_DATA_TYPE,strDtInteger,sep=" "))}
+  if(!is.na(strDtLogical) && !is.null(strDtLogical)){lsDataLines=c(lsDataLines,paste(c_LOGICAL_DATA_TYPE,strDtLogical,sep=" "))}
+  if(!is.na(strDtNumeric) && !is.null(strDtNumeric)){lsDataLines=c(lsDataLines,paste(c_NUMERIC_DATA_TYPE,strDtNumeric,sep=" "))}
+  if(!is.na(strDtOrdered) && !is.null(strDtOrdered)){lsDataLines=c(lsDataLines,paste(c_ORDEREDFACTOR_DATA_TYPE,strDtOrdered,sep=" "))}
   lsDataLines = c(lsDataLines,"\n")
 
   #Output to file

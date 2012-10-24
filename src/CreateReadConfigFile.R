@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 
 inlinedocs <- function(
-##author<< Timothy Tickle <ttickle@hsph.harvard.edu>
+#author<< Timothy Tickle <ttickle@hsph.harvard.edu>
 ) { return( pArgs ) }
 
 ### Logging class
@@ -10,15 +10,14 @@ suppressMessages(library( logging, warn.conflicts=FALSE, quietly=TRUE, verbose=F
 suppressMessages(library( optparse, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
 
 ### Source the IO.R for the script
-#source(file.path("input","maaslin","src","IO.R"))
-#source("IO.R")
+source(file.path("src","IO.R"))
+source(file.path("src","Constants.R"))
 
 ### Create command line argument parser
 ### The TSV (tab seperated value (column major, samples are rows) file that will be read in
 ### The column that is the last metadata name
 ### The read.config file that will be used to read in the TSV file
 pArgs <- OptionParser( usage = "%prog [optional] <strOutputRC> <strMatrixName>" )
-
 # Settings for Read config
 ## row indices
 pArgs <- add_option( pArgs, c("-r", "--rows"), type="character", action="store", dest="strRows", default=NA, metavar="row_indices", help="Rows to read by index starting with 1.")
@@ -39,17 +38,18 @@ pArgs <- add_option( pArgs, c("-o", "--orderdata"), type="character", action="st
 ## delimiter
 pArgs <- add_option( pArgs, c("-d", "--delimiter"), type="character", action="store", dest="charDelimiter", default="\t", metavar="delimiter", help="Delimiter to read the matrix.")
 ## append to current file
-pArgs <- add_option( pArgs, c("-a", "--append"), type="character", action="store_true", dest="fAppend", default=FALSE, metavar="append", help="Append to existing data. Default no append.")
+pArgs <- add_option( pArgs, c("-a", "--append"), type="logical", action="store_true", dest="fAppend", default=FALSE, metavar="append", help="Append to existing data. Default no append.")
 ## append to current file
 pArgs <- add_option( pArgs, c("-t", "--tsv"), type="character", action="store", dest="strTSV", default=NA, metavar="TSVfile", help="TSV file to give.")
-
 ### Parse arguments
 lsArgs <- parse_args( pArgs, positional_arguments = TRUE )
 
 #Get positional arguments
-if( !length( lsArgs$args ) == 3 ) { stop( print_help( pArgs ) ) }
+if( !(length( lsArgs$args ) == 2) ) { stop( print_help( pArgs ) ) }
 
 ### Write to file the read config script
-funcWriteMatrixToReadConfigFile(strConfigureFileName=lsArgs$args[1], strMatrixFile=lsArgs$options$strTSV, strMatrixName=lsArgs$args[2], strRowIndices=lsArgs$options$strRows, strColIndices=lsArgs$options$strColumns,
-  strDtCharacter=lsArgs$options$strCharData, strDtFactoral=lsArgs$options$strFactorData, strDtInteger=lsArgs$options$srtIntegerData, strDtLogical=lsArgs$options$strLogicalData, strDtNumeric=lsArgs$options$strNumericData, strDtOrdered=lsArgs$options$strOrderData,
-  acharDelimiter=lsArgs$options$charDelimiter, fAppend=lsArgs$options$fAppend)
+funcWriteMatrixToReadConfigFile(strConfigureFileName=lsArgs$args[1], strMatrixFile=lsArgs$options$strTSV, strMatrixName=lsArgs$args[2],
+  strRowIndices=lsArgs$options$strRows, strColIndices=lsArgs$options$strColumns, strDtCharacter=lsArgs$options$strCharData,
+  strDtFactoral=lsArgs$options$strFactorData, strDtInteger=lsArgs$options$srtIntegerData, strDtLogical=lsArgs$options$strLogicalData,
+  strDtNumeric=lsArgs$options$strNumericData, strDtOrdered=lsArgs$options$strOrderData, acharDelimiter=lsArgs$options$charDelimiter,
+  fAppend=lsArgs$options$fAppend)
