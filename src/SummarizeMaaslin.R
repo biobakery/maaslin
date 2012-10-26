@@ -1,12 +1,19 @@
-####################################
-# Summary: Takes the individual detail data from different factors
-# And condenses them to one file for reading
-# Author: Timothy Tickle
-# Start Date: 12-23-2011 current
-####################################
+#######################################################################################
+# This file is provided under the Creative Commons Attribution 3.0 license.
+#
+# You are free to share, copy, distribute, transmit, or adapt this work
+# PROVIDED THAT you attribute the work to the authors listed below.
+# For more information, please see the following web page:
+# http://creativecommons.org/licenses/by/3.0/
+#
+# This file is a component of the MaAsLin (Multivariate Associations Using Linear Models), 
+# authored by the Huttenhower lab at the Harvard School of Public Health
+# (contact Timothy Tickle, ttickle@hsph.harvard.edu).
+#######################################################################################
 
 inlinedocs <- function(
-##author<< Timothy Tickle <ttickle@hsph.harvard.edu>
+##author<< Curtis Huttenhower <chuttenh@hsph.harvard.edu> and Timothy Tickle <ttickle@hsph.harvard.edu>
+##description<< Creates a summary of association detail files.
 ) { return( pArgs ) }
 
 #Logging class
@@ -17,14 +24,19 @@ suppressMessages(library(logging, warn.conflicts=FALSE, quietly=TRUE, verbose=FA
 # Get logger
 c_logrMaaslin	<- getLogger( "maaslin" )
 
+funcSummarizeDirectory = function(
 ### Summarizes the massline detail files into one file based on significance.
-### astrOutputDirectory The output directory to find the MaAsLin results.
-### strBasename The prefix string used in maaslin to strart the detail files.
-### astrSummaryFileName The summary file's name, should be a path not a file name
-### astrKeyword The column name of the data to check significance before adding a detail to the summary
-### afSignificanceLevel The value of significance the data must be at or below to be included in the summary (0.0 is most significant; like p-values)
-funcSummarizeDirectory = function(astrOutputDirectory, strBaseName, astrSummaryFileName, astrKeyword, afSignificanceLevel)
-{
+astrOutputDirectory,
+### The output directory to find the MaAsLin results.
+strBaseName,
+### The prefix string used in maaslin to strart the detail files.
+astrSummaryFileName,
+### The summary file's name, should be a path not a file name
+astrKeyword,
+### The column name of the data to check significance before adding a detail to the summary
+afSignificanceLevel
+### The value of significance the data must be at or below to be included in the summary (0.0 is most significant; like p-values)
+){
   #Store significant data elements
   dfSignificantData = NULL
 

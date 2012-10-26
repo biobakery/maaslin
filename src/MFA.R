@@ -1,18 +1,39 @@
-####################################
-# Summary: Multifactor Analysis
-# Author: Timothy Tickle
-# Start Date: 11-21-2011 current
-####################################
+#######################################################################################
+# This file is provided under the Creative Commons Attribution 3.0 license.
+#
+# You are free to share, copy, distribute, transmit, or adapt this work
+# PROVIDED THAT you attribute the work to the authors listed below.
+# For more information, please see the following web page:
+# http://creativecommons.org/licenses/by/3.0/
+#
+# This file is a component of the MaAsLin (Multivariate Associations Using Linear Models), 
+# authored by the Huttenhower lab at the Harvard School of Public Health
+# (contact Timothy Tickle, ttickle@hsph.harvard.edu).
+#######################################################################################
+
+inlinedocs <- function(
+##author<< Curtis Huttenhower <chuttenh@hsph.harvard.edu> and Timothy Tickle <ttickle@hsph.harvard.edu>
+##description<< Performs MultiFactorial Analysis and plots ordination.
+) { return( pArgs ) }
 
 #Import library
 suppressMessages(library( FactoMineR, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
 
-### 
-### frmeData: Data
-### aiMetadata: Indicies or metadata to use
-### aiBugs: Bugs to 
-funcMFA = function( frmeData, aiMetadata, aiBugs, aiGenes = c() )
-{
+funcMFA = function(
+### Performs multi-factorial analysis
+frmeData,
+### Data frame of data
+dMinSamp,
+## Minimum samples
+aiMetadata,
+### Indicies or metadata to use
+aiBugs,
+### Indicies of features
+aiGenetics,
+### Indicies of genetics
+aiGenes = c()
+### Indicies of genetics
+){
   #Update aiBugs with factor and gene data that is being plotted
   #If a custom plotting function is given, then use, otherwise give defaults
   lsFeatures = c()
@@ -65,7 +86,7 @@ funcMFA = function( frmeData, aiMetadata, aiBugs, aiGenes = c() )
       }
 
       #If there is data and the amount of NA is under a certain threshold
-      if( length( aiCols ) && ( iNNA < ( c_dMinSamp * length( aiCols ) ) ) )
+      if( length( aiCols ) && ( iNNA < ( dMinSamp * length( aiCols ) ) ) )
       {
         rowOK = FALSE
         break
@@ -144,22 +165,33 @@ funcMFA = function( frmeData, aiMetadata, aiBugs, aiGenes = c() )
   #MFA requires
   lsRet <- try( MFA( frmeMFA[,aiCols], group = aiLengths, type = astrTypes, name.group = astrNames, graph = FALSE ) )
   return( lsRet )
+  ### Multifactorial analysis results
 }
 
+funcPlotMFA <- function(
 ### Plot Multiple Factoral Analysis
-### lsMFA: MFA output object
-### tempSaveFileName: File to save as a pdf (.pdf extension will be added
-### tempWidth: Width of pdf graphics region in inches
-### tempHeight: Heigth of pdf graphics region in inches
-### tempPCH: Numeric pch symbol
-### tempBackgroundColor: Pdf image background color
-### tempForeground: Pdf image foreground color
-### tempAxesColor: Pdf image axes color
-### tempLabelColor: Pdf image label color
-### tempTitleColor: Pdf image title color
-### tempSubtitleColor: Pdf image subtitle color
-funcPlotMFA <- function(lsMFA, fInvert = FALSE, tempSaveFileName="MFA", funcPlotColors = NULL, funcPlotPoints = NULL, funcPlotLegend = NULL, tempWidth=(tempHeight*1.5), tempHeight=6, tempPCH=20)
-{
+lsMFA,
+### MFA output object
+fInvert = FALSE,
+### Invert figure to make background black
+tempSaveFileName="MFA",
+### File to save as a pdf (.pdf extension will be added
+funcPlotColors = NULL,
+### Function to control plotting colors, read from custom *.R script input file
+funcPlotPoints = NULL,
+### Function to control plotting point shapes, read from custom *.R script input file
+funcPlotLegend = NULL,
+### Function to control plotting legend, read from custom *.R script input file
+tempWidth=(tempHeight*1.5),
+### Width of plot
+tempHeight=6,
+### Height of plot
+tempPCH=20
+### Point size
+){
+  if(!exists("funcPlotColors",mode="function") && !exists("funcPlotPoints",mode="function") && !exists("funcGetFeatureScale",mode="function") && !exists("funcGetMetadataScale",mode="function") && !exists("funcPlotMetadata",mode="function") && !exists("funcPlotFeatures",mode="function") && !exists("funcPlotLegend",mode="function"))
+  { return() }
+
   #Set pdf settings
   pdf(paste(tempSaveFileName,".pdf",sep=""), width = c_dHeight * 1.5, height = c_dHeight, useDingbats=FALSE )
   if( fInvert )
@@ -238,12 +270,38 @@ funcPlotMFA <- function(lsMFA, fInvert = FALSE, tempSaveFileName="MFA", funcPlot
         dBugScale=dBugScale, lsFeatureLabels=funcRename( rownames( lsPCA$var$coord )[afFeatures] ), sLegendLoc="topright")
     }
   }
-
   dev.off( )
 }
 
-funcPlotMFAPage <- function(coordinatesPlot, coordinatesText, strX, strY, aiPoints, astrCols, afMetadata=NA, dScale=NA, lsMetadataLabels=NA, afFeatures=NA, dBugScale=NA, lsFeatureLabels=NA, sLegendLoc="topright")
-{
+funcPlotMFAPage <- function(
+### Plot a MFA ordination
+coordinatesPlot,
+### The coordinates of the points from the MFA
+coordinatesText,
+### The coordinates of the labels from the MFA
+strX,
+### X axis label
+strY,
+### Y axis label
+aiPoints,
+### Shapes to plot points with
+astrCols,
+### Colors to plot points with
+afMetadata=NA,
+### The metadata to plot (indices)
+dScale=NA,
+### Scale factor for metadata ordination
+lsMetadataLabels=NA,
+### Labels for the metadata to be plotted
+afFeatures=NA,
+### Indicies of features to plot
+dBugScale=NA,
+### Scale factor for the data feature ordination
+lsFeatureLabels=NA,
+### Names of features to plot
+sLegendLoc="topright"
+### Location to place the legend
+){
   plot( coordinatesPlot, pch = aiPoints, col = astrCols, xlab = strX, ylab = strY, cex.axis=1.5, cex.lab=1.5, cex=1.5)
   if( !is.na(afMetadata) && !is.na(dScale) && !is.na(lsMetadataLabels) )
   {

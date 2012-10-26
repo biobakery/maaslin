@@ -1,8 +1,20 @@
-####################################
-# Summary: Constants
-# Author: Timothy Tickle
-# Start Date: 11-02-2011
-####################################
+#######################################################################################
+# This file is provided under the Creative Commons Attribution 3.0 license.
+#
+# You are free to share, copy, distribute, transmit, or adapt this work
+# PROVIDED THAT you attribute the work to the authors listed below.
+# For more information, please see the following web page:
+# http://creativecommons.org/licenses/by/3.0/
+#
+# This file is a component of the MaAsLin (Multivariate Associations Using Linear Models), 
+# authored by the Huttenhower lab at the Harvard School of Public Health
+# (contact Timothy Tickle, ttickle@hsph.harvard.edu).
+#######################################################################################
+
+inlinedocs <- function(
+##author<< Curtis Huttenhower <chuttenh@hsph.harvard.edu> and Timothy Tickle <ttickle@hsph.harvard.edu>
+##description<< Global project constants.
+) { return( pArgs ) }
 
 #General
 c_COMMA = ","
@@ -81,6 +93,7 @@ c_sFactorNameSep = ""
 c_iSelection = 1
 c_iTransform = 2
 c_iAnalysis = 3
+c_iResults = 4
 
-
+# Na action in anaylsis, placed here to standardize
 c_strNA_Action = "na.omit"

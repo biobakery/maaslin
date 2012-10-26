@@ -1,7 +1,20 @@
 #!/usr/bin/env Rscript
+#######################################################################################
+# This file is provided under the Creative Commons Attribution 3.0 license.
+#
+# You are free to share, copy, distribute, transmit, or adapt this work
+# PROVIDED THAT you attribute the work to the authors listed below.
+# For more information, please see the following web page:
+# http://creativecommons.org/licenses/by/3.0/
+#
+# This file is a component of the MaAsLin (Multivariate Associations Using Linear Models), 
+# authored by the Huttenhower lab at the Harvard School of Public Health
+# (contact Timothy Tickle, ttickle@hsph.harvard.edu).
+#######################################################################################
 
 inlinedocs <- function(
 ##author<< Curtis Huttenhower <chuttenh@hsph.harvard.edu> and Timothy Tickle <ttickle@hsph.harvard.edu>
+##description<< Main driver script. Should be called to perform MaAsLin Analysis.
 ) { return( pArgs ) }
 
 ### Logging class
@@ -31,7 +44,7 @@ pArgs <- add_option( pArgs, c("-m", "--method"), type="character", action="store
 pArgs <- add_option( pArgs, c("-l", "--link"), type="character", action="store", dest="strTransform", default="asinsqrt", metavar="method", help="Indicates which link or transformation to use with a glm, if glm is not selected this argument will be set to none.")
 
 #Miscellaneouse arguments
-## Argument to control logging (enumerate)
+### Argument to control logging (enumerate)
 strDefaultLogging = "INFO"
 pArgs <- add_option( pArgs, c("-v", "--verbosity"), type="character", action="store", dest="fVerbosity", default=strDefaultLogging, metavar="verbosity", help="Logging verbosity")
 ### Argument for inverting background to black
@@ -39,6 +52,22 @@ pArgs <- add_option( pArgs, c("-i", "--invert"), type="logical", action="store_t
 ### Selection Frequency
 pArgs <- add_option( pArgs, c("-f","--selectionFrequency"), type="double", action="store", dest="dSelectionFrequency", default= NA, metavar="selectionFrequency", help="Selection Frequency")
 
+### The main function manages the following:
+### 1. Optparse arguments are checked
+### 2. A logger is created if requested in the optional arguments
+### 3. The custom R script is sourced. This is the input *.R script named
+### the same as the input *.pcl file. This script contains custom formating
+### of data and function calls to the MFA visualization.
+### 4. Matrices are written to the project folder as they are read in seperately as metadata and data and merged together.
+### 5. Data is cleaned with custom filtering if supplied in the *.R script.
+### 6. Transformations occur if indicated by the optional arguments
+### 7. Standard quality control is performed on data
+### 8. Cleaned metadata and data are written to output project for documentation.
+### 9. A regularization method is ran (boosting by default).
+### 10. An analysis method is performed on the model (optionally boostd model).
+### 11. Data is summarized and PDFs are created for significant associations
+### (those whose q-values {BH FDR correction} are <= the threshold given in the optional arguments.
+main <- function( pArgs ) {
 ### Parse arguments
 lsArgs <- parse_args( pArgs, positional_arguments = TRUE )
 logdebug("lsArgs", c_logrMaaslin)
@@ -47,11 +76,6 @@ logdebug(paste(lsArgs,sep=" "), c_logrMaaslin)
 ###Default configurations
 #c_astrConfigurationValues <- c("noImpute", "invertPlots", "significanceLevel", "selectionFrequency", "processFunction")
 #c_lsConfigurationDefaults <- list(NULL, lsArgs$options$fInvert, lsArgs$options$dSignificanceLevel, NA, NULL)
-
-# Constants
-### Minimum Relative Abundance (###TODO fix shadowing)
-c_dMinSamp <- lsArgs$options$dMinSamp
-c_dFence <- lsArgs$options$dOutlierFence
 
 #TODO
 xNoImpute = NULL
@@ -83,8 +107,7 @@ strInputR <- lsArgs$args[4]
 ### External libraries to source
 astrSourceR <- lsArgs$args[5:length( lsArgs$args )]
 ### Source all libraries
-print("getwd")
-print(getwd())
+
 for( strR in astrSourceR ){source( strR )}
 
 # Get analysis method options
@@ -203,7 +226,7 @@ funcProcess <- NULL
 if(!is.null(funcSourceScript(strInputR))){funcProcess <- get(c_strCustomProcessFunction)}
 
 #Clean the data and update the current data list to the cleaned data list
-lsRet = funcClean( frmeData=frmeData, funcDataProcess=funcProcess, aiMetadata=aiMetadata, aiGenetics=aiGenetics, aiData=aiData, lsQCCounts=lsData$lsQCCounts, astrNoImpute=xNoImpute, funcTransform=afuncVariableAnalysis[[c_iTransform]])
+lsRet = funcClean( frmeData=frmeData, funcDataProcess=funcProcess, aiMetadata=aiMetadata, aiGenetics=aiGenetics, aiData=aiData, lsQCCounts=lsData$lsQCCounts, astrNoImpute=xNoImpute, dMinSamp = lsArgs$options$dMinSamp, dFence=lsArgs$options$dOutlierFence, funcTransform=afuncVariableAnalysis[[c_iTransform]])
 logdebug("lsRet", c_logrMaaslin)
 logdebug(format(lsRet), c_logrMaaslin)
 #Update the variables after cleaning
@@ -229,13 +252,13 @@ lsRet$lsQCCounts$iLms = 0
 
 #Run analysis
 alsRetBugs = funcBugs( lsRet$frmeData, lsRet, lsRet$aiMetadata, lsRet$aiGenetics, lsRet$aiData, strData,
-	lsArgs$options$dSelectionFrequency, lsArgs$options$dSignificanceLevel, lsArgs$options$fInvert,
+	lsArgs$options$dSelectionFrequency, lsArgs$options$dSignificanceLevel, lsArgs$options$dMinSamp, lsArgs$options$fInvert,
         outputDirectory, astrScreen = c(), funcReg=afuncVariableAnalysis[[c_iSelection]],
-        funcAnalysis=afuncVariableAnalysis[[c_iAnalysis]] )
+        funcAnalysis=afuncVariableAnalysis[[c_iAnalysis]], funcGetResults=afuncVariableAnalysis[[c_iResults]] )
 aiBugs = alsRetBugs$aiReturnBugs
 
 #Output a summary file of analysis process
-#funcWriteQCReport(strProcessFileName=file.path(strQCDir,"ProcessQC.txt"), lsQCData=alsRetBugs$lsQCCounts, liDataDim=liData, liMetadataDim=liMetaData)
+funcWriteQCReport(strProcessFileName=file.path(strQCDir,"ProcessQC.txt"), lsQCData=alsRetBugs$lsQCCounts, liDataDim=liData, liMetadataDim=liMetaData)
 
 #Numeric vector of Metadata indexes or MFA
 aiUMD <- intersect( lsRet$aiMetadata, which( colnames( lsRet$frmeData ) %in% lsRet$astrMetadata ) )
@@ -245,7 +268,7 @@ if( !length( aiBugs ) ) { aiBugs <- lsRet$aiData }
 if( length( aiBugs ) )
 {
   logdebug("MFA:in", c_logrMaaslin)
-  lsMFA <- funcMFA( lsRet$frmeData, aiUMD, aiBugs )
+  lsMFA <- funcMFA( lsRet$frmeData, lsArgs$options$dMinSamp, aiUMD, aiBugs, lsRet$aiGenetics)
   logdebug("MFA:out", c_logrMaaslin)
   if( class( lsMFA ) != "try-error" )
   {
@@ -262,3 +285,11 @@ funcSummarizeDirectory(astrOutputDirectory=outputDirectory,
                        astrSummaryFileName=file.path(outputDirectory,paste(strBase,c_sSummaryFileSuffix, sep="")), 
                        astrKeyword=c_strKeywordEvaluatedForInclusion, 
                        afSignificanceLevel=lsArgs$options$dSignificanceLevel)
+}
+# This is the equivalent of __name__ == "__main__" in Python.
+# That is, if it's true we're being called as a command line script;
+# if it's false, we're being sourced or otherwise included, such as for
+# library or inlinedocs.
+if( identical( environment( ), globalenv( ) ) &&
+	!length( grep( "^source\\(", sys.calls( ) ) ) ) {
+	main( pArgs ) }

@@ -1,7 +1,42 @@
+#######################################################################################
+# This file is provided under the Creative Commons Attribution 3.0 license.
+#
+# You are free to share, copy, distribute, transmit, or adapt this work
+# PROVIDED THAT you attribute the work to the authors listed below.
+# For more information, please see the following web page:
+# http://creativecommons.org/licenses/by/3.0/
+#
+# This file is a component of the MaAsLin (Multivariate Associations Using Linear Models), 
+# authored by the Huttenhower lab at the Harvard School of Public Health
+# (contact Timothy Tickle, ttickle@hsph.harvard.edu).
+#######################################################################################
 
+inlinedocs <- function(
+##author<< Curtis Huttenhower <chuttenh@hsph.harvard.edu> and Timothy Tickle <ttickle@hsph.harvard.edu>
+##description<< Holds MaAsLin related plotting
+) { return( pArgs ) }
 
-funcPDF <- function( lsCur, curPValue, curQValue, strFilePDF, strBaseOut, strName, fInvert )
-{
+funcPDF <- function(
+### Function to plt raw data with linear model information.
+### Continuous and integer variables are plotted with a line of best fit.
+### Other data is plotted as boxplots.
+lsCur,
+### Linear model information
+curPValue,
+### Pvalue to display
+curQValue,
+### Qvalue to display
+aiGenetics,
+### List of genetics indicies
+strFilePDF,
+### PDF file to create or to which to append
+strBaseOut,
+### Project directory to place pdf in
+strName,
+### Name of taxon
+fInvert
+### Invert the figure so the background is black
+){
   if( is.na( strFilePDF ) )
   {
     strFilePDF <- sprintf( "%s-%s.pdf", strBaseOut, strName )
@@ -118,29 +153,5 @@ funcPDF <- function( lsCur, curPValue, curQValue, strFilePDF, strBaseOut, strNam
     abline( reg = lmod, col = strColor, lwd = 3 )
   }
   return(strFilePDF)
+  ### File to which the pdf was written
 }
-
-#funcPlotDeconfounded <- function()
-#{
-      #Now plot residual hat plot
-      #Get coefficient names
-#      lsAllCoefs = setdiff(names(lsCur$allCoefs),c("(Intercept)"))
-
-      #Current b1 coefficient
-#      sCurSigData = lsCur$orig
-
-      #Other coefficients names
-#      lsOtherCoefs = setdiff(lsAllCoefs, c(sCurSigData))
-
-      #Get xi (raw data)
-#      b1 = as.matrix(adData)
-
-      #Get bi coefficients * data
-#      bi = as.matrix(adData) %*% t(as.matrix(lsCur$allCoefs[lsOtherCoefs]))
-#      bi = bi %*% as.matrix(rep(1,ncol(bi)))
-
-      #Plot
-#      plot(bi ~ b1, xlab = sCurSigData, ylab = paste(lsOtherCoefs,sep="", collapse="+"), main = paste(strTaxon,"~",strTitle), pch = 20)
-#      rug(b1, side=1)
-#      rug(bi, side=2)
-#}

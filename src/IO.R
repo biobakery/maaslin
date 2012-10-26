@@ -1,8 +1,20 @@
-####################################
-# Summary: IO
-# Author: Timothy Tickle
-# Start Date: 11-01-2011
-####################################
+#######################################################################################
+# This file is provided under the Creative Commons Attribution 3.0 license.
+#
+# You are free to share, copy, distribute, transmit, or adapt this work
+# PROVIDED THAT you attribute the work to the authors listed below.
+# For more information, please see the following web page:
+# http://creativecommons.org/licenses/by/3.0/
+#
+# This file is a component of the MaAsLin (Multivariate Associations Using Linear Models), 
+# authored by the Huttenhower lab at the Harvard School of Public Health
+# (contact Timothy Tickle, ttickle@hsph.harvard.edu).
+#######################################################################################
+
+inlinedocs <- function(
+##author<< Curtis Huttenhower <chuttenh@hsph.harvard.edu> and Timothy Tickle <ttickle@hsph.harvard.edu>
+##description<< Collection of functions centered on custom reading of data and some IO services.
+) { return( pArgs ) }
 
 #Project Constants
 
@@ -11,24 +23,35 @@ c_astrNA <- c(""," ","  ","NA","na")
 #Do not report warnings
 options(warn=-1)
 
-#4 Test cases
+funcWriteMatrixToReadConfigFile = function(
 ### Writes a read config file. Will write over a file by default
-### strConfigureFileName Read Config file to write to 
-### strMatrixFile File that will be read
-### strMatrixName Name of matrix that will be read
-### strRowIndices Rows which will be Read (TSV) by default all will be read
-### strColIndices Cols which will be Read (TSV) by default all will be read
-### strDtCharacter Data columns which will be forced to character data
-### strDtFactoral Data columns which will be forced to factor data
-### strDtInteger Data columns which will be forced to integer data
-### strDtLogical Data columns which will be forced to logical data
-### strDtNumeric Data columns which will be forced to numeric data
-### strDtOrdered Data columns which will be forced to ordered data
-### acharDelimiter Delimiter for the matrix that will be read in\
-### fAppend Append to a current read config file
-funcWriteMatrixToReadConfigFile = function(strConfigureFileName, strMatrixFile, strMatrixName, strRowIndices=NA, strColIndices=NA,
-  strDtCharacter=NA, strDtFactoral=NA, strDtInteger=NA, strDtLogical=NA, strDtNumeric=NA, strDtOrdered=NA, acharDelimiter=c_strDefaultMatrixDelimiter, fAppend=FALSE)
-{
+strConfigureFileName,
+### Read Config file to write to 
+strMatrixFile,
+### File that will be read
+strMatrixName,
+### Name of matrix that will be read
+strRowIndices=NA,
+### Rows which will be Read (TSV) by default all will be read
+strColIndices=NA,
+### Cols which will be Read (TSV) by default all will be read
+strDtCharacter=NA,
+### Data columns which will be forced to character data
+strDtFactoral=NA,
+### Data columns which will be forced to factor data
+strDtInteger=NA,
+### Data columns which will be forced to integer data
+strDtLogical=NA,
+### Data columns which will be forced to logical data
+strDtNumeric=NA,
+### Data columns which will be forced to numeric data
+strDtOrdered=NA,
+### Data columns which will be forced to ordered data
+acharDelimiter=c_strDefaultMatrixDelimiter,
+### Delimiter for the matrix that will be read in\
+fAppend=FALSE
+### Append to a current read config file
+){
   #If no append delete previous file
   if(!fAppend){unlink(strConfigureFileName)}
 
@@ -65,12 +88,19 @@ funcWriteMatrixToReadConfigFile = function(strConfigureFileName, strMatrixFile, 
   lapply(lsDataLines, cat, file=strConfigureFileName, sep="\n", append=TRUE)
 }
 
-#Write data frame data files with config files
-#dataFrameList is a named list of data frames (what you get directly from the read function)
-#saveFileList File names to save the data matrices in (one name per data frame)
-#configureFileName Name of the configure file to be written which will direct the reading of these data
-funcWriteMatrices = function(dataFrameList, saveFileList, configureFileName, acharDelimiter=c_strDefaultMatrixDelimiter, log = FALSE)
-{
+funcWriteMatrices = function(
+### Write data frame data files with config files
+dataFrameList,
+### A named list of data frames (what you get directly from the read function)
+saveFileList,
+### File names to save the data matrices in (one name per data frame)
+configureFileName,
+### Name of the configure file to be written which will direct the reading of these data
+acharDelimiter=c_strDefaultMatrixDelimiter,
+### Matrix delimiter
+log = FALSE
+### Indicates if logging should occur
+){
   #Get names
   dataFrameNames = names(dataFrameList)
 
@@ -197,10 +227,15 @@ funcWriteMatrices = function(dataFrameList, saveFileList, configureFileName, ach
   return(TRUE)
 }
 
-#Dynamically Read a Matrix/Matrices from a configure file
-#TODO If there is no row or column values then read the full matrix
-funcReadMatrices = function( configureFile , defaultFile = NA, log = FALSE)
-{
+funcReadMatrices = function(
+### Dynamically Read a Matrix/Matrices from a configure file
+configureFile,
+### Read config file to guide reading in data
+defaultFile = NA,
+### Default data file to read
+log = FALSE
+
+){
   #Named vector to return data frames read
   returnFrames = list()
   #Holds the names of the frames as they are being added
@@ -220,10 +255,34 @@ funcReadMatrices = function( configureFile , defaultFile = NA, log = FALSE)
   return(returnFrames)
 }
 
-#Read one matrix
-#ID rows and columns are assumed to be 1
-funcReadMatrix = function(tempMatrixName, tempFileName, tempDelimiter=c_strDefaultMatrixDelimiter, tempColumns=c_strDefaultReadCols, tempRows=c_strDefaultReadRows, tempDtCharacter=NA, tempDtFactor=NA, tempDtInteger=NA, tempDtLogical=NA, tempDtNumeric=NA, tempDtOrderedFactor=NA, tempLog=FALSE)
-{
+funcReadMatrix = function(
+### Read one matrix
+### ID rows and columns are assumed to be 1
+tempMatrixName,
+### The name to give the block of data read in from file
+tempFileName,
+### Data file to read
+tempDelimiter=c_strDefaultMatrixDelimiter,
+### Data matrix delimiter
+tempColumns=c_strDefaultReadCols,
+### Data columns to read
+tempRows=c_strDefaultReadRows,
+### Data rows to read
+tempDtCharacter=NA,
+### Data columns which will be forced to integer data
+tempDtFactor=NA,
+### Data columns which will be forced to integer data
+tempDtInteger=NA,
+### Data columns which will be forced to integer data
+tempDtLogical=NA,
+### Data columns which will be forced to integer data
+tempDtNumeric=NA,
+### Data columns which will be forced to integer data
+tempDtOrderedFactor=NA,
+### Data columns which will be forced to integer data
+tempLog=FALSE
+### Indicator to log
+){
   #Check parameter and make sure not NA
   if(!funcIsValid(tempMatrixName)){stop(paste("Did not receive a valid matrix name, received ",tempMatrixName,"."))}
 
@@ -387,12 +446,15 @@ funcReadMatrix = function(tempMatrixName, tempFileName, tempDelimiter=c_strDefau
   return(dataMatrix)
 }
 
-#2 Testcases
-#Reads in configure file and extracts the pieces needed for reading in a matrix
-#Configure file = string path to configure file
 #TODO Make sure that commented is commented out
-funcReadConfigFile = function(configureFile, defaultFile = NA)
-{
+
+funcReadConfigFile = function(
+### Reads in configure file and extracts the pieces needed for reading in a matrix
+configureFile,
+### Configure file = string path to configure file
+defaultFile = NA
+### Used to set a default data file
+){
   #Read configure file
   fileDataList <- scan( file = configureFile, what = character(), quiet=TRUE)
   matrixName <- NA
@@ -463,12 +525,14 @@ funcReadConfigFile = function(configureFile, defaultFile = NA)
   return(matrixInformationList)
 }
 
-#16 Test cases
-#Take a string of comma or dash seperated integer strings and convert into a vector
-#of integers to use in index slicing
-#TODO Should writing the read config be in words
-funcParseIndexSlices = function(strIndexString,cstrNames)
-{
+funcParseIndexSlices = function(
+### Take a string of comma or dash seperated integer strings and convert into a vector
+### of integers to use in index slicing
+strIndexString,
+### String to be parsed into indicies vector
+cstrNames
+### Column names of the data so names can be resolved to indicies
+){
   #If the slices are NA then return
   if(is.na(strIndexString)){return(strIndexString)}
 
@@ -508,4 +572,5 @@ funcParseIndexSlices = function(strIndexString,cstrNames)
   }
   if(length(viRetIndicies)==0){return(NA)}
   return(sort(unique(viRetIndicies)))
+  ### Sorted indicies vector
 }

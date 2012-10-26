@@ -1,15 +1,28 @@
-##########################
-# Summary: Code used to validate the existence and correct typing of variable
-# Author: Timothy Tickle
-# Date: 09-30-2011
-##########################
+#######################################################################################
+# This file is provided under the Creative Commons Attribution 3.0 license.
+#
+# You are free to share, copy, distribute, transmit, or adapt this work
+# PROVIDED THAT you attribute the work to the authors listed below.
+# For more information, please see the following web page:
+# http://creativecommons.org/licenses/by/3.0/
+#
+# This file is a component of the MaAsLin (Multivariate Associations Using Linear Models), 
+# authored by the Huttenhower lab at the Harvard School of Public Health
+# (contact Timothy Tickle, ttickle@hsph.harvard.edu).
+#######################################################################################
 
-# Requires a data to not be NA, not be NULL
-# Returns True on meeting these requirements, returns false otherwise
-# Parameter tempData Is evaluated as not empty
-# Return boolean Indicator of not being empty (TRUE = not empty)
-funcIsValid <- function(tempData = NA)
-{
+inlinedocs <- function(
+##author<< Curtis Huttenhower <chuttenh@hsph.harvard.edu> and Timothy Tickle <ttickle@hsph.harvard.edu>
+##description<< Minor validation files to check data typing when needed.
+) { return( pArgs ) }
+
+funcIsValid <- function(
+### Requires a data to not be NA, not be NULL
+### Returns True on meeting these requirements, returns false otherwise
+### Return boolean Indicator of not being empty (TRUE = not empty)
+tempData = NA
+### Parameter tempData Is evaluated as not empty
+){
   #If the data is not na or null return true
   if(!is.null(tempData))
   {
@@ -17,14 +30,16 @@ funcIsValid <- function(tempData = NA)
     return(TRUE)
   }
   return(FALSE)
+  ### True (Valid) false (invalid)
 }
 
-# Requires a data to not be NA, not be NULL, and to be of type Character
-# Returns True on meeting these requirements, returns false otherwise
-# Parameter tempData Is evaluated as a string
-# Return boolean Indicator of identity as a string
-funcIsValidString <- function(tempData = NA)
-{
+funcIsValidString <- function(
+### Requires a data to not be NA, not be NULL, and to be of type Character
+### Returns True on meeting these requirements, returns false otherwise
+### Return boolean Indicator of identity as a string
+tempData = NA
+### Parameter tempData Is evaluated as a string
+){
   #If is not a valid data return false
   if(!funcIsValid(tempData))
   {
@@ -36,15 +51,19 @@ funcIsValidString <- function(tempData = NA)
     return(TRUE)
   }
   return(FALSE)
+  ### True (Valid) false (invalid)
 }
 
-# Requires a data to not be NA, not be NULL, and to be a valid string
-# which points to an existing file
-# Returns True on meeting these requirements, returns false otherwise
-# Parameter tempData Is evaluated as a file name
-# Return boolean Indicator of identity as a file name
-funcIsValidFileName <- function(tempData = NA, fVerbose=FALSE)
-{
+funcIsValidFileName <- function(
+### Requires a data to not be NA, not be NULL, and to be a valid string
+### which points to an existing file
+### Returns True on meeting these requirements, returns false otherwise
+### Return boolean Indicator of identity as a file name
+tempData = NA,
+### Parameter tempData Is evaluated as a file name
+fVerbose=FALSE
+### Verbose will print the file path when not valid.
+){
   #If is not valid string return false
   if(!(funcIsValidString(tempData)))
   {
@@ -58,4 +77,5 @@ funcIsValidFileName <- function(tempData = NA, fVerbose=FALSE)
   }
   if(fVerbose){print(paste("FunctIsValidFileName: Path does not exist. Value=",tempData,sep=""))}
   return(FALSE)
+  ### True (Valid) false (invalid)
 }
