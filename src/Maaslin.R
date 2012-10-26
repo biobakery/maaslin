@@ -69,7 +69,7 @@ main <- function(
 ### 11. Data is summarized and PDFs are created for significant associations
 ### (those whose q-values {BH FDR correction} are <= the threshold given in the optional arguments.
 pArgs
-### Parsed commandlin arguments
+### Parsed commandline arguments
 ) {
 lsArgs <- parse_args( pArgs, positional_arguments = TRUE )
 logdebug("lsArgs", c_logrMaaslin)
