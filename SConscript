@@ -1,23 +1,27 @@
 import sfle
 
 Import( "*" )
+pE = DefaultEnvironment( )
 
-sRExtention = ".R"
-lsTestedScriptNames = ["SummarizeMaaslin","ValidateData","Utility","IO","Maaslin"]
-lsInlineDocs = [sfle.d(fileDirSrc,sFile) for sFile in ["Maaslin.R","AnalysisModules.R","BoostGLM.R","IO.R","MaaslinPlots.R","MFA.R","SummarizeMaaslin.R","Utility.R","ValidateData.R"]]
+c_fileDirLib		= sfle.d( fileDirSrc, "lib" )
+c_fileInputMaaslinR	= sfle.d( pE, fileDirSrc, "Maaslin.R" )
+c_afileTestsR		= [c_fileInputMaaslinR] + [sfle.d( pE, c_fileDirLib, s ) for s in
+						("SummarizeMaaslin.R", "ValidateData.R", "Utility.R", "IO.R")]
+c_afileDocsR		= c_afileTestsR + [sfle.d( pE, c_fileDirLib, s ) for s in
+						("AnalysisModules.R", "BoostGLM.R", "MaaslinPlots.R", "MFA.R")]
 
 #Test scripts
-for sScriptName in lsTestedScriptNames:
-  #Testing summary file
-  sTestingSummary = sfle.d(fileDirOutput, sScriptName +"-TestReport.txt")
-  sfle.testthat(DefaultEnvironment(), sfle.d(fileDirSrc,sScriptName+sRExtention), sfle.d(fileDirSrc,"test-"+sScriptName), sTestingSummary)
-  Default( sTestingSummary )
+for fileInputR in c_afileTestsR:
+	strBase = sfle.rebase( fileInputR, True )
+	#Testing summary file
+	fileTestingSummary = sfle.d( pE, fileDirOutput, strBase +"-TestReport.txt" )
+	dirTestingR = Dir( sfle.d( fileDirSrc, "test-" + strBase ) )
+	Default( sfle.testthat( pE, fileInputR, dirTestingR, fileTestingSummary ) )
 
 #Inline doc
-for fileProg in lsInlineDocs:
-	filePDF = sfle.d( pE, fileDirOutput, sfle.rebase( fileProg, sRExtention, sfle.c_strSufPDF ) )
-	sfle.inlinedocs( pE, fileProg, filePDF, fileDirTmp )
-	Default( filePDF )
+for fileProg in c_afileDocsR:
+	filePDF = sfle.d( pE, fileDirOutput, sfle.rebase( fileProg, sfle.c_strSufR, sfle.c_strSufPDF ) )
+	Default( sfle.inlinedocs( pE, fileProg, filePDF, fileDirTmp ) )
 
 #Start regression suite
 execfile( "SConscript_maaslin.py" )

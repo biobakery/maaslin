@@ -74,7 +74,7 @@ c_sSummaryFileSuffix = "_Summary.txt"
 c_cTableDelimiter="\t"
 
 #Testing Related
-c_strTestingDirectory = file.path("testing")
+c_strTestingDirectory = "testing"
 c_strCorrectAnswers = "answers"
 c_strTemporaryFiles = "tmp"
 c_strTestingInput = "input"

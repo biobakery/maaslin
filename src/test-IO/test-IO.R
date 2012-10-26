@@ -1,11 +1,6 @@
-library(testthat)
-source(file.path("input","maaslin","src","Constants.R"))
-source(file.path("input","maaslin","src","IO.R"))
-source(file.path("input","maaslin","src","ValidateData.R"))
-
-#source("Constants.R")
-#source("IO.R")
-#source("ValidateData.R")
+source(file.path("..","Constants.R"))
+source(file.path("..","ValidateData.R"))
+strTestingDirectory = file.path("..",c_strTestingDirectory)
 
 expect_equal(funcParseIndexSlices("1",cNames),c(1))
 
@@ -46,13 +41,13 @@ test_that("Words and numbers are parsed correctly",{
 
 context("Test funcWriteMatrixToReadConfigFile")
 # File to temporarily write to
-strWriteMatrixRCTestFile = file.path(c_strTestingDirectory,c_strTemporaryFiles,"FuncWriteMatrixToReadConfigFileTemp.read.config")
+strWriteMatrixRCTestFile = file.path(strTestingDirectory,c_strTemporaryFiles,"FuncWriteMatrixToReadConfigFileTemp.read.config")
 # Files that hold answers
-strFileSimpleRCFileAnswer = file.path(c_strTestingDirectory,c_strCorrectAnswers,"FuncWriteMatrixToReadConfigFile_SimpleAnswer.read.config")
-strFileUseAllRCFileAnswer = file.path(c_strTestingDirectory,c_strCorrectAnswers,"FuncWriteMatrixToReadConfigFile_AllAnswer.read.config")
-strFileAppendTrueRCFileAnswer = file.path(c_strTestingDirectory,c_strCorrectAnswers,"FuncWriteMatrixToReadConfigFile_AppendAnswer.read.config")
+strFileSimpleRCFileAnswer = file.path(strTestingDirectory,c_strCorrectAnswers,"FuncWriteMatrixToReadConfigFile_SimpleAnswer.read.config")
+strFileUseAllRCFileAnswer = file.path(strTestingDirectory,c_strCorrectAnswers,"FuncWriteMatrixToReadConfigFile_AllAnswer.read.config")
+strFileAppendTrueRCFileAnswer = file.path(strTestingDirectory,c_strCorrectAnswers,"FuncWriteMatrixToReadConfigFile_AppendAnswer.read.config")
 #Input matrix file
-strFileMatrix = file.path(c_strTestingDirectory,c_strTestingInput,"TestMatrix.tsv")
+strFileMatrix = file.path(strTestingDirectory,c_strTestingInput,"TestMatrix.tsv")
 
 #Get read config files in different scenarios
 funcWriteMatrixToReadConfigFile(strWriteMatrixRCTestFile,strFileMatrix,"SimpleMatrix")
@@ -117,7 +112,7 @@ test_that("Matrix file is read correctly.",{
 })
 
 context("Test funcReadMatrices")
-sConfigureFile1Matrix = file.path(c_strTestingDirectory,c_strTestingInput,"1Matrix.read.config")
+sConfigureFile1Matrix = file.path(strTestingDirectory,c_strTestingInput,"1Matrix.read.config")
 mtxOne = as.data.frame(as.matrix(rbind(c(11,12,13,14,15),c(21,22,23,24,25),c(31,32,33,34,35),c(41,42,43,44,45),
                                                         c(51,52,53,54,55),c(61,62,63,64,65),c(71,72,73,74,75),c(81,82,83,84,85),
                                                         c(91,92,93,94,95),c(101,102,103,104,105),c(111,112,113,114,115),c(121,122,123,124,125),
@@ -125,12 +120,12 @@ mtxOne = as.data.frame(as.matrix(rbind(c(11,12,13,14,15),c(21,22,23,24,25),c(31,
 rownames(mtxOne) = c("Feature1","Feature2","Feature3","Feature4","Feature5","Feature6","Feature7","Feature8","Feature9","Feature10",
                      "Feature11","Feature12","Feature13","Feature14","Feature15")
 colnames(mtxOne) = c("Sample1","Sample2","Sample3","Sample4","Sample5")
-sConfigureFile2Matrix = file.path(c_strTestingDirectory,c_strTestingInput,"2Matrix.read.config")
+sConfigureFile2Matrix = file.path(strTestingDirectory,c_strTestingInput,"2Matrix.read.config")
 mtxTwo = as.data.frame(as.matrix(rbind(c(11,12,13),c(21,22,23),c(31,32,33))))
 rownames(mtxTwo) = c("Feature1","Feature2","Feature3")
 colnames(mtxTwo) = c("Sample1","Sample2","Sample3")
 
-sConfigureFile3Matrix = file.path(c_strTestingDirectory,c_strTestingInput,"3Matrix.read.config")
+sConfigureFile3Matrix = file.path(strTestingDirectory,c_strTestingInput,"3Matrix.read.config")
 mtxThree = as.data.frame(as.matrix(rbind(c(11,12,14),c(21,22,24),c(31,32,34),c(41,42,44),
                                          c(51,52,54),c(61,62,64),c(71,72,74),c(81,82,84),c(91,92,94))))
 rownames(mtxThree) = c("Feature1","Feature2","Feature3","Feature4","Feature5","Feature6","Feature7","Feature8","Feature9")
@@ -158,12 +153,12 @@ test_that("Test funcReadMatrices read in the correct matrices not matter the num
 })
 
 context("Test funcWriteMatrices")
-strFuncWriteMatricesMatrix1 = file.path(c_strTestingDirectory,c_strTemporaryFiles,"FuncWriteMatrices1.tsv")
-strFuncWriteMatricesMatrix2 = file.path(c_strTestingDirectory,c_strTemporaryFiles,"FuncWriteMatrices2.tsv")
-strFuncWriteMatricesMatrix1Answer = file.path(c_strTestingDirectory, c_strCorrectAnswers,"FuncWriteMatrices1.tsv")
-strFuncWriteMatricesMatrix2Answer = file.path(c_strTestingDirectory, c_strCorrectAnswers,"FuncWriteMatrices2.tsv")
-strFuncWriteMatricesRCFile = file.path(c_strTestingDirectory,c_strTemporaryFiles,"FuncWriteMatrices.read.config")
-strFuncWriteMatricesRCFileAnswer = file.path(c_strTestingDirectory, c_strCorrectAnswers,"FuncWriteMatrices.read.config")
+strFuncWriteMatricesMatrix1 = file.path(strTestingDirectory,c_strTemporaryFiles,"FuncWriteMatrices1.tsv")
+strFuncWriteMatricesMatrix2 = file.path(strTestingDirectory,c_strTemporaryFiles,"FuncWriteMatrices2.tsv")
+strFuncWriteMatricesMatrix1Answer = file.path(strTestingDirectory, c_strCorrectAnswers,"FuncWriteMatrices1.tsv")
+strFuncWriteMatricesMatrix2Answer = file.path(strTestingDirectory, c_strCorrectAnswers,"FuncWriteMatrices2.tsv")
+strFuncWriteMatricesRCFile = file.path(strTestingDirectory,c_strTemporaryFiles,"FuncWriteMatrices.read.config")
+strFuncWriteMatricesRCFileAnswer = file.path(strTestingDirectory, c_strCorrectAnswers,"FuncWriteMatrices.read.config")
 funcWriteMatrices(list("1"=mtxOne, "2"=mtxThree),c(strFuncWriteMatricesMatrix1, strFuncWriteMatricesMatrix2), strFuncWriteMatricesRCFile)
 
 test_that("Test that writing to a file occurs correctly, for both matrix and configure file.",{

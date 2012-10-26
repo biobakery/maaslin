@@ -188,8 +188,6 @@ tempHeight=6,
 tempPCH=20
 ### Point size
 ){
-  if(!exists("funcPlotColors",mode="function") && !exists("funcPlotPoints",mode="function") && !exists("funcGetFeatureScale",mode="function") && !exists("funcGetMetadataScale",mode="function") && !exists("funcPlotMetadata",mode="function") && !exists("funcPlotFeatures",mode="function") && !exists("funcPlotLegend",mode="function"))
-  { return() }
 
   #Set pdf settings
   pdf(paste(tempSaveFileName,".pdf",sep=""), width = c_dHeight * 1.5, height = c_dHeight, useDingbats=FALSE )

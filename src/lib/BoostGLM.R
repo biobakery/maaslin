@@ -61,7 +61,7 @@ funcTransform
   {
     c_logrMaaslin$debug("Additional preprocess function attempted.")
 
-    pTmp <- funcDataProcess( frmeData=frmeData, aiMetadata=aiMetadata, aiGenetics=aiGenetics, aiData=aiData, funcTransform)
+    pTmp <- funcDataProcess( frmeData=frmeData, aiMetadata=aiMetadata, aiGenetics=aiGenetics, aiData=aiData)
     frmeData = pTmp$frmeData
     aiMetadata = pTmp$aiMetadata
     aiGenetics = pTmp$aiGenetics
@@ -69,6 +69,11 @@ funcTransform
     lsQCCounts$lsQCCustom = pTmp$lsQCCounts
   }
 
+  for(aiDatum in aiData)
+  {
+	  frmeData[,aiDatum] = funcTransform(frmeData[,aiDatum])
+  }
+	  
   # Set data indicies after custom QC process.
   lsQCCounts$aiAfterPreprocess = aiData
 

@@ -243,7 +243,17 @@ log = FALSE
 
   #Read in config file info
   #Read each data block extracted from the config file
-  for(dataBlock in funcReadConfigFile(configureFile, defaultFile))
+  lsDataBlocks <- funcReadConfigFile(configureFile, defaultFile)
+  if(!length(lsDataBlocks)) {
+	  astrMetadata <- NULL
+	  astrMetadata[2] <- defaultFile
+	  astrMetadata[5] <- "2"
+	  astrData <- NULL
+	  astrData[2] <- defaultFile
+	  astrData[5] <- "3-"
+	  lsDataBlocks <- list(astrMetadata, astrData)
+  }
+  for(dataBlock in lsDataBlocks)
   {
     #Read in matrix
     returnFrames[[returnFramesIndex]] = funcReadMatrix(tempMatrixName=dataBlock[1], tempFileName=dataBlock[2], tempDelimiter=dataBlock[3], tempColumns=dataBlock[5], tempRows=dataBlock[4], tempDtCharacter=dataBlock[6], tempDtFactor=dataBlock[7], tempDtInteger=dataBlock[8], tempDtLogical=dataBlock[9], tempDtNumeric=dataBlock[10], tempDtOrderedFactor=dataBlock[11], tempLog=log)
@@ -256,16 +266,16 @@ log = FALSE
 
 funcReadMatrix = function(
 ### Read one matrix
-### ID rows and columns are assumed to be 1
-tempMatrixName,
 ### The name to give the block of data read in from file
 tempFileName,
+### ID rows and columns are assumed to be 1
+tempMatrixName=NA,
 ### Data file to read
-tempDelimiter=c_strDefaultMatrixDelimiter,
+tempDelimiter=NA,
 ### Data matrix delimiter
-tempColumns=c_strDefaultReadCols,
+tempColumns=NA,
 ### Data columns to read
-tempRows=c_strDefaultReadRows,
+tempRows=NA,
 ### Data rows to read
 tempDtCharacter=NA,
 ### Data columns which will be forced to integer data
@@ -282,12 +292,17 @@ tempDtOrderedFactor=NA,
 tempLog=FALSE
 ### Indicator to log
 ){
+  if(is.na(tempDelimiter)){tempDelimiter <- c_strDefaultMatrixDelimiter}
+  if(is.na(tempColumns)){tempColumns <- c_strDefaultReadCols}
+  if(is.na(tempRows)){tempRows <- c_strDefaultReadRows}
+  
   #Check parameter and make sure not NA
+  if(is.na(tempMatrixName)){tempMatrixName <- ""}
   if(!funcIsValid(tempMatrixName)){stop(paste("Did not receive a valid matrix name, received ",tempMatrixName,"."))}
 
   #Check to make sure there is a file name for the matrix
   if(! funcIsValidFileName(tempFileName))
-  {stop(paste("No valid file name is given for the matrix ",tempMatrixName,". Please add a valid file name to read the matrix from.", sep=""))}
+  {stop(paste("No valid file name is given for the matrix ",tempMatrixName," from file: ",tempFileName,". Please add a valid file name to read the matrix from.", sep=""))}
 
   #Read in superset matrix and give names if indicated 
   #Read in matrix
@@ -451,7 +466,9 @@ defaultFile = NA
 ### Used to set a default data file
 ){
   #Read configure file
-  fileDataList <- scan( file = configureFile, what = character(), quiet=TRUE)
+  fileDataList <- list()
+  if(!is.null( configureFile ) ) {
+    fileDataList <- scan( file = configureFile, what = character(), quiet=TRUE) }
   matrixName <- NA
   fileName <- defaultFile
 
@@ -461,6 +478,7 @@ defaultFile = NA
 
   for(textIndex in c(1:length(fileDataList)))
   {
+	if(textIndex > length(fileDataList)) {break}
     #Start at the Matrix name
     #Keep this if statement first so that you scan through until you find a matrix block
     if(fileDataList[textIndex] == c_MATRIX_NAME)

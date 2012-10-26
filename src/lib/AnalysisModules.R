@@ -516,35 +516,35 @@ funcGetAnalysisMethods <- function(sModelSelectionKey,sTransformKey,sMethodKey)
   lRetMethods = list()
   #Insert selection methods here
   lRetMethods[[c_iSelection]] = switch(sModelSelectionKey,
-    boost = funcBoostModel,
-    forward = funcForwardModel,
-    backward = funcBackwardsModel,
-    none = NULL)
+    boost			= funcBoostModel,
+    forward			= funcForwardModel,
+    backward		= funcBackwardsModel,
+    none			= NULL)
 
   #Insert transforms
   lRetMethods[[c_iTransform]] = switch(sTransformKey,
-    asinsqrt = funcArcsinSqrt,
-    none = funcNoTransform)
+    asinsqrt		= funcArcsinSqrt,
+    none			= funcNoTransform)
 
   #Insert analysis
   lRetMethods[[c_iAnalysis]] = switch(sMethodKey,
-    neg_binomial = funcBinomialMult,
-    quasi = funcQuasiMult,
-    spearman = funcSpearman,
-    wilcoxon = funcWilcoxon,
-    lasso = funcLasso,
-    lm = funcLM,
-    none = NULL)
+    neg_binomial	= funcBinomialMult,
+    quasi			= funcQuasiMult,
+    spearman		= funcSpearman,
+    wilcoxon		= funcWilcoxon,
+    lasso			= funcLasso,
+    lm				= funcLM,
+    none			= NULL)
 
   #Insert method to get results
   lRetMethods[[c_iResults]] = switch(sMethodKey,
-    neg_binomial = funcGetLMResults,
-    quasi = funcGetLMResults,
-    spearman = funcGetUnivariateResults,
-    wilcoxon = funcGetUnivariateResults,
-    lasso = funcGetLassoResults,
-    lm = funcGetLMResults,
-    none = NULL)
+    neg_binomial	= funcGetLMResults,
+    quasi			= funcGetLMResults,
+    spearman		= funcGetUnivariateResults,
+    wilcoxon		= funcGetUnivariateResults,
+    lasso			= funcGetLassoResults,
+    lm				= funcGetLMResults,
+    none			= NULL)
 
   return(lRetMethods)
   ### Returns a list of functions to be passed for regularization, data transformation, analysis,
