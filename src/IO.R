@@ -234,7 +234,6 @@ configureFile,
 defaultFile = NA,
 ### Default data file to read
 log = FALSE
-
 ){
   #Named vector to return data frames read
   returnFrames = list()
@@ -440,13 +439,9 @@ tempLog=FALSE
   #Account for when both column ranges and row ranges are given or just a column or a row range is given
   dataMatrix = dataMatrix[tempRows, tempColumns, drop=FALSE]
 
-#  if(tempLog){funcLogMatrixRead()}
-  
   #Return matrix
   return(dataMatrix)
 }
-
-#TODO Make sure that commented is commented out
 
 funcReadConfigFile = function(
 ### Reads in configure file and extracts the pieces needed for reading in a matrix

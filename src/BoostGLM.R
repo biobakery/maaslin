@@ -178,7 +178,7 @@ funcTransform
     for( iData in aiData )
     {
       adData <- frmeData[,iData]
-## Why is there a while loop here?
+
       while( TRUE )
       {
         lsTest <- try( grubbs.test( adData ), silent = TRUE )
@@ -391,8 +391,7 @@ funcGetResults=NULL
       adData		<- lsCur$data
       astrFactors	<- lsCur$factors
       adCur		<- lsCur$metadata
-#	  adY			<- lsCur$quasired
-	  adY <- adData
+      adY <- adData
       if( is.na( strData ) ) { next }
 
       ## If the text file output is not written to yet
@@ -490,7 +489,6 @@ funcGetResult=NULL
   {
     aMetadatum <- frmeTmp[,strMetadatum]
 
-### I thought this is already done in clean?
     #Find the amount of NA and if over a certain ratio, remove that metadata from analysis
     iNA = sum( is.na( aMetadatum ) ) + sum( aMetadatum == "NA", na.rm = TRUE )
 	#Be kinder to genetics than other metadata
@@ -503,9 +501,7 @@ funcGetResult=NULL
       astrRemove <- c(astrRemove, strMetadatum)
     }
   }
-#### Should be in clean
 
-### This needs to be documented in the QC processing.
   #Document removal in logging
   if(length(astrRemove))
   {
@@ -534,7 +530,6 @@ funcGetResult=NULL
   funcWrite( c("#metadata", astrMetadata), strLog )
   funcWrite( c("#Genetics", ifelse(length(astrGenetics),astrGenetics,"Not Genetics")), strLog )
   funcWrite( c("#samples", rownames( frmeTmp )), strLog )
-  #TODO need to make variable with if boosting , regularization occured, can I
 
   # Regularisation terms
   astrTerms <- c()

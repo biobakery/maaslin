@@ -50,8 +50,7 @@ functionContrast
     {
       lliTests = apply(as.matrix(model.matrix(as.formula(paste("~",sComparison)),frmeTmp))[,-1],2,list)
     }
-    print("lliTests")
-    print(lliTests)
+
     sComparisonResults = lapply(lliTests, function(x) functionContrast(x=as.vector(unlist(x)), y=adCur))
     #Pass important data.
     #TODO finish

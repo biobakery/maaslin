@@ -52,6 +52,7 @@ pArgs <- add_option( pArgs, c("-i", "--invert"), type="logical", action="store_t
 ### Selection Frequency
 pArgs <- add_option( pArgs, c("-f","--selectionFrequency"), type="double", action="store", dest="dSelectionFrequency", default= NA, metavar="selectionFrequency", help="Selection Frequency")
 
+main <- function(
 ### The main function manages the following:
 ### 1. Optparse arguments are checked
 ### 2. A logger is created if requested in the optional arguments
@@ -67,8 +68,9 @@ pArgs <- add_option( pArgs, c("-f","--selectionFrequency"), type="double", actio
 ### 10. An analysis method is performed on the model (optionally boostd model).
 ### 11. Data is summarized and PDFs are created for significant associations
 ### (those whose q-values {BH FDR correction} are <= the threshold given in the optional arguments.
-main <- function( pArgs ) {
-### Parse arguments
+pArgs
+### Parsed commandlin arguments
+) {
 lsArgs <- parse_args( pArgs, positional_arguments = TRUE )
 logdebug("lsArgs", c_logrMaaslin)
 logdebug(paste(lsArgs,sep=" "), c_logrMaaslin)

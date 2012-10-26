@@ -120,7 +120,6 @@ aiGenes = c()
     if( iCol %in% aiBugs )
     {
       next
-#      adCol <- funcTransform( adCol )
     } else {
       aiMDC <- c(aiMDC, iCol)
     }
