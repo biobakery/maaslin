@@ -1,6 +1,8 @@
-source(file.path("..","Constants.R"))
-source(file.path("..","ValidateData.R"))
-strTestingDirectory = file.path("..",c_strTestingDirectory)
+c_strDir <- file.path(getwd( ),"..")
+
+source(file.path(c_strDir,"lib","Constants.R"))
+source(file.path(c_strDir,"lib","ValidateData.R"))
+strTestingDirectory = file.path(c_strDir,"src",c_strTestingDirectory)
 
 expect_equal(funcParseIndexSlices("1",cNames),c(1))
 

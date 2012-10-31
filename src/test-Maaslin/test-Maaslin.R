@@ -1,4 +1,3 @@
-#c_strDir <- file.path(dirname(parent.frame(2)$file),"..")
 c_strDir <- file.path(getwd( ),"..")
 
 source(file.path(c_strDir,"lib","Constants.R"))

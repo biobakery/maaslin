@@ -12,6 +12,58 @@
 # (contact Timothy Tickle, ttickle@hsph.harvard.edu).
 #######################################################################################
 
+funcGetAnalysisMethods <- function(
+### Returns the appropriate functions for regularization, analysis, data transformation, and analysis object inspection.
+### This allows modular customization per analysis step.
+### To add a new method insert an entry in the switch for either the selection, transform, or method
+### Insert them by using the pattern optparse_keyword_without_quotes = function_in_AnalysisModules
+### Order in the return listy is curretly set and expected to be selection, transforms/links, analsis method
+### none returns null
+sModelSelectionKey,
+### Keyword defining the method of model selection
+sTransformKey,
+### Keyword defining the method of data transformation
+sMethodKey
+### Keyword defining the method of analysis
+){
+  lRetMethods = list()
+  #Insert selection methods here
+  lRetMethods[[c_iSelection]] = switch(sModelSelectionKey,
+    boost			= funcBoostModel,
+    forward			= funcForwardModel,
+    backward		= funcBackwardsModel,
+    none			= NULL)
+
+  #Insert transforms
+  lRetMethods[[c_iTransform]] = switch(sTransformKey,
+    asinsqrt		= funcArcsinSqrt,
+    none			= funcNoTransform)
+
+  #Insert analysis
+  lRetMethods[[c_iAnalysis]] = switch(sMethodKey,
+    neg_binomial	= funcBinomialMult,
+    quasi			= funcQuasiMult,
+    spearman		= funcSpearman,
+    wilcoxon		= funcWilcoxon,
+    lasso			= funcLasso,
+    lm				= funcLM,
+    none			= NULL)
+
+  #Insert method to get results
+  lRetMethods[[c_iResults]] = switch(sMethodKey,
+    neg_binomial	= funcGetLMResults,
+    quasi			= funcGetLMResults,
+    spearman		= funcGetUnivariateResults,
+    wilcoxon		= funcGetUnivariateResults,
+    lasso			= funcGetLassoResults,
+    lm				= funcGetLMResults,
+    none			= NULL)
+
+  return(lRetMethods)
+  ### Returns a list of functions to be passed for regularization, data transformation, analysis,
+  ### and custom analysis results introspection functions to pull from return objects data of interest
+}
+
 inlinedocs <- function(
 ##author<< Curtis Huttenhower <chuttenh@hsph.harvard.edu> and Timothy Tickle <ttickle@hsph.harvard.edu>
 ##description<< Main driver script. Should be called to perform MaAsLin Analysis.
@@ -52,11 +104,17 @@ pArgs <- add_option( pArgs, c("-o", "--outlierFence"), type="double", action="st
 
 # Arguments used in validation of MaAsLin
 ## Model selection (enumerate) c("none","boost","forward","backward")
-pArgs <- add_option( pArgs, c("-s", "--selection"), type="character", action="store", dest="strModelSelection", default="boost", metavar="model selection", help="Indicates which of the model selection techniques to use.")
+pArgs <- add_option( pArgs, c("-s", "--selection"), type="character", action="store", dest="strModelSelection", default="boost", metavar="model_selection", help="Indicates which of the model selection techniques to use.")
 ## Argument indicating which method should be ran (enumerate) c("wilcoxon","spearman","lm","lasso","neg_binomial","quasi")
-pArgs <- add_option( pArgs, c("-m", "--method"), type="character", action="store", dest="strMethod", default="lm", metavar="method", help="Indicates which of the statistical analysis methods to run.")
+pArgs <- add_option( pArgs, c("-m", "--method"), type="character", action="store", dest="strMethod", default="lm", metavar="analysis_method", help="Indicates which of the statistical analysis methods to run.")
 ## Argument indicating which link function is used c("none","asinsqrt")
-pArgs <- add_option( pArgs, c("-l", "--link"), type="character", action="store", dest="strTransform", default="asinsqrt", metavar="method", help="Indicates which link or transformation to use with a glm, if glm is not selected this argument will be set to none.")
+pArgs <- add_option( pArgs, c("-l", "--link"), type="character", action="store", dest="strTransform", default="asinsqrt", metavar="transform_method", help="Indicates which link or transformation to use with a glm, if glm is not selected this argument will be set to none.")
+
+# Arguments to supress MaAsLin actions on certain data
+## Do not perform model selection on the following data
+pArgs <- add_option( pArgs, c("-f","--forced"), type="character", action="store", dest="strForcedPredictors", default=NULL, metavar="forced_predictors", help="Metadata features that will be forced into the model. Example 'Metadata2|Metadata6|Metadata10'")
+## Do not impute the following
+pArgs <- add_option( pArgs, c("-n","--noImpute"), type="character", action="store", dest="strNoImpute", default=NULL, metavar="no_impute", help="These data will not be imputed. Pipe delimited data feature names. Example 'Feature1|Feature4|Feature6'")
 
 #Miscellaneouse arguments
 ### Argument to control logging (enumerate)
@@ -94,8 +152,9 @@ lsArgs <- parse_args( pArgs, positional_arguments = TRUE )
 #c_astrConfigurationValues <- c("noImpute", "invertPlots", "significanceLevel", "selectionFrequency", "processFunction")
 #c_lsConfigurationDefaults <- list(NULL, lsArgs$options$fInvert, lsArgs$options$dSignificanceLevel, NA, NULL)
 
-#TODO
-xNoImpute = NULL
+# Parse Piped parameters
+lsForcedParameters = if(!is.null(lsForcedParameters)){unlist(strsplit(lsForcedParameters,"[|]"))}else{NULL}
+xNoImpute = if(!is.null(strNoImpute)){unlist(strsplit(strNoImpute,"[|]"))}else{NULL}
 
 #If logging is not an allowable value, inform user and set to INFO
 if(length(intersect(names(loglevels), c(lsArgs$options$strVerbosity))) == 0)
@@ -192,16 +251,17 @@ frmeData = merge(inputFileData[[c_strMatrixMetadata]],inputFileData[[c_strMatrix
 row.names(frmeData) = frmeData[[1]]
 frmeData = frmeData[-1]
 
+#Write QC files only in certain modes of verbosity
 if( c_logrMaaslin$level <= loglevels["DEBUG"] ) {
-	# If the QC internal file does not exist, make
-	strQCDir = file.path(outputDirectory,"QC")
-	dir.create(strQCDir, showWarnings = FALSE)
-	# Write metadata matrix before merge
-	funcWriteMatrices(dataFrameList=list(Metadata = inputFileData[[c_strMatrixMetadata]]), saveFileList=c(file.path(strQCDir,"metadata.tsv")), configureFileName=c(file.path(strQCDir,"metadata.read.config")), acharDelimiter="\t")
-	# Write data matrix before merge
-	funcWriteMatrices(dataFrameList=list(Data = inputFileData[[c_strMatrixData]]), saveFileList=c(file.path(strQCDir,"data.tsv")), configureFileName=c(file.path(strQCDir,"data.read.config")), acharDelimiter="\t")
-	#Record the data as it has been read
-	funcWriteMatrices(dataFrameList=list(Merged = frmeData), saveFileList=c(file.path(strQCDir,"read-Merged.tsv")), configureFileName=c(file.path(strQCDir,"read-Merged.read.config")), acharDelimiter="\t")
+  # If the QC internal file does not exist, make
+  strQCDir = file.path(outputDirectory,"QC")
+  dir.create(strQCDir, showWarnings = FALSE)
+  # Write metadata matrix before merge
+  funcWriteMatrices(dataFrameList=list(Metadata = inputFileData[[c_strMatrixMetadata]]), saveFileList=c(file.path(strQCDir,"metadata.tsv")), configureFileName=c(file.path(strQCDir,"metadata.read.config")), acharDelimiter="\t")
+  # Write data matrix before merge
+  funcWriteMatrices(dataFrameList=list(Data = inputFileData[[c_strMatrixData]]), saveFileList=c(file.path(strQCDir,"data.tsv")), configureFileName=c(file.path(strQCDir,"data.read.config")), acharDelimiter="\t")
+  #Record the data as it has been read
+  funcWriteMatrices(dataFrameList=list(Merged = frmeData), saveFileList=c(file.path(strQCDir,"read-Merged.tsv")), configureFileName=c(file.path(strQCDir,"read-Merged.read.config")), acharDelimiter="\t")
 }
 
 #Data needed for the MaAsLin environment
@@ -214,9 +274,6 @@ lsData = c()
 #List of metadata indicies
 aiMetadata = c(1:liMetaData[2])
 lsData$aiMetadata = aiMetadata
-#List of genetics indicies
-aiGenetics = c()
-lsData$aiGenetics = aiGenetics
 #List of data indicies
 aiData = c(1:liData[2])+liMetaData[2]
 lsData$aiData = aiData
@@ -232,7 +289,7 @@ funcProcess <- NULL
 if(!is.null(funcSourceScript(lsArgs$options$strInputR))){funcProcess <- get(c_strCustomProcessFunction)}
 
 #Clean the data and update the current data list to the cleaned data list
-lsRet = funcClean( frmeData=frmeData, funcDataProcess=funcProcess, aiMetadata=aiMetadata, aiGenetics=aiGenetics, aiData=aiData, lsQCCounts=lsData$lsQCCounts, astrNoImpute=xNoImpute, dMinSamp = lsArgs$options$dMinSamp, dFence=lsArgs$options$dOutlierFence, funcTransform=afuncVariableAnalysis[[c_iTransform]])
+lsRet = funcClean( frmeData=frmeData, funcDataProcess=funcProcess, aiMetadata=aiMetadata, aiData=aiData, lsQCCounts=lsData$lsQCCounts, astrNoImpute=xNoImpute, dMinSamp = lsArgs$options$dMinSamp, dFence=lsArgs$options$dOutlierFence, funcTransform=afuncVariableAnalysis[[c_iTransform]])
 logdebug("lsRet", c_logrMaaslin)
 logdebug(format(lsRet), c_logrMaaslin)
 #Update the variables after cleaning
@@ -244,12 +301,13 @@ lsRet$lsQCCounts$aiMetadataCleaned = lsRet$aiMetadata
 astrMetadata = colnames(lsRet$frmeData)[lsRet$aiMetadata]
 lsRet$astrMetadata = astrMetadata
 
+#Write QC files only in certain modes of verbosity
 if( c_logrMaaslin$level <= loglevels["DEBUG"] ) {
 	#Record the data after cleaning
 	funcWriteMatrices(dataFrameList=list(Cleaned = lsRet$frmeData), saveFileList=c(file.path(strQCDir,"read_cleaned.tsv")), configureFileName=c(file.path(strQCDir,"read_cleaned.read.config")), acharDelimiter="\t") }
 
 #Log file
-strData = file.path(outputDirectory,paste(strBase,".txt",sep=""))
+strData = file.path(outputDirectory,paste(strBase,c_sLogFileSuffix,sep=""))
 
 #These variables will be used to count how many features get analysed
 lsRet$lsQCCounts$iBoosts = 0
@@ -258,13 +316,13 @@ lsRet$lsQCCounts$iNoTerms = 0
 lsRet$lsQCCounts$iLms = 0
 
 #Run analysis
-alsRetBugs = funcBugs( lsRet$frmeData, lsRet, lsRet$aiMetadata, lsRet$aiGenetics, lsRet$aiData, strData,
+alsRetBugs = funcBugs( lsRet$frmeData, lsRet, lsRet$aiMetadata, lsRet$aiData, strData,
 	lsArgs$options$dSelectionFrequency, lsArgs$options$dSignificanceLevel, lsArgs$options$dMinSamp, lsArgs$options$fInvert,
         outputDirectory, astrScreen = c(), funcReg=afuncVariableAnalysis[[c_iSelection]],
         funcAnalysis=afuncVariableAnalysis[[c_iAnalysis]], funcGetResults=afuncVariableAnalysis[[c_iResults]] )
 aiBugs = alsRetBugs$aiReturnBugs
 
-#Output a summary file of analysis process
+#Write QC files only in certain modes of verbosity
 if( c_logrMaaslin$level <= loglevels["DEBUG"] ) {
 	funcWriteQCReport(strProcessFileName=file.path(strQCDir,"ProcessQC.txt"), lsQCData=alsRetBugs$lsQCCounts, liDataDim=liData, liMetadataDim=liMetaData) }
 
@@ -276,11 +334,11 @@ if( !length( aiBugs ) ) { aiBugs <- lsRet$aiData }
 if( length( aiBugs ) )
 {
   logdebug("MFA:in", c_logrMaaslin)
-  lsMFA <- funcMFA( lsRet$frmeData, lsArgs$options$dMinSamp, aiUMD, aiBugs, lsRet$aiGenetics)
+  lsMFA <- funcMFA( lsRet$frmeData, lsArgs$options$dMinSamp, aiUMD, aiBugs)
   logdebug("MFA:out", c_logrMaaslin)
   if( class( lsMFA ) != "try-error" )
   {
-	logdebug("PlotMFA:in", c_logrMaaslin)
+    logdebug("PlotMFA:in", c_logrMaaslin)
     funcPlotMFA( fInvert=lsArgs$options$fInvert, lsMFA=lsMFA, tempSaveFileName=file.path(outputDirectory,strBase), funcPlotColors=lsRet$funcPlotColors, funcPlotPoints=lsRet$funcPlotPoints, funcPlotLegend=lsRet$funcPlotLegend )
     logdebug("PlotMFA:out", c_logrMaaslin)
   }

@@ -68,7 +68,8 @@ c_iNonFactorLevelThreshold = 3
 
 #Extensions
 c_sDetailFileSuffix = ".txt"
-c_sSummaryFileSuffix = "_Summary.txt"
+c_sSummaryFileSuffix = ".txt"
+c_sLogFileSuffix = "_log.txt"
 
 #Delimiter for output tables
 c_cTableDelimiter="\t"

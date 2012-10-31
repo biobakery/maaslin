@@ -1,9 +1,7 @@
-library(testthat)
-source(file.path("input","maaslin","src","Constants.R"))
-source(file.path("input","maaslin","src","SummarizeMaaslin.R"))
+c_strDir <- file.path(getwd( ),"..")
 
-#source("Constants.R")
-#source("SummarizeMaaslin.R")
+ssource(file.path(c_strDir,"lib","Constants.R"))
+source(file.path(c_strDir,"lib","SummarizeMaaslin.R"))
 
 context("Test funcSummarizeDirectory")
 strDirectoryNone = file.path(c_strTestingDirectory,c_strTestingInput,"funcSummarizeDirectory","None")

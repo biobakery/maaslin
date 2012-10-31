@@ -40,7 +40,7 @@ functionContrast
 ### functionContrast The univariate test to perfom
 ){
   #Get test comparisons (predictor names from formula string)
-  asComparisons = gsub("`","",setdiff(unlist(strsplit(strFormula," ")),c("adCur","~","+")))
+  asComparisons = gsub("`","",setdiff(unlist(strsplit(unlist(strsplit(strFormula,"~"))[2]," ")),c("","+")))
   lliTests = NULL
   lData = c()
   for(sComparison in asComparisons)
@@ -252,8 +252,10 @@ adCur,
 ### The response data
 lsParameters,
 ### User controlled parameters needed specific to boosting
-strLog
+strLog,
 ### File to which to document logging
+lsForcedParameters = NULL
+### Force these predictors to be in the model
 ){
   funcWrite( c("#Boost formula", strFormula), strLog )
   lmod = try( gbm( as.formula( strFormula ), data=frmeTmp, distribution="laplace", verbose=FALSE, n.minobsinnode=min(1, round(0.2 * nrow( frmeTmp ) ) ), n.trees=1000 ) )
@@ -309,8 +311,10 @@ adCur,
 ### Response data
 lsParameters,
 ### User controlled parameters needed specific to boosting
-strLog
+strLog,
 ### File to which to document logging
+lsForcedParameters = NULL
+### Force these predictors to be in the model
 ){
   astrTerms <- c()
   funcWrite( c("#Forward formula", strFormula), strLog )
@@ -338,8 +342,10 @@ adCur,
 ### Response data
 lsParameters,
 ### User controlled parameters needed specific to boosting
-strLog
+strLog,
 ### File to which to document logging
+lsForcedParameters = NULL
+### Force these predictors to be in the model
 ){
   astrTerms <- c()
   funcWrite( c("#Backwards formula", strFormula), strLog )
@@ -504,50 +510,3 @@ adCur
   return(try( glm(as.formula(strFormula), family=quasipoisson, data=frmeTmp, na.action=c_strNA_Action) ))
   ### lmod result object from lm
 }
-
-### Returns the appropriate functions for regularization, analysis, data transformation, and analysis object inspection.
-### This allows modular customization per analysis step.
-### To add a new method insert an entry in the switch for either the selection, transform, or method
-### Insert them by using the pattern optparse_keyword_without_quotes = function_in_AnalysisModules
-### Order in the return listy is curretly set and expected to be selection, transforms/links, analsis method
-### none returns null
-funcGetAnalysisMethods <- function(sModelSelectionKey,sTransformKey,sMethodKey)
-{
-  lRetMethods = list()
-  #Insert selection methods here
-  lRetMethods[[c_iSelection]] = switch(sModelSelectionKey,
-    boost			= funcBoostModel,
-    forward			= funcForwardModel,
-    backward		= funcBackwardsModel,
-    none			= NULL)
-
-  #Insert transforms
-  lRetMethods[[c_iTransform]] = switch(sTransformKey,
-    asinsqrt		= funcArcsinSqrt,
-    none			= funcNoTransform)
-
-  #Insert analysis
-  lRetMethods[[c_iAnalysis]] = switch(sMethodKey,
-    neg_binomial	= funcBinomialMult,
-    quasi			= funcQuasiMult,
-    spearman		= funcSpearman,
-    wilcoxon		= funcWilcoxon,
-    lasso			= funcLasso,
-    lm				= funcLM,
-    none			= NULL)
-
-  #Insert method to get results
-  lRetMethods[[c_iResults]] = switch(sMethodKey,
-    neg_binomial	= funcGetLMResults,
-    quasi			= funcGetLMResults,
-    spearman		= funcGetUnivariateResults,
-    wilcoxon		= funcGetUnivariateResults,
-    lasso			= funcGetLassoResults,
-    lm				= funcGetLMResults,
-    none			= NULL)
-
-  return(lRetMethods)
-  ### Returns a list of functions to be passed for regularization, data transformation, analysis,
-  ### and custom analysis results introspection functions to pull from return objects data of interest
-}
-

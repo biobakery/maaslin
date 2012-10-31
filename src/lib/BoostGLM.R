@@ -40,8 +40,6 @@ funcDataProcess,
 ### Custom script that can be given to perform specialized processing before MaAsLin does.
 aiMetadata,
 ### Indices of columns in frmeData which are metadata for analysis.
-aiGenetics,
-### Indices of columns in frmeData which are genetics for analysis.
 aiData,
 ### Indices of column in frmeData which are (abundance) data for analysis.
 lsQCCounts,
@@ -61,10 +59,9 @@ funcTransform
   {
     c_logrMaaslin$debug("Additional preprocess function attempted.")
 
-    pTmp <- funcDataProcess( frmeData=frmeData, aiMetadata=aiMetadata, aiGenetics=aiGenetics, aiData=aiData)
+    pTmp <- funcDataProcess( frmeData=frmeData, aiMetadata=aiMetadata, aiData=aiData)
     frmeData = pTmp$frmeData
     aiMetadata = pTmp$aiMetadata
-    aiGenetics = pTmp$aiGenetics
     aiData = pTmp$aiData
     lsQCCounts$lsQCCustom = pTmp$lsQCCounts
   }
@@ -87,11 +84,11 @@ funcTransform
     }
   }
 
-  # Metadata and genetics: Remove missing data
+  # Metadata: Remove missing data
   # This is defined as if there is only one non-NA value or
   # if the number of NOT NA data is less than a percentage of the data defined by dMinSamp
   aiRemove = c()
-  for( iCol in c(aiMetadata, aiGenetics) )
+  for( iCol in c(aiMetadata) )
   {
     adCol = frmeData[,iCol]
     if( ( sum( !is.na( adCol ) ) < ( dMinSamp * length( adCol ) ) ) ||
@@ -101,9 +98,8 @@ funcTransform
     }
   }
 
-  # Remove metadata and genetics data
+  # Remove metadata
   aiMetadata = setdiff( aiMetadata, aiRemove )
-  aiGenetics = setdiff( aiGenetics, aiRemove )
 
   # Update the data which was removed.
   lsQCCounts$iMissingMetadata = aiRemove
@@ -112,21 +108,6 @@ funcTransform
     c_logrMaaslin$info("Removing the following metadata/genetics for too much missing data or only one data value outside of NA.")
     c_logrMaaslin$info(format(colnames( frmeData )[aiRemove]))
   }
-
-  # Remove genetics where the minimum number of values over one is less tan a percentage (dMinSamp) of the sample
-  aiRemove = c()
-  for( iCol in aiGenetics )
-  {
-    adCol = frmeData[,iCol]
-    if( sum( adCol > 0, na.rm = TRUE ) < ( dMinSamp * length( adCol ) ) )
-    {
-      aiRemove = c(aiRemove, iCol)
-    }
-  }
-
-  # Remove index of genetics which where filtered out
-  aiGenetics <- setdiff( aiGenetics, aiRemove )
-  lsQCCounts$iRemovedSNPs = aiRemove
 
   # Document
   if(length(aiRemove))
@@ -227,7 +208,7 @@ funcTransform
 
   # Keep track of factor levels in a list for later use
   lslsFactors <- list()
-  for( iCol in c(aiGenetics, aiMetadata) )
+  for( iCol in c(aiMetadata) )
   {
     aCol <- frmeData[,iCol]
     if( class( aCol ) == "factor" )
@@ -246,8 +227,7 @@ funcTransform
   }
 
   #Use na.gam.replace to manage NA metadata and genetics
-  aiTmp <- c(aiGenetics, aiMetadata)
-  aiTmp <- setdiff( aiTmp, which( colnames( frmeData ) %in% astrNoImpute ) )
+  aiTmp <- setdiff( aiMetadata, which( colnames( frmeData ) %in% astrNoImpute ) )
   frmeData[,aiTmp] <- na.gam.replace( frmeData[,aiTmp] )
 
   #If NA is a value in  factor data, set the NA as a level.
@@ -262,11 +242,10 @@ funcTransform
   }
 
   c_logrMaaslin$debug("End FuncClean")
-  return( list(frmeData = frmeData, aiMetadata = aiMetadata, aiGenetics = aiGenetics, aiData = aiData, lsQCCounts = lsQCCounts) )
+  return( list(frmeData = frmeData, aiMetadata = aiMetadata, aiData = aiData, lsQCCounts = lsQCCounts) )
   ### Return list of
   ### frmeData: The Data after cleaning
   ### aiMetadata: The indices of the metadata still being used after filtering
-  ### aiGenetics: The indices of the genetics still being used after filtering
   ### aiData: The indices of the data still being used after filtering
   ### lsQCCOunts: QC info
 }
@@ -279,8 +258,6 @@ lsData,
 ### This list is a general container for data as the analysis occurs, think about it as a cache for the analysis
 aiMetadata,
 ### Indices of metadata used in analysis
-aiGenetics,
-### Indices of genetics used in analysis
 aiData,
 ### Indices of response data
 strData,
@@ -325,7 +302,7 @@ funcGetResults=NULL
       c_logrMaaslin$info( "Taxon %d/%d", iTaxon, max( aiData ) )
     }
     #Call analysis method
-    lsOne <- funcBugHybrid( iTaxon, frmeData, lsData, aiMetadata, aiGenetics, dFreq, dSig, dMinSamp, adP, lsSig, strLog, funcReg, funcAnalysis, funcGetResults )
+    lsOne <- funcBugHybrid( iTaxon, frmeData, lsData, aiMetadata, dFreq, dSig, dMinSamp, adP, lsSig, strLog, funcReg, funcAnalysis, funcGetResults )
 
     #Update pvalue array
     adP <- lsOne$adP
@@ -371,13 +348,7 @@ funcGetResults=NULL
     astrFactors <- lsCur$factors
     strTaxon <- lsCur$taxon
 	
-    if( length( aiGenetics ) )
-    {
-      if( length( intersect( astrFactors, colnames( frmeData )[aiGenetics] ) ) )
-      {
-      	astrRet <- c(astrRet, astrFactors)
-      }
-    } else if( !length( astrScreen ) || sum( astrFactors %in% astrScreen ) ) {
+    if( !length( astrScreen ) || sum( astrFactors %in% astrScreen ) ) {
       astrRet <- c(astrRet, strTaxon)
     }
     astrRet <- unique( astrRet )
@@ -414,18 +385,13 @@ funcGetResults=NULL
       ## If the significance meets the threshold
       ## Write PDF file output
       if( adQ[j] > dSig ) { next }
-      strFilePDF = funcPDF( lsCur=lsCur, curPValue=adP[j], curQValue=adQ[j], aiGenetics=aiGenetics, strFilePDF=strFilePDF, strBaseOut=strBaseOut, strName=strName, fInvert=fInvert )
+      strFilePDF = funcPDF( lsCur=lsCur, curPValue=adP[j], curQValue=adQ[j], strFilePDF=strFilePDF, strBaseOut=strBaseOut, strName=strName, fInvert=fInvert )
     }
 
     if( dev.cur( ) != 1 ) { dev.off( ) }
   }
 
-  if( length( aiGenetics ) )
-  {
-    aiTmp <- aiGenetics
-  } else {
-    aiTmp <- aiData
-  }
+  aiTmp <- aiData
 
   logdebug("End funcBugs", c_logMaaslin)
   aiReturnBugs = aiTmp[colnames( frmeData )[aiTmp] %in% astrRet]
@@ -439,7 +405,6 @@ funcGetResults=NULL
 ### frmeData: Data frame The full data
 ### lsData: List of all associated data
 ### aiMetadata: Numeric vector of indices
-### aiGenetics: Numeric vector of genetics data
 ### dFreq: Used to select metadata from the boosting, selected refrequency must be larger than this
 ### dSig: Numeric significance threshold for q-value cut off
 ### adP: List of pvalues from associations
@@ -455,8 +420,6 @@ lsData,
 ### List of all associated data
 aiMetadata,
 ### Numeric vector of indices
-aiGenetics,
-### Numeric vector of genetics data
 dFreq,
 ### Used to select metadata from the boosting, selected refrequency must be larger than this
 dSig,
@@ -480,7 +443,6 @@ funcGetResult=NULL
 #dTime00 <- proc.time()[3]
   #Get metadata and genetics column names
   astrMetadata = intersect( lsData$astrMetadata, colnames( frmeData )[aiMetadata] )
-  astrGenetics = colnames( frmeData )[aiGenetics]
 
   #Get data measurements that are not NA
   aiRows <- which( !is.na( frmeData[,iTaxon] ) )
@@ -519,7 +481,7 @@ funcGetResult=NULL
   #Set the min boosting selection frequency to a default if not given
   if( is.na( dFreq ) )
   {
-    dFreq <- 0.5 / length( c(astrMetadata, astrGenetics) )
+    dFreq <- 0.5 / length( c(astrMetadata) )
   }
 
   # Get the full data for the bug feature
@@ -527,13 +489,11 @@ funcGetResult=NULL
 
   #Create a linear additive model including all metadata or genetics which were not filtered
   lmod <- NA
-  strFormula <- paste( "adCur ~", paste( sprintf( "`%s`", astrMetadata ), collapse = " + " ),
-  ifelse( length( astrGenetics ), "+", "" ), paste( astrGenetics, collapse = " + " ), sep = " " )
+  strFormula <- paste( "adCur ~", paste( sprintf( "`%s`", astrMetadata ), collapse = " + " ))
 
   # Document the model
   funcWrite( c("#taxon", colnames( frmeTmp )[iTaxon]), strLog )
   funcWrite( c("#metadata", astrMetadata), strLog )
-  funcWrite( c("#Genetics", ifelse(length(astrGenetics),astrGenetics,"Not Genetics")), strLog )
   funcWrite( c("#samples", rownames( frmeTmp )), strLog )
 
   # Regularisation terms

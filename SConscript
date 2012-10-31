@@ -5,8 +5,10 @@ pE = DefaultEnvironment( )
 
 c_fileDirLib		= sfle.d( fileDirSrc, "lib" )
 c_fileInputMaaslinR	= sfle.d( pE, fileDirSrc, "Maaslin.R" )
-c_afileTestsR		= [c_fileInputMaaslinR] + [sfle.d( pE, c_fileDirLib, s ) for s in
-						("SummarizeMaaslin.R", "ValidateData.R", "Utility.R", "IO.R")]
+c_afileTestsR		= [sfle.d( pE, c_fileDirLib, s ) for s in
+						("ValidateData.R", "Utility.R")]
+#c_afileTestsR		= [c_fileInputMaaslinR] + [sfle.d( pE, c_fileDirLib, s ) for s in
+#						("SummarizeMaaslin.R", "ValidateData.R", "Utility.R")]#, "IO.R")]
 c_afileDocsR		= c_afileTestsR + [sfle.d( pE, c_fileDirLib, s ) for s in
 						("AnalysisModules.R", "BoostGLM.R", "MaaslinPlots.R", "MFA.R")]
 
