@@ -34,8 +34,8 @@ test_that("Test only strings are true",{
 })
 
 context("Test funcIsValidFileName")
-strFileSimpleRCFileAnswer = file.path(c_strTestingDirectory,c_strCorrectAnswers,"FuncWriteMatrixToReadConfigFile_SimpleAnswer.read.config")
-strFileUseAllRCFileAnswer = file.path(c_strTestingDirectory,c_strCorrectAnswers,"FuncWriteMatrixToReadConfigFile_AllAnswer.read.config")
+strFileSimpleRCFileAnswer = file.path(c_strDir,c_strTestingDirectory,c_strCorrectAnswers,"FuncWriteMatrixToReadConfigFile_SimpleAnswer.read.config")
+strFileUseAllRCFileAnswer = file.path(c_strDir,c_strTestingDirectory,c_strCorrectAnswers,"FuncWriteMatrixToReadConfigFile_AllAnswer.read.config")
 
 test_that("Test only strings pointing to existing files are true",{
   expect_equal(funcIsValidFileName(NA),FALSE)

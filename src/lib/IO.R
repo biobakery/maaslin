@@ -267,9 +267,9 @@ log = FALSE
 funcReadMatrix = function(
 ### Read one matrix
 ### The name to give the block of data read in from file
-tempFileName,
+tempMatrixName,
 ### ID rows and columns are assumed to be 1
-tempMatrixName=NA,
+tempFileName=NA,
 ### Data file to read
 tempDelimiter=NA,
 ### Data matrix delimiter

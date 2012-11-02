@@ -41,16 +41,16 @@ test_that("Test that white spaces at the beginning and end of s string are remov
 #TODO currently the capture versio of this does not produce a tabbed table (or default table delim) which is not consistent with the rest of the code base.
 context("Test funcWrite")
 #Answer files
-c_sAnswerWriteFile1 = file.path(c_strTestingDirectory,c_strCorrectAnswers,"FuncWriteTemp1.txt")
-c_sAnswerWriteFile2 = file.path(c_strTestingDirectory,c_strCorrectAnswers,"FuncWriteTemp2.txt")
-c_sAnswerWriteDFFile1 = file.path(c_strTestingDirectory,c_strCorrectAnswers,"FuncWriteTempDF1.txt")
-c_sAnswerWriteDFFile2 = file.path(c_strTestingDirectory,c_strCorrectAnswers,"FuncWriteTempDF2.txt")
+c_sAnswerWriteFile1 = file.path(c_strDir,c_strTestingDirectory,c_strCorrectAnswers,"FuncWriteTemp1.txt")
+c_sAnswerWriteFile2 = file.path(c_strDir,c_strTestingDirectory,c_strCorrectAnswers,"FuncWriteTemp2.txt")
+c_sAnswerWriteDFFile1 = file.path(c_strDir,c_strTestingDirectory,c_strCorrectAnswers,"FuncWriteTempDF1.txt")
+c_sAnswerWriteDFFile2 = file.path(c_strDir,c_strTestingDirectory,c_strCorrectAnswers,"FuncWriteTempDF2.txt")
 
 #Working files
-c_sTempWriteFile1 = file.path(c_strTestingDirectory,c_strTemporaryFiles,"FuncWriteTemp1.txt")
-c_sTempWriteFile2 = file.path(c_strTestingDirectory,c_strTemporaryFiles,"FuncWriteTemp2.txt")
-c_sTempWriteDFFile1 = file.path(c_strTestingDirectory,c_strTemporaryFiles,"FuncWriteTempDF1.txt")
-c_sTempWriteDFFile2 = file.path(c_strTestingDirectory,c_strTemporaryFiles,"FuncWriteTempDF2.txt")
+c_sTempWriteFile1 = file.path(c_strDir,c_strTestingDirectory,c_strTemporaryFiles,"FuncWriteTemp1.txt")
+c_sTempWriteFile2 = file.path(c_strDir,c_strTestingDirectory,c_strTemporaryFiles,"FuncWriteTemp2.txt")
+c_sTempWriteDFFile1 = file.path(c_strDir,c_strTestingDirectory,c_strTemporaryFiles,"FuncWriteTempDF1.txt")
+c_sTempWriteDFFile2 = file.path(c_strDir,c_strTestingDirectory,c_strTemporaryFiles,"FuncWriteTempDF2.txt")
 dfTest = as.data.frame(as.matrix(cbind(c(1,11,111),c(2,22,222),c(3,33,333))))
 sWriteString = "Testing, 1,2,3 anything but that."
 unlink(c_sTempWriteFile1)
@@ -73,12 +73,12 @@ test_that("Test that a test file is written and appended to for strings and data
 
 context("Test funcWriteTable")
 #Answer files
-c_sAnswerWriteDFFile1 = file.path(c_strTestingDirectory,c_strCorrectAnswers,"FuncWriteTableTempDF1.txt")
-c_sAnswerWriteDFFile2 = file.path(c_strTestingDirectory,c_strCorrectAnswers,"FuncWriteTableTempDF2.txt")
+c_sAnswerWriteDFFile1 = file.path(c_strDir,c_strTestingDirectory,c_strCorrectAnswers,"FuncWriteTableTempDF1.txt")
+c_sAnswerWriteDFFile2 = file.path(c_strDir,c_strTestingDirectory,c_strCorrectAnswers,"FuncWriteTableTempDF2.txt")
 
 #Working files
-c_sTempWriteDFFile1 = file.path(c_strTestingDirectory,c_strTemporaryFiles,"FuncWriteTableTempDF1.txt")
-c_sTempWriteDFFile2 = file.path(c_strTestingDirectory,c_strTemporaryFiles,"FuncWriteTableTempDF2.txt")
+c_sTempWriteDFFile1 = file.path(c_strDir,c_strTestingDirectory,c_strTemporaryFiles,"FuncWriteTableTempDF1.txt")
+c_sTempWriteDFFile2 = file.path(c_strDir,c_strTestingDirectory,c_strTemporaryFiles,"FuncWriteTableTempDF2.txt")
 unlink(c_sTempWriteDFFile1)
 unlink(c_sTempWriteDFFile2)
 funcWriteTable(dfTest,c_sTempWriteDFFile1)
