@@ -26,27 +26,13 @@ options(warn=-1)
 funcWriteMatrixToReadConfigFile = function(
 ### Writes a read config file. Will write over a file by default
 strConfigureFileName,
-### Read Config file to write to 
-strMatrixFile,
-### File that will be read
+### Matrix that will be read
 strMatrixName,
 ### Name of matrix that will be read
 strRowIndices=NA,
 ### Rows which will be Read (TSV) by default all will be read
 strColIndices=NA,
 ### Cols which will be Read (TSV) by default all will be read
-strDtCharacter=NA,
-### Data columns which will be forced to character data
-strDtFactoral=NA,
-### Data columns which will be forced to factor data
-strDtInteger=NA,
-### Data columns which will be forced to integer data
-strDtLogical=NA,
-### Data columns which will be forced to logical data
-strDtNumeric=NA,
-### Data columns which will be forced to numeric data
-strDtOrdered=NA,
-### Data columns which will be forced to ordered data
 acharDelimiter=c_strDefaultMatrixDelimiter,
 ### Delimiter for the matrix that will be read in\
 fAppend=FALSE
@@ -74,14 +60,6 @@ fAppend=FALSE
     paste(c_TSVROWS,strRowIndices,sep=" "),
     paste(c_TSVCOLUMNS,strColIndices,sep=" "))
 
-  #Optional output
-  if(!is.na(strMatrixFile) && !is.null(strMatrixFile)){lsDataLines=c(lsDataLines,paste(c_FILE_NAME,strMatrixFile,sep=" "))}
-  if(!is.na(strDtCharacter) && !is.null(strDtCharacter)){lsDataLines=c(lsDataLines,paste(c_CHARACTER_DATA_TYPE,strDtCharacter,sep=" "))}
-  if(!is.na(strDtFactoral) && !is.null(strDtFactoral)){lsDataLines=c(lsDataLines,paste(c_FACTOR_DATA_TYPE,strDtFactoral,sep=" "))}
-  if(!is.na(strDtInteger) && !is.null(strDtInteger)){lsDataLines=c(lsDataLines,paste(c_INTEGER_DATA_TYPE,strDtInteger,sep=" "))}
-  if(!is.na(strDtLogical) && !is.null(strDtLogical)){lsDataLines=c(lsDataLines,paste(c_LOGICAL_DATA_TYPE,strDtLogical,sep=" "))}
-  if(!is.na(strDtNumeric) && !is.null(strDtNumeric)){lsDataLines=c(lsDataLines,paste(c_NUMERIC_DATA_TYPE,strDtNumeric,sep=" "))}
-  if(!is.na(strDtOrdered) && !is.null(strDtOrdered)){lsDataLines=c(lsDataLines,paste(c_ORDEREDFACTOR_DATA_TYPE,strDtOrdered,sep=" "))}
   lsDataLines = c(lsDataLines,"\n")
 
   #Output to file
@@ -143,86 +121,15 @@ log = FALSE
     #Get col indices
     colStart = 1
     if(!is.na(columnNamesString)){  colStart = 2}
-    colEnd = columnCount+ colStart - 1
+    colEnd = columnCount+colStart - 1
     colIndices = paste(c(colStart:colEnd),sep="",collapse=",")
-
-    #Data modes
-    dtCharacter = c()
-    dtFactoral = c()
-    dtInteger = c()
-    dtLogical = c()
-    dtNumeric = c()
-    dtOrdered = c()
-
-    #Move through data frame and collect data
-    for(colIndex in c(1:columnCount))
-    {
-      currentCol = data[[colIndex]]
-
-      if(is.character(currentCol))
-      {
-        dtCharacter = c(dtCharacter,colIndex)
-        next
-      }
-      if(is.integer(currentCol))
-      {
-        dtInteger = c(dtInteger,colIndex)
-        next
-      }
-      if(is.logical(currentCol))
-      {
-        dtLogical = c(dtLogical,colIndex)
-        next
-      }
-      if(is.numeric(currentCol))
-      {
-        dtNumeric = c(dtNumeric,colIndex)
-        next
-      }
-      if(is.ordered(currentCol))
-      {
-        dtOrdered = c(dtOrdered,colIndex)
-        next
-      }
-      if(is.factor(currentCol))
-      {
-        dtFactoral = c(dtFactoral,colIndex)
-        next
-      }
-    }
-
-    #Adjust for column of row names and turn into comma delimited list
-    if(length(dtCharacter)>0)
-    {dtCharacter=paste(dtCharacter+1,sep="",collapse=",")
-    } else {dtCharacter=""}
-    
-    if(length(dtFactoral)>0)
-    {dtFactoral=paste(dtFactoral+1,sep="",collapse=",")
-    } else {dtFactoral=""}
-    
-    if(length(dtInteger)>0)
-    {dtInteger=paste(dtInteger+1,sep="",collapse=",")
-    } else {dtInteger=""}
-    
-    if(length(dtLogical)>0)
-    {dtLogical=paste(dtLogical+1,sep="",collapse=",")
-    } else {dtLogical=""}
-    
-    if(length(dtNumeric)>0)
-    {dtNumeric=paste(dtNumeric+1,sep="",collapse=",")
-    } else {dtNumeric=""}
-    
-    if(length(dtOrdered)>0)
-    {dtOrdered=paste(dtOrdered+1,sep="",collapse=",")
-    } else {dtOrdered=""}
 
     #Write Data to file
     write.table(data, saveFileList[dataIndex], quote = FALSE, sep = acharDelimiter, col.names = NA, row.names = rowNames, na = "NA", append = FALSE)
 
     #Write the read config file
-    funcWriteMatrixToReadConfigFile(strConfigureFileName=configureFileName, strMatrixFile=saveFileList[dataIndex], strMatrixName=dataFrameNames[dataIndex],
-      strRowIndices=rowIndices, strColIndices=colIndices, strDtCharacter=dtCharacter, strDtFactoral=dtFactoral, strDtInteger=dtInteger,
-      strDtLogical=dtLogical, strDtNumeric=dtNumeric, strDtOrdered=dtOrdered, acharDelimiter=acharDelimiter, fAppend=TRUE)
+    funcWriteMatrixToReadConfigFile(strConfigureFileName=configureFileName, strMatrixName=dataFrameNames[dataIndex],
+      strRowIndices=rowIndices, strColIndices=colIndices, acharDelimiter=acharDelimiter, fAppend=TRUE)
   }
   return(TRUE)
 }
@@ -256,7 +163,7 @@ log = FALSE
   for(dataBlock in lsDataBlocks)
   {
     #Read in matrix
-    returnFrames[[returnFramesIndex]] = funcReadMatrix(tempMatrixName=dataBlock[1], tempFileName=dataBlock[2], tempDelimiter=dataBlock[3], tempColumns=dataBlock[5], tempRows=dataBlock[4], tempDtCharacter=dataBlock[6], tempDtFactor=dataBlock[7], tempDtInteger=dataBlock[8], tempDtLogical=dataBlock[9], tempDtNumeric=dataBlock[10], tempDtOrderedFactor=dataBlock[11], tempLog=log)
+    returnFrames[[returnFramesIndex]] = funcReadMatrix(tempMatrixName=dataBlock[1], tempFileName=dataBlock[2], tempDelimiter=dataBlock[3], tempColumns=dataBlock[5], tempRows=dataBlock[4], tempLog=log)
     returnFrameNames = c(returnFrameNames,dataBlock[1])
     returnFramesIndex = returnFramesIndex + 1
   }
@@ -277,18 +184,6 @@ tempColumns=NA,
 ### Data columns to read
 tempRows=NA,
 ### Data rows to read
-tempDtCharacter=NA,
-### Data columns which will be forced to integer data
-tempDtFactor=NA,
-### Data columns which will be forced to integer data
-tempDtInteger=NA,
-### Data columns which will be forced to integer data
-tempDtLogical=NA,
-### Data columns which will be forced to integer data
-tempDtNumeric=NA,
-### Data columns which will be forced to integer data
-tempDtOrderedFactor=NA,
-### Data columns which will be forced to integer data
 tempLog=FALSE
 ### Indicator to log
 ){
@@ -316,13 +211,6 @@ tempLog=FALSE
   #Convert characters to vectors of indices
   tempColumns = funcParseIndexSlices(ifelse(is.na(tempColumns),"-",tempColumns), columnNameList)
   tempRows = funcParseIndexSlices(ifelse(is.na(tempRows),"-", tempRows), rowNameList)
-  
-  tempDtCharacter = funcParseIndexSlices(tempDtCharacter, columnNameList)
-  tempDtFactor = funcParseIndexSlices(tempDtFactor, columnNameList)
-  tempDtOrderedFactor = funcParseIndexSlices(tempDtOrderedFactor, columnNameList)
-  tempDtInteger = funcParseIndexSlices(tempDtInteger, columnNameList)
-  tempDtLogical = funcParseIndexSlices(tempDtLogical, columnNameList)
-  tempDtNumeric = funcParseIndexSlices(tempDtNumeric, columnNameList)
 
   #Check indices
   #Check to make sure valid id col/rows and data col/rows
@@ -347,12 +235,6 @@ tempLog=FALSE
   dataMatrix = dataMatrix[(-1)]
   #Adjust row ids given the removal of the id row
   tempColumns=(tempColumns-1)
-  if(funcIsValid(tempDtCharacter)){ tempDtCharacter=(tempDtCharacter-1)}
-  if(funcIsValid(tempDtFactor)){ tempDtFactor=(tempDtFactor-1)}
-  if(funcIsValid(tempDtInteger)){ tempDtInteger=(tempDtInteger-1)}
-  if(funcIsValid(tempDtLogical)){ tempDtLogical=(tempDtLogical-1)}
-  if(funcIsValid(tempDtNumeric)){ tempDtNumeric=(tempDtNumeric-1)}
-  if(funcIsValid(tempDtOrderedFactor)){ tempDtOrderedFactor=(tempDtOrderedFactor-1)}
 
   ## Remove id rows/columns and set row/col names
   #Remove ids from vector
@@ -365,94 +247,13 @@ tempLog=FALSE
   row.names(dataMatrix) = as.character(rowNameList)
   colnames(dataMatrix) = as.character(columnNameList)
 
-  #Set all columns data types to R guessed default
-  for(i in 1:ncol(dataMatrix)){
-    dataMatrix[,i] <- type.convert(dataMatrix[,i], na.strings = c_astrNA)}
-
-  #Check to make sure there are no duplicates in data mode indices (remove NAs before checking uniqueness, we done care about duplicate Nas)
-  if((funcIsValid(tempDtNumeric)) || (funcIsValid(tempDtFactor)) || (funcIsValid(tempDtCharacter)) || (funcIsValid(tempDtInteger)) || (funcIsValid(tempDtLogical)) || (funcIsValid(tempDtOrderedFactor)))
-  {
-    allModes = c(tempDtNumeric,tempDtFactor,tempDtCharacter,tempDtInteger,tempDtLogical,tempDtOrderedFactor)
-    allModes = allModes[!is.na(allModes)]
-
-    if(anyDuplicated(allModes))
-    {
-      stop("Data types (modes) indices appeared in more than one category. Make sure the indices in all combined data types (mode) categories are unique.")
-    }
-    
-    #Set modes of data
-    if (funcIsValid(tempDtNumeric))
-    {
-      #Set numerics
-      for(numericIndex in tempDtNumeric)
-      {
-        tryCatch({
-         dataMatrix[numericIndex] = as.numeric(as.character(dataMatrix[[numericIndex]]))
-        }, error = function(ex) {
-          stop(paste("IO::Index ",numericIndex," could not be converted to a numeric vector.",dataMatrix[numericIndex], sep=""))}, finally={})
-      }
-    }
-    if (funcIsValid(tempDtFactor))
-    {
-      #Set factors
-      for(factorIndex in tempDtFactor)
-      {
-        tryCatch({
-        dataMatrix[factorIndex] = as.factor(as.character(dataMatrix[[factorIndex]]))
-        }, error = function(ex) {
-          stop(paste("IO::Index ",factorIndex," could not be converted to a factor vector.",dataMatrix[factorIndex], sep=""))}, finally={})
-      }
-    }
-    if (funcIsValid(tempDtInteger))
-    {
-      #Set integers
-      for(integerIndex in tempDtInteger)
-      {
-        tryCatch({
-        dataMatrix[integerIndex] = as.integer(as.character(dataMatrix[[integerIndex]]))
-        }, error = function(ex) {
-          stop(paste("IO::Index ",integerIndex," could not be converted to an integer vector.",dataMatrix[integerIndex], sep=""))}, finally={})
-      }
-    }
-    if (funcIsValid(tempDtLogical))
-    {
-      #Set logical
-      for(logicalIndex in tempDtLogical)
-      {
-        tryCatch({
-        dataMatrix[logicalIndex] = sapply(dataMatrix[[logicalIndex]],
-          function(x){ifelse(is.logical(x), as.logical(as.character(x)), as.logical(as.numeric(as.character(x))))})
-        }, error = function(ex) {
-          stop(paste("IO::Index ",logicalIndex," could not be converted to a logical vector.",dataMatrix[logicalIndex], sep=""))}, finally={})
-      }
-    }
-    if (funcIsValid(tempDtOrderedFactor))
-    {
-      #Set orderedFactor
-      for(orderedIndex in tempDtOrderedFactor)
-      {
-        tryCatch({
-        dataMatrix[orderedIndex] = as.ordered(as.character(dataMatrix[[orderedIndex]]))
-        }, error = function(ex) {
-          stop(paste("IO::Index ",orderedIndex," could not be converted to an ordered factor vector.",dataMatrix[orderedIndex], sep=""))}, finally={})
-      }
-    }
-    if (funcIsValid(tempDtCharacter))
-    {
-      #Set Character
-      for(characterIndex in tempDtCharacter)
-      {
-        tryCatch({
-        dataMatrix[characterIndex] = as.character(dataMatrix[[characterIndex]])
-        }, warning={}, error = function(ex) {
-          stop(paste("IO::Index ",characterIndex," could not be converted to a character vector.",dataMatrix[characterIndex], sep=""))}, finally={})
-      }
-    }
-  }
-
   #Reduce matrix
   #Account for when both column ranges and row ranges are given or just a column or a row range is given
   dataMatrix = dataMatrix[tempRows, tempColumns, drop=FALSE]
+
+  #Set all columns data types to R guessed default
+  for(i in 1:ncol(dataMatrix)){
+    dataMatrix[,i] <- type.convert(dataMatrix[,i], na.strings = c_astrNA)}
 
   #Return matrix
   return(dataMatrix)
@@ -478,7 +279,7 @@ defaultFile = NA
 
   for(textIndex in c(1:length(fileDataList)))
   {
-	if(textIndex > length(fileDataList)) {break}
+    if(textIndex > length(fileDataList)) {break}
     #Start at the Matrix name
     #Keep this if statement first so that you scan through until you find a matrix block
     if(fileDataList[textIndex] == c_MATRIX_NAME)
@@ -487,7 +288,7 @@ defaultFile = NA
       #Either way reset
       if(funcIsValid(fileName)&&funcIsValid(matrixName))
       {
-        matrixInformationList[[matrixInformationListCount]] = c(matrixName,fileName,delimiter,rows,columns,dtCharacter,dtFactor,dtInteger,dtLogical,dtNumeric,dtOrderedFactor)
+        matrixInformationList[[matrixInformationListCount]] = c(matrixName,fileName,delimiter,rows,columns)
         matrixInformationListCount = matrixInformationListCount + 1
       }
 
@@ -498,12 +299,6 @@ defaultFile = NA
       delimiter = "\t"
       rows = NA
       columns = NA
-      dtCharacter = NA
-      dtFactor = NA
-      dtInteger = NA
-      dtLogical = NA
-      dtNumeric = NA
-      dtOrderedFactor = NA 
       #If is not matrix name and no matrix name is known skip until you find the matrix name
       #If matrix name is known, continue to collect information about that matrix
     } else if(is.na(matrixName)){next}
@@ -514,12 +309,6 @@ defaultFile = NA
     else if(strParseKey==c_FILE_NAME){fileName=fileDataList[textIndex+1]}
     else if(strParseKey %in% c(c_TSVROWS,c_PCLCOLUMNS,c_ROWS)){rows=fileDataList[textIndex+1]}
     else if(strParseKey %in% c(c_TSVCOLUMNS,c_PCLROWS,c_COLUMNS)){columns=fileDataList[textIndex+1]}
-    else if(strParseKey==c_CHARACTER_DATA_TYPE){dtCharacter=fileDataList[textIndex+1]}
-    else if(strParseKey==c_FACTOR_DATA_TYPE){dtFactor=fileDataList[textIndex+1]}
-    else if(strParseKey==c_INTEGER_DATA_TYPE){dtInteger=fileDataList[textIndex+1]}
-    else if(strParseKey==c_LOGICAL_DATA_TYPE){dtLogical=fileDataList[textIndex+1]}
-    else if(strParseKey==c_NUMERIC_DATA_TYPE){dtNumeric=fileDataList[textIndex+1]}
-    else if(strParseKey==c_ORDEREDFACTOR_DATA_TYPE){dtOrderedFactor=fileDataList[textIndex+1]}
     else if(strParseKey==c_DELIMITER)
     {
         switch(fileDataList[textIndex + 1],
@@ -532,7 +321,7 @@ defaultFile = NA
   #If there is matrix information left
   if((!is.na(matrixName)) && (!is.na(fileName)))
   {
-    matrixInformationList[[matrixInformationListCount]] = c(matrixName,fileName,delimiter,rows,columns,dtCharacter,dtFactor,dtInteger,dtLogical,dtNumeric,dtOrderedFactor)
+    matrixInformationList[[matrixInformationListCount]] = c(matrixName,fileName,delimiter,rows,columns)
     matrixInformationListCount = matrixInformationListCount + 1
   }
   return(matrixInformationList)

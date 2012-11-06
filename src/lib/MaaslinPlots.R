@@ -26,8 +26,6 @@ curPValue,
 ### Pvalue to display
 curQValue,
 ### Qvalue to display
-aiGenetics,
-### List of genetics indicies
 strFilePDF,
 ### PDF file to create or to which to append
 strBaseOut,
@@ -129,23 +127,8 @@ fInvert
     title( ylab = strTaxon, cex.lab = dCEX, line = dLine )
   } else {
     #Plot continuous data
-    fGenetics <- length( aiGenetics ) && ( class( adCur ) == "integer" ) &&
-      length( intersect( astrFactors, colnames( frmeData )[aiGenetics] ) )
-    if( fGenetics )
-    {
-      astrLabels <- c()
-      for( i in 0:2 )
-      {
-        astrLabels <- c(astrLabels, sprintf( "%d (%d)", i, sum( adCur == i, na.rm = TRUE ) ))
-      }
-      adCur <- adCur + rnorm( length( adCur ), sd = 0.05 )
-    }
     plot( adCur, adY, mar = adMar, main = strTitle, xlab = lsCur$name, pch = 20,
-      col = sprintf( "%s99", funcGetColor( ) ), ylab = NA, xaxt = ifelse( fGenetics, "n", "s" ) )
-    if( fGenetics )
-    {
-      axis( 1, at = 0:2, labels = astrLabels )
-    }
+      col = sprintf( "%s99", funcGetColor( ) ), ylab = NA, xaxt = "s" )
     title( ylab = strTaxon, cex.lab = dCEX )
     lmod <- lm( adY ~ adCur )
     dColor <- lmod$coefficients[2] * mean( adCur, na.rm = TRUE ) / mean( adY, na.rm = TRUE )

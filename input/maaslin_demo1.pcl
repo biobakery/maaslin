@@ -1,5 +1,12 @@
 sample	Sample1	Sample2	Sample3	Sample4	Sample5	Sample6	Sample7	Sample8
 Age	87	78	3	2	32	10	39	96
+Cohort	Healthy	Healthy	Healthy	Healthy	IBD	IBD	IBD	IBD
+Favorite_color	Yellow	Blue	Green	Yellow	Green	Blue	Green	Blue
+Height	60	72	63	67	71	65	61	64
+Sex	0	1	0	1	1	0	1	0
+Smoking	0	0	1	0	1	1	1	0
+Star_Trek_Fan	1	1	0	0	1	0	0	1
+Weight	151	258	195	172	202	210	139	140
 Bacteria	1	1	1	1	1	1	1	1
 Bacteria|Actinobacteria|Actinobacteria	0.0507585	0.252153	0.161725	0.0996769	0.144075	0.00592628	0.0399472	0.0663809
 Bacteria|Actinobacteria|Actinobacteria|Bifidobacteriales|Bifidobacteriaceae|Bifidobacterium|1	0.0507585	0.0861117	0.00168464	0.0011966	0.0164305	0.00592628	0.0367439	0.0663809

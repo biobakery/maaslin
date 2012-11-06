@@ -29,8 +29,6 @@ aiMetadata,
 ### Indicies or metadata to use
 aiBugs,
 ### Indicies of features
-aiGenetics,
-### Indicies of genetics
 aiGenes = c()
 ### Indicies of genetics
 ){
@@ -147,7 +145,6 @@ aiGenes = c()
   for( lsCur in list(
                   list(aiCols = aiMDN, strType = "n", strName = "metadata_nom"),
                   list(aiCols = aiMDC, strType = "c", strName = "metadata_cont"),
-                  list(aiCols = aiGenetics, strType = "n", strName = "genetics"),
                   list(aiCols = aiBugs, strType = "c", strName = "taxa")) )
   {
     aiCur <- lsCur$aiCols

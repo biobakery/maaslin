@@ -17,9 +17,8 @@ def MaAsLin( filePCL, fileDirOut = fileDirOutput, fileDirInt = fileDirTmp ):
 	def funcMaaslin( target, source, env, fileR = fileR, fileRC = fileRC ):
 		strT, astrSs = sfle.ts( target, source )
 		strProg, strTSV = astrSs[:2]
-		return sfle.ex( [strProg, strT, strTSV] +
-			( ["-i", fileRC] if fileRC else [] ) +
-			( ["-I", fileR] if fileR else [] ) )
+		return sfle.ex( [strProg] + ( ["-i", fileRC] if fileRC else [] ) +
+			( ["-I", fileR] if fileR else [] ) + [strT, strTSV])
 	
 	strBase = os.path.basename( strBase )
 	strDir = sfle.d( fileDirOut, strBase )

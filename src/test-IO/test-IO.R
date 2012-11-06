@@ -52,17 +52,15 @@ strFileAppendTrueRCFileAnswer = file.path(strTestingDirectory,c_strCorrectAnswer
 strFileMatrix = file.path(strTestingDirectory,c_strTestingInput,"TestMatrix.tsv")
 
 #Get read config files in different scenarios
-funcWriteMatrixToReadConfigFile(strWriteMatrixRCTestFile,strFileMatrix,"SimpleMatrix")
+funcWriteMatrixToReadConfigFile(strWriteMatrixRCTestFile,"SimpleMatrix")
 strSimpleInterface = readLines(strWriteMatrixRCTestFile)
-funcWriteMatrixToReadConfigFile(strWriteMatrixRCTestFile,strFileMatrix,"AllMatrix",strRowIndices="1,2,3,4,5",
-  strColIndices="10,11,12",strDtCharacter="1", strDtFactoral="2", strDtInteger="3", strDtLogical="4", strDtNumeric="5", strDtOrdered="6",
-  acharDelimiter=" ")
+funcWriteMatrixToReadConfigFile(strWriteMatrixRCTestFile,"AllMatrix",strRowIndices="1,2,3,4,5", strColIndices="10,11,12",acharDelimiter=" ")
 strUseAllParametersInterface = readLines(strWriteMatrixRCTestFile)
-funcWriteMatrixToReadConfigFile(strWriteMatrixRCTestFile,strFileMatrix,"SimpleMatrix")
-funcWriteMatrixToReadConfigFile(strWriteMatrixRCTestFile,strFileMatrix,"SimpleMatrix")
+funcWriteMatrixToReadConfigFile(strWriteMatrixRCTestFile,"SimpleMatrix")
+funcWriteMatrixToReadConfigFile(strWriteMatrixRCTestFile,"SimpleMatrix")
 strAppendFalseInterface = readLines(strWriteMatrixRCTestFile)
-funcWriteMatrixToReadConfigFile(strWriteMatrixRCTestFile,strFileMatrix,"SimpleMatrix")
-funcWriteMatrixToReadConfigFile(strWriteMatrixRCTestFile,strFileMatrix,"SimpleMatrix",fAppend=TRUE)
+funcWriteMatrixToReadConfigFile(strWriteMatrixRCTestFile,"SimpleMatrix")
+funcWriteMatrixToReadConfigFile(strWriteMatrixRCTestFile,"SimpleMatrix",fAppend=TRUE)
 strAppendTrueInterface = readLines(strWriteMatrixRCTestFile)
 
 test_that("Correct config file is written",{
@@ -72,15 +70,14 @@ test_that("Correct config file is written",{
   expect_equal(strAppendTrueInterface,readLines(strFileAppendTrueRCFileAnswer))
 })
 
-
 context("Test funcReadConfigFile")
-lsSimpleRC = funcReadConfigFile(strFileSimpleRCFileAnswer)
-lsAllRC = funcReadConfigFile(strFileUseAllRCFileAnswer)
+lsSimpleRC = funcReadConfigFile(strFileSimpleRCFileAnswer,strFileMatrix)
+lsAllRC = funcReadConfigFile(strFileUseAllRCFileAnswer,strFileMatrix)
 
 lsSimpleListAnswer = list()
-lsSimpleListAnswer[[1]]=c("SimpleMatrix", strFileMatrix,"\t","-","-",NA,NA,NA,NA,NA,NA)
+lsSimpleListAnswer[[1]]=c("SimpleMatrix",strFileMatrix,"\t","-","-")
 lsAllListAnswer = list()
-lsAllListAnswer[[1]]=c("AllMatrix", strFileMatrix," ","1,2,3,4,5","10,11,12","1","2","3","4","5","6")
+lsAllListAnswer[[1]]=c("AllMatrix",strFileMatrix," ","1,2,3,4,5","10,11,12")
 
 test_that("Test readConfigFile reads in files correctly.",{
   expect_equal(lsSimpleRC,lsSimpleListAnswer)
@@ -91,22 +88,16 @@ test_that("Test readConfigFile reads in files correctly.",{
 context("Test funcReadMatrix")
 
 #Read in config files
-dfSimpleRead = funcReadMatrix("SimpleMatrix",strFileMatrix,"\t","2,4,5","7,3,5","2","4","5")
-dfUseAllParametersRead = funcReadMatrix("AllMatrix",strFileMatrix,"\t","2,3,4","6,2,4",NA,NA,NA,"2","3","4")
+dfSimpleRead = funcReadMatrix("SimpleMatrix",strFileMatrix,"\t","2,4,5","7,3,5")
+dfUseAllParametersRead = funcReadMatrix("AllMatrix",strFileMatrix,"\t","2,3,4","6,2,4")
 
 dfSimpleReadCorrect = as.data.frame(as.matrix(rbind(c(21,23,24),c(41,43,44),c(61,63,64))))
 rownames(dfSimpleReadCorrect) = c("Feature2", "Feature4", "Feature6")
 colnames(dfSimpleReadCorrect) = c("Sample1", "Sample3", "Sample4")
-dfSimpleReadCorrect[1] = as.character(dfSimpleReadCorrect[[1]])
-dfSimpleReadCorrect[2] = as.factor(as.character(dfSimpleReadCorrect[[2]]))
-dfSimpleReadCorrect[3] = as.integer(dfSimpleReadCorrect[[3]])
 
 dfUseAllReadCorrect = as.data.frame(as.matrix(rbind(c(11,12,13),c(31,32,33),c(51,52,53))))
 rownames(dfUseAllReadCorrect) = c("Feature1", "Feature3", "Feature5")
 colnames(dfUseAllReadCorrect) = c("Sample1", "Sample2", "Sample3")
-dfUseAllReadCorrect[1] = as.logical(dfUseAllReadCorrect[[1]])
-dfUseAllReadCorrect[2] = as.numeric(dfUseAllReadCorrect[[2]])
-dfUseAllReadCorrect[3] = as.ordered(as.character(dfUseAllReadCorrect[[3]]))
 
 test_that("Matrix file is read correctly.",{
   expect_equal(dfSimpleRead,dfSimpleReadCorrect)
@@ -114,6 +105,7 @@ test_that("Matrix file is read correctly.",{
 })
 
 context("Test funcReadMatrices")
+
 sConfigureFile1Matrix = file.path(strTestingDirectory,c_strTestingInput,"1Matrix.read.config")
 mtxOne = as.data.frame(as.matrix(rbind(c(11,12,13,14,15),c(21,22,23,24,25),c(31,32,33,34,35),c(41,42,43,44,45),
                                                         c(51,52,53,54,55),c(61,62,63,64,65),c(71,72,73,74,75),c(81,82,83,84,85),
@@ -134,16 +126,16 @@ rownames(mtxThree) = c("Feature1","Feature2","Feature3","Feature4","Feature5","F
 colnames(mtxThree) = c("Sample1","Sample2","Sample4")
 
 #Read one matrix
-ldfRet1 = funcReadMatrices(configureFile=sConfigureFile1Matrix)
+ldfRet1 = funcReadMatrices(configureFile=sConfigureFile1Matrix,strFileMatrix)
 ldfRet1Answer = list( "Matrix1" = mtxOne)
 
 #Read two matrices
-ldfRet2 = funcReadMatrices(configureFile=sConfigureFile2Matrix)
+ldfRet2 = funcReadMatrices(configureFile=sConfigureFile2Matrix,strFileMatrix)
 ldfRet2Answer = list( "Matrix1" = mtxOne,
                       "Matrix2" = mtxTwo)
 
 #Read three matrices from two different files
-ldfRet3 = funcReadMatrices(configureFile=sConfigureFile3Matrix)
+ldfRet3 = funcReadMatrices(configureFile=sConfigureFile3Matrix,strFileMatrix)
 ldfRet3Answer = list( "Matrix1" = mtxOne,
                       "Matrix2" = mtxTwo,
                       "Matrix3" = mtxThree)

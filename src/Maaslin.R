@@ -79,10 +79,11 @@ initial.options <- commandArgs(trailingOnly = FALSE)
 script.name <- sub("--file=", "", initial.options[grep("--file=", initial.options)])
 strDir = file.path( dirname( script.name ), "lib" )
 strSelf = basename( script.name )
-for( strR in dir( strDir, pattern = "*.R" ) ) {
-	if( strR == strSelf ) {
-		next }
-	source( file.path( strDir, strR ) ) }
+for( strR in dir( strDir, pattern = "*.R$" ) )
+{
+  if( strR == strSelf ) {next}
+  source( file.path( strDir, strR ) )
+}
 
 ### Create command line argument parser
 pArgs <- OptionParser( usage = "%prog [options] <output.txt> <data.tsv>" )
@@ -112,7 +113,7 @@ pArgs <- add_option( pArgs, c("-l", "--link"), type="character", action="store",
 
 # Arguments to supress MaAsLin actions on certain data
 ## Do not perform model selection on the following data
-pArgs <- add_option( pArgs, c("-f","--forced"), type="character", action="store", dest="strForcedPredictors", default=NULL, metavar="forced_predictors", help="Metadata features that will be forced into the model. Example 'Metadata2|Metadata6|Metadata10'")
+pArgs <- add_option( pArgs, c("-F","--forced"), type="character", action="store", dest="strForcedPredictors", default=NULL, metavar="forced_predictors", help="Metadata features that will be forced into the model. Example 'Metadata2|Metadata6|Metadata10'")
 ## Do not impute the following
 pArgs <- add_option( pArgs, c("-n","--noImpute"), type="character", action="store", dest="strNoImpute", default=NULL, metavar="no_impute", help="These data will not be imputed. Pipe delimited data feature names. Example 'Feature1|Feature4|Feature6'")
 
@@ -153,13 +154,13 @@ lsArgs <- parse_args( pArgs, positional_arguments = TRUE )
 #c_lsConfigurationDefaults <- list(NULL, lsArgs$options$fInvert, lsArgs$options$dSignificanceLevel, NA, NULL)
 
 # Parse Piped parameters
-lsForcedParameters = if(!is.null(lsForcedParameters)){unlist(strsplit(lsForcedParameters,"[|]"))}else{NULL}
-xNoImpute = if(!is.null(strNoImpute)){unlist(strsplit(strNoImpute,"[|]"))}else{NULL}
+lsForcedParameters = if(!is.null(lsArgs$strForcedPredictors)){unlist(strsplit(lsArgs$strForcedPredictors,"[|]"))}else{NULL}
+xNoImpute = if(!is.null(lsArgs$strNoImpute)){unlist(strsplit(lsArgs$strNoImpute,"[|]"))}else{NULL}
 
 #If logging is not an allowable value, inform user and set to INFO
 if(length(intersect(names(loglevels), c(lsArgs$options$strVerbosity))) == 0)
 {
-  print(paste("Maaslin::Error. Did not understand the value given for logging, please use any of the following: ",c_lsLoggingValues,"."))
+  print(paste("Maaslin::Error. Did not understand the value given for logging, please use any of the following: DEBUG,INFO,WARN,ERROR."))
   print(paste("Maaslin::Warning. Setting logging value to \"",strDefaultLogging,"\"."))
 }
 
@@ -306,9 +307,6 @@ if( c_logrMaaslin$level <= loglevels["DEBUG"] ) {
 	#Record the data after cleaning
 	funcWriteMatrices(dataFrameList=list(Cleaned = lsRet$frmeData), saveFileList=c(file.path(strQCDir,"read_cleaned.tsv")), configureFileName=c(file.path(strQCDir,"read_cleaned.read.config")), acharDelimiter="\t") }
 
-#Log file
-strData = file.path(outputDirectory,paste(strBase,c_sLogFileSuffix,sep=""))
-
 #These variables will be used to count how many features get analysed
 lsRet$lsQCCounts$iBoosts = 0
 lsRet$lsQCCounts$iBoostErrors = 0
@@ -316,7 +314,7 @@ lsRet$lsQCCounts$iNoTerms = 0
 lsRet$lsQCCounts$iLms = 0
 
 #Run analysis
-alsRetBugs = funcBugs( lsRet$frmeData, lsRet, lsRet$aiMetadata, lsRet$aiData, strData,
+alsRetBugs = funcBugs( lsRet$frmeData, lsRet, lsRet$aiMetadata, lsRet$aiData, strBase,
 	lsArgs$options$dSelectionFrequency, lsArgs$options$dSignificanceLevel, lsArgs$options$dMinSamp, lsArgs$options$fInvert,
         outputDirectory, astrScreen = c(), funcReg=afuncVariableAnalysis[[c_iSelection]],
         funcAnalysis=afuncVariableAnalysis[[c_iAnalysis]], funcGetResults=afuncVariableAnalysis[[c_iResults]] )

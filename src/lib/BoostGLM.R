@@ -105,14 +105,7 @@ funcTransform
   lsQCCounts$iMissingMetadata = aiRemove
   if(length(aiRemove))
   {
-    c_logrMaaslin$info("Removing the following metadata/genetics for too much missing data or only one data value outside of NA.")
-    c_logrMaaslin$info(format(colnames( frmeData )[aiRemove]))
-  }
-
-  # Document
-  if(length(aiRemove))
-  {
-    c_logrMaaslin$info("Removing the following genetics indicies, too sparse.")
+    c_logrMaaslin$info("Removing the following metadata for too much missing data or only one data value outside of NA.")
     c_logrMaaslin$info(format(colnames( frmeData )[aiRemove]))
   }
 
@@ -226,7 +219,7 @@ funcTransform
     frmeData[,iCol] <- adCol
   }
 
-  #Use na.gam.replace to manage NA metadata and genetics
+  #Use na.gam.replace to manage NA metadata
   aiTmp <- setdiff( aiMetadata, which( colnames( frmeData ) %in% astrNoImpute ) )
   frmeData[,aiTmp] <- na.gam.replace( frmeData[,aiTmp] )
 
@@ -253,7 +246,7 @@ funcTransform
 funcBugs <- function(
 ### Run analysis of all data features against all metadata
 frmeData,
-### Cleaned data including metadata, genetics, and data
+### Cleaned data including metadata, and data
 lsData,
 ### This list is a general container for data as the analysis occurs, think about it as a cache for the analysis
 aiMetadata,
@@ -287,7 +280,8 @@ funcGetResults=NULL
     strDirOut <- paste( dirname( strData ), "/", sep = "" )
   }
   strBaseOut <- paste( strDirOut, sub( "\\.([^.]+)$", "", basename(strData) ), sep = "/" )
-  strLog <- paste( strBaseOut, ".txt", sep = "" )
+
+  strLog <- paste( strBaseOut,c_sLogFileSuffix, ".txt", sep = "" )
   c_logrMaaslin$info( "Outputting to: %s", strLog )
   unlink( strLog )
 
@@ -441,7 +435,7 @@ funcGetResult=NULL
 ){
 
 #dTime00 <- proc.time()[3]
-  #Get metadata and genetics column names
+  #Get metadata column names
   astrMetadata = intersect( lsData$astrMetadata, colnames( frmeData )[aiMetadata] )
 
   #Get data measurements that are not NA
