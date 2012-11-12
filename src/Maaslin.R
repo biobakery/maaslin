@@ -90,7 +90,7 @@ pArgs <- OptionParser( usage = "%prog [options] <output.txt> <data.tsv>" )
 
 # Settings for MaAsLin
 ## Data configuration file
-pArgs <- add_option( pArgs, c("-i", "--input_config"), type="character", action="store", dest="strInputRC", metavar="data.read.config", help="Optional configuration file describing data input format.")
+pArgs <- add_option( pArgs, c("-i", "--input_config"), type="character", action="store", dest="strInputConfig", metavar="data.read.config", help="Optional configuration file describing data input format.")
 ## Data manipulation/normalization file
 pArgs <- add_option( pArgs, c("-I", "--input_process"), type="character", action="store", dest="strInputR", metavar="data.R", help="Optional configuration script normalizing or processing data.")
 
@@ -238,7 +238,7 @@ funcSourceScript <- function(strFunctionPath)
 }
 
 #Read file
-inputFileData = funcReadMatrices(lsArgs$options$strInputRC, strInputTSV, log=TRUE)
+inputFileData = funcReadMatrices(lsArgs$options$strInputConfig, strInputTSV, log=TRUE)
 if(is.null(inputFileData[[c_strMatrixMetadata]])) { names(inputFileData)[1] <- c_strMatrixMetadata }
 if(is.null(inputFileData[[c_strMatrixData]])) { names(inputFileData)[2] <- c_strMatrixData }
 
