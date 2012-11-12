@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+<tool name="A.) Load data for MaAsLin" id="maaslin_input" version="1.0">
+  <description>
+  </description>
+  <action module="galaxy.tools.actions.upload" class="UploadToolAction"/>
+  <command interpreter="python">
+      $GALAXY_ROOT_DIR/tools/maaslin/galaxy/upload.py $GALAXY_ROOT_DIR $GALAXY_DATATYPES_CONF_FILE $paramfile
+    #set $outnum = 0
+    #while $varExists('output%i' % $outnum):
+        #set $output = $getVar('output%i' % $outnum)
+        #set $outnum += 1
+        #set $file_name = $output.file_name
+        ## FIXME: This is not future-proof for other uses of external_filename (other than for use by the library upload's "link data" feature)
+        #if $output.dataset.dataset.external_filename:
+            #set $file_name = "None"
+        #end if
+        ${output.dataset.dataset.id}:${output.files_path}:${file_name}
+    #end while
+  </command>
+  <inputs nginx_upload="true">
+    <param name="file_type" type="hidden" label="File Format" value="maaslin" />
+    <param name="async_datasets" type="hidden" value="None"/>
+    <upload_dataset name="files" title="Specify Files for Dataset" file_type_name="file_type" metadata_ref="files_metadata">
+      <param name="file_data" type="file" size="30" label="Input PCL file" ajax-upload="true" help="TIP: A example file can be found at the URL https://bytebucket.org/chuttenh/maaslin/wiki/maaslin_demo_pcl.txt  ">
+        <validator type="expression" message="You will need to reselect the file you specified (%s)." substitute_value_in_message="True">not ( ( isinstance( value, unicode ) or isinstance( value, str ) ) and value != "" )</validator> <!-- use validator to post message to user about needing to reselect the file, since most browsers won't accept the value attribute for file inputs -->
+      </param>
+      <param name="url_paste" type="text" area="true" size="5x35" label="Enter URL or file text here" help="Here you may specify a list of URLs (one per line) or paste the contents of a file."/> 
+      <param name="ftp_files" type="ftpfile" label="Files uploaded via FTP"/>
+      <param name="space_to_tab" type="hidden" display="checkboxes" value="Yes" multiple="True" /> 
+    </upload_dataset>
+    <conditional name="files_metadata" title="Specify metadata" value_from="self:app.datatypes_registry.get_upload_metadata_params" value_ref="file_type" value_ref_in_group="False" />
+    <!-- <param name="other_dbkey" type="text" label="Or user-defined Genome" /> -->
+  </inputs>
+  <help>
+
+
+Feedback?  Not working?  Please contact us at Maaslin_google_group_ .
+
+MaAsLin: Multivariate Analysis by Linear Models
+-----------------------------------------------
+
+MaAsLin is a multivariate statistical framework that finds associations between clinical metadata and microbial community abundance or function. The clinical metadata can be of any type continuous (for example age and weight), boolean (sex, stool/biopsy), or discrete/factor (cohort groupings and phenotypes). MaAsLin is best used in the case when you are associating many metadata with microbial measurements. When this is the case each metadatum can be a diffrent type. For example, you could include age, weight, sex, cohort and phenotype in the same input file to be analyzed in the same MaAsLin run. The microbial measurements are expected to be normalized before using MaAsLin and so are proportional data ranging from 0 to 1.0.
+
+The results of a MaAsLin run are the association of a specific microbial community member with metadata. These associations are without the influence of the other metadata in the study. There are certain factors known that can influence the microbiome (for example diet, age, geography, fecal or biopsy sample origin). MaAsLin allows one to detect the effect of a metadata, possibly a phenotype, deconfounding the effects of diet, age, sample origin or any other metadata captured in the study!
+
+.. image:: ../galaxy/static/images/Figure1-Overview.png
+
+*Maaslin Analysis Overview* MaAsLin performs boosted, additive general linear models between one group of data (metadata/the predictors) and another group (in our case microbial abundance/the response). Given that metagenomic data is sparse, the boosting is used to select metadata that show some potential to be associated with microbial abundances. Boosting of metadata and selection of a model occurs per otu. The metadata data that is selected for use by boosting is then used in a general linear model using metadata as predictors and otu arcsin-square root transformed abundance as the response.
+
+For more information on the technical aspects to this algorithm please see the methodological evaluation of MaAsLin that compared it to multiviariate and univariate analyses. Please check back for paper citing.
+
+Required inputs
+---------------
+
+MaAsLin requires an input pcl file of metadata and microbial community measurements. MaAsLin expects a PCL file as an input file. A PCL file is a text delimited file similar to an excel spread sheet with the following characteristics.
+
+1. **Rows** represent metadata and features (bugs), **columns** represent samples.
+2. The **first row** by default should be the sample ids.
+3. Metadata rows should be next.
+4. Lastly, rows containing features (bugs) measurements (like abundance) should be after metadata rows.
+5. The **first column** should contain the ID describing the column. For metadata this may be, for example, ''Age'' for a row containing the age of the patients donating the samples. For measurements, this should be the feature name (bug name).
+6. The file is expected to be TAB delimited.
+
+
+Contacts
+--------
+
+Please feel free to contact us at ttickle@hsph.harvard.edu for any questions or comments!
+
+.. _Maaslin_google_group: https://groups.google.com/d/forum/maaslin-users
+
+  </help>
+</tool>

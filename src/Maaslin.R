@@ -222,6 +222,8 @@ strBase <- sub("\\.[^.]*$", "", basename(strInputTSV))
 ### defaults are used and no custom scripts are ran
 funcSourceScript <- function(strFunctionPath)
 {
+  print("File:::")
+  print(strFunctionPath)
   #If is specified, set up the custom func clean variable
   #If the custom script is null then return 
   if(is.null(strFunctionPath)){return(NULL)}
@@ -287,6 +289,9 @@ lsData$frmeRaw = frmeData
 
 #Load script if it exists, stop on error
 funcProcess <- NULL
+print("Inputs:::")
+print(lsArgs$options$strInputR)
+
 if(!is.null(funcSourceScript(lsArgs$options$strInputR))){funcProcess <- get(c_strCustomProcessFunction)}
 
 #Clean the data and update the current data list to the cleaned data list
