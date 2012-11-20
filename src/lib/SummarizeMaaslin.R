@@ -30,8 +30,6 @@ inlinedocs <- function(
 
 #Logging class
 suppressMessages(library(logging, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
-#source(file.path("input","maaslin","src","Utility.R"))
-#source("Utility.R")
 
 # Get logger
 c_logrMaaslin	<- getLogger( "maaslin" )
@@ -41,7 +39,7 @@ funcSummarizeDirectory = function(
 astrOutputDirectory,
 ### The output directory to find the MaAsLin results.
 strBaseName,
-### The prefix string used in maaslin to strart the detail files.
+### The prefix string used in maaslin to start the detail files.
 astrSummaryFileName,
 ### The summary file's name, should be a path not a file name
 astrKeyword,
@@ -53,7 +51,7 @@ afSignificanceLevel
   dfSignificantData = NULL
 
   #Get detail files in output directory
-  astrlsDetailFiles = list.files(astrOutputDirectory, pattern=paste(strBaseName,"-","[0-9A-Za-z]*",c_sDetailFileSuffix,sep=""), full.names=TRUE)
+  astrlsDetailFiles = list.files(astrOutputDirectory, pattern=paste(strBaseName,"-","[[:print:]]*",c_sDetailFileSuffix,sep=""), full.names=TRUE)
   logdebug(format(astrlsDetailFiles),c_logrMaaslin)
 
   #For each file after the first file

@@ -1,5 +1,5 @@
 c_strDir <- file.path(getwd( ),"..")
-print(file.path(getwd( ),".."))
+
 source(file.path(c_strDir,"lib","Constants.R"))
 source(file.path(c_strDir,"lib","SummarizeMaaslin.R"))
 source(file.path(c_strDir,"lib","Utility.R"))

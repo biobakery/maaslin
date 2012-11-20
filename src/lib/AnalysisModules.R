@@ -362,16 +362,10 @@ lsForcedParameters = NULL
   astrTerms <- c()
   funcWrite( c("#Backwards formula", strFormula), strLog )
 
-  print("###################Backwards")
   lmodFull <- try( lm(as.formula( strFormula ), data=frmeTmp ))
-  print("###################lmodFull")
-  print(lmodFull)
-  print(summary(lmodFull))
   if(! class( lmodFull ) == "try-error" )
   {
-    print("###################lmod")
     lmod = stepAIC(lmodFull, direction="backward")
-    print(lmod)
     return(funcGetStepPredictors(lmod,strLog))
   } else { return( NA ) }
   return(astrTerms)

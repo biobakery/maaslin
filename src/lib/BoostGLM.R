@@ -128,7 +128,6 @@ funcTransform
   aiSumOutlierPerDatum = c()
   if( dFence > 0.0 )
   {
-    print("OUTLIERS: Using fence")
     # For each sample measurements
     for( iData in aiData )
     {

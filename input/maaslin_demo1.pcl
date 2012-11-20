@@ -1,5 +1,5 @@
 sample	Sample1	Sample2	Sample3	Sample4	Sample5	Sample6	Sample7	Sample8
-Age	87	78	3	2	32	10	39	96
+Age_standard	87	78	3	2	32	10	39	96
 Cohort	Healthy	Healthy	Healthy	Healthy	IBD	IBD	IBD	IBD
 Favorite_color	Yellow	Blue	Green	Yellow	Green	Blue	Green	Blue
 Height	60	72	63	67	71	65	61	64
