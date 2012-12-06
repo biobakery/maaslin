@@ -180,6 +180,8 @@ funcPlotMFA <- function(
 ### Plot Multiple Factoral Analysis
 lsMFA,
 ### MFA output object
+frmeData,
+### Analysis data
 fInvert = FALSE,
 ### Invert figure to make background black
 tempSaveFileName="MFA",
@@ -208,10 +210,16 @@ tempPCH=20
   lsPCA = lsMFA$global.pca
 
   #Plot colors
-  astrCols = ifelse(exists("funcPlotColors",mode="function"),funcPlotColors( frmeData ),funcGetRandomColors( length( lsPCA$ind$coord ) ))
+  astrCols = funcGetRandomColors( length( lsPCA$ind$coord ) )
+  if(exists("funcPlotColors",mode="function")){astrCols = funcPlotColors( frmeData )}
+  print("MFA colors")
+  print(astrCols)
 
   #Plot points
-  aiPoints = ifelse(exists("funcPlotPoints",mode="function"),funcPlotPoints( frmeData ),16)
+  aiPoints = 16
+  if(exists("funcPlotPoints",mode="function")){aiPoints = funcPlotPoints( frmeData )}
+  print("MFA points")
+  print(aiPoints)
 
   dX1 = max( lsPCA$ind$coord[,1] ) / max( lsPCA$var$coord[,1] )
   dX2 = min( lsPCA$ind$coord[,1] ) / min( lsPCA$var$coord[,1] )
@@ -219,11 +227,13 @@ tempPCH=20
   dY2 = min( lsPCA$ind$coord[,2] ) / min( lsPCA$var$coord[,2] )
 
   #Scale the metadate labels so they are viewable
-  dScaleFactor = ifelse(exists("funcGetMetadataScale",mode="function"),funcGetMetadataScale(),1)
+  dScaleFactor = 1
+  if(exists("funcGetMetadataScale",mode="function")){dScaleFactor = funcGetMetadataScale()}
 
   #Scale feature and metadata text locations so they are on the page
   dScale = dScaleFactor * min( abs( c(dX1, dX2, dY1, dY2) ) )
-  dBugScaleFactor = ifelse(exists("funcGetFeatureScale",mode="function"),funcGetFeatureScale(),1)
+  dBugScaleFactor = 1
+  if(exists("funcGetFeatureScale",mode="function")){dBugScaleFactor = funcGetFeatureScale()}
   dBugScale = dBugScaleFactor * min( abs( c(dX1, dX2, dY1, dY2) ) )
 
   #Set X and Y coordinates and plot points
@@ -231,13 +241,15 @@ tempPCH=20
   strY <- sprintf( "Dimension 2 (%.2f%%)", lsPCA$eig$`percentage of variance`[2] )
 
   #Get metadata names
-  lsasMetadata = ifelse(exists("funcPlotMetadata",mode="function"),funcPlotMetadata(),
-    list(asNames=lsMFA$summary.quali$modalite, asLabels=lsMFA$summary.quali$modalite))
+  lsasMetadata = list(asNames=lsMFA$summary.quali$modalite, asLabels=lsMFA$summary.quali$modalite)
+  if(exists("funcPlotMetadata",mode="function")){lsasMetadata = funcPlotMetadata()}
+    
   afMetadata <- rownames(lsPCA$var$coord) %in% lsasMetadata$asNames
   afLabels = lsasMetadata$asLabels
 
   #Get feature names
-  lsFeaturesToPlot = ifelse(exists("funcPlotFeatures",mode="function"),funcPlotFeatures(),lsMFA$summary.quanti$variable)
+  lsFeaturesToPlot = lsMFA$summary.quanti$variable
+  if(exists("funcPlotFeatures",mode="function")){lsFeaturesToPlot = funcPlotFeatures()}
   afFeatures = rownames(lsPCA$var$coord) %in% lsFeaturesToPlot
 
   #Order the metadata

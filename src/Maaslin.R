@@ -350,7 +350,7 @@ if( length( aiBugs ) )
   if( class( lsMFA ) != "try-error" )
   {
     logdebug("PlotMFA:in", c_logrMaaslin)
-    funcPlotMFA( fInvert=lsArgs$options$fInvert, lsMFA=lsMFA, tempSaveFileName=file.path(outputDirectory,strBase), funcPlotColors=lsRet$funcPlotColors, funcPlotPoints=lsRet$funcPlotPoints, funcPlotLegend=lsRet$funcPlotLegend )
+    funcPlotMFA( lsMFA=lsMFA, frmeData=lsRet$frmeData, fInvert=lsArgs$options$fInvert, tempSaveFileName=file.path(outputDirectory,strBase), funcPlotColors=lsRet$funcPlotColors, funcPlotPoints=lsRet$funcPlotPoints, funcPlotLegend=lsRet$funcPlotLegend )
     logdebug("PlotMFA:out", c_logrMaaslin)
   }
 }

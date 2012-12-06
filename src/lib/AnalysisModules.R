@@ -292,7 +292,8 @@ lsForcedParameters = NULL
     {
       #If the selprob is less than a certain frequency, skip
       dSel <- lsSum$rel.inf[which( lsSum$var == strMetadata )] / 100
-      if( is.na(dSel) || ( dSel < lsParameters$dFreq ) ) { next }
+      if( is.na(dSel) || ( dSel < lsParameters$dFreq ) ){ next }
+
       #Get the name of the metadata
       strTerm <- funcCoef2Col( strMetadata, frmeTmp, c(astrMetadata, astrGenetics) )
 
