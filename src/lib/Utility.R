@@ -310,3 +310,16 @@ liMetadataDim
   funcWrite("\nData which survived clean: ", strProcessFileName )
   funcWrite(lsQCData$aiDataCleaned, strProcessFileName )
 }
+
+funcLMToNoNAFormula <-function(
+lMod,
+frmeTmp,
+adCur
+){
+  dfCoef = coef(lMod)
+  astrCoefNames = setdiff(names(dfCoef[as.vector(!is.na(dfCoef))==TRUE]),"(Intercept)")
+  astrPredictors = unique(as.vector(sapply(astrCoefNames,funcCoef2Col, frmeData=frmeTmp)))
+  strFormula = paste( "adCur ~", paste( sprintf( "`%s`", astrPredictors ), collapse = " + " ), sep = " " )
+  print(strFormula)
+  return(try( lm(as.formula( strFormula ), data=frmeTmp )))
+}

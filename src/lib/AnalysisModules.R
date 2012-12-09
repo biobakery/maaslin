@@ -36,46 +36,95 @@ suppressMessages(library( MASS, warn.conflicts=FALSE, quietly=TRUE, verbose=FALS
 suppressMessages(library( gam, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
 # Needed for boosting
 suppressMessages(library( gbm, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
+# Needed for mixed models
+suppressMessages(library( lme4, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
 
 
 ### Helper functions
-
+# OK
 funcMakeContrasts <- function
 ### Makes univariate contrasts of all predictors in the model formula with the response.
 (strFormula, 
-### lm style string defining reposne and predictors 
+### lm style string defining reponse and predictors 
 frmeTmp,
 ### The data frame to find predictor data in
 adCur,
 ### adCur Response data
-functionContrast
+iTaxon,
+### Taxon
+functionContrast,
 ### functionContrast The univariate test to perfom
+fDummy = FALSE
+### Indicates if dummy variables are need is needed (tests of heterogenous data types will be encountered but the test can not handle them)
 ){
+  lldTests = list()
+  ### Holds all the univariate test information (final return container)
+  lsSig = list()
+  ### Holds all the significance results from the tests
+  aaP = list()
+  ### Holds the p-values
+
   #Get test comparisons (predictor names from formula string)
   asComparisons = gsub("`","",setdiff(unlist(strsplit(unlist(strsplit(strFormula,"~"))[2]," ")),c("","+")))
-  lliTests = NULL
-  lData = c()
-  for(sComparison in asComparisons)
+  asConvComparisons = c()
+  for( sCompar in asComparisons )
   {
-    lliTests = list("1"=frmeTmp[[sComparison]])
-    if(is.factor(lliTests[[1]]))
-    {
-      lliTests = apply(as.matrix(model.matrix(as.formula(paste("~",sComparison)),frmeTmp))[,-1],2,list)
-    }
-
-    sComparisonResults = lapply(lliTests, function(x) functionContrast(x=as.vector(unlist(x)), y=adCur))
-    #Pass important data.
-    #TODO finish
-    lData = c(lData, list(dPValue=sComparisonResults[[1]]$p.value,dSTD=NA,sMetadata=sComparison))
+    lsParse = unlist(strsplit(sComparison, "[\\(\\|\\)]", perl=FALSE))
+    asConvComparisons = c( lsParse[length(lsParse)], asConvComparisons )
   }
-  return(lData)
+
+  for(sComparison in asConvComparisons)
+  {
+    #Removed fixed covariate formating
+    lsParse = unlist(strsplit(sComparison, "[\\(\\|\\)]", perl=FALSE))
+    sComparison = lsParse[length(lsParse)]
+ 
+    viTest = as.vector(frmeTmp[[sComparison]])
+    if(is.character(viTest)){viTest = as.factor(viTest)}
+
+    #I am dummy variabling it because that is equivalent to the handling in the lms
+    
+#    if(is.factor(viTest)){viTest = as.numeric(viTest)}
+
+
+    sComparisonResults = functionContrast(x=viTest, y=adCur)
+
+    aaP = c(sComparisonResults$p.value,aaP)
+
+    lsSig[[length( lsSig ) + 1]] <- list(
+      #Current metadata name
+      name = sComparison,
+      #Current metadatda name (as a factor level if existing as such)
+      orig = sComparison,
+      #Taxon feature name
+      taxon = colnames( frmeData )[iTaxon],
+      #Taxon data / response
+      data = frmeTmp[,iTaxon],
+      #All levels
+      factors = levels(viTest),
+      #Metadata values
+      metadata = sComparison,
+      #Current coeficient value
+      value = sComparison,
+      #Standard deviation
+      std = sd(viTest),
+      #Model coefficients
+      allCoefs = asConvComparisons)
+
+    #Pass important data.
+    lldTests[[length(lldTests)+1]] = list(aaP,lsSig,sMetadata=sComparison)
+  }
+
+  return(list(adP=adP, lsSig=lsSig, lsQCCounts=lsQCCounts))
   ### Returns a list of p-value, standard deviation, and comparison which produced the p-value
 }
 
+#Ok
 funcGetStepPredictors <- function
 ### Retrieve the predictors of the reduced model after stepwise model selection
 (lmod,
 ### Linear model resulting from step-wise model selection
+frmeTmp,
 strLog
 ### File to document logging
 ){
@@ -87,13 +136,16 @@ strLog
   funcWrite( "#summary-gbm", strLog )
   funcWrite( summary(lmod), strLog )
 
-  # Select model predictors
-  asStepCoefsFactors = lmod$anov$Step
-  if(length(asStepCoefsFactors)==1){ return(NA) }
-  return( setdiff(unlist(strsplit(paste(as.character(asStepCoefsFactors), collapse=" "),split=" ")),c("","+")) )
+  #Get Names from coefficients
+  asStepCoefsFactors = coefficients(lmod)
+  astrCoefNames = setdiff(names(asStepCoefsFactors[as.vector(!is.na(asStepCoefsFactors))==TRUE]),"(Intercept)")
+  asStepCoefsFactors = unique(as.vector(sapply(astrCoefNames,funcCoef2Col, frmeData=frmeTmp)))
+
+  if(length(asStepCoefsFactors)<1){ return(NA) }
+  return( asStepCoefsFactors )
   ### Vector of string predictor names
 }
-
+# ok
 funcGetLMResults <- function
 ### Reduce the lm object return to just the data needed for further analysis
 ( lmod=lmod,
@@ -226,10 +278,10 @@ astrCols=astrTerms
 
 funcGetUnivariateResults <- function( 
 ### Reduce the lm object return to just the data needed for further analysis
-mod=lmod,
+lmod=lmod,
 ### The result from a linear model
 frmeData=frmeData,
-### Data analysis is perfromed on
+### Data analysis is performed on
 iTaxon=iTaxon,
 ### The response id
 dSig=dSig,
@@ -245,6 +297,12 @@ lsQCCounts=lsData$lsQCCounts,
 astrCols=astrTerms
 ### Predictors used in the association
 ){
+  print("START UNIVARIATE RESULTS")
+  print(lmod)
+  ldpvalue = lapply(lmod, function(x) x[[1]]$p.value)
+  print("ldpvalue")
+  print(ldpvalue)
+  gffs
   return(list(adP=adP, lsSig=lsSig, lsQCCounts=lsQCCounts))
   ### List containing a list of pvalues, a list of significant data per association, and a list of QC data
 }
@@ -253,7 +311,9 @@ astrCols=astrTerms
 ### Options for regularization 
 
 #TODO# Add in forced into regularization
+#TODO# make sure the qvuale are made of the right number, univariate case has more comaprisons
 
+# OK
 funcBoostModel <- function(
 ### Perform model selection / regularization with boosting
 strFormula,
@@ -264,10 +324,10 @@ adCur,
 ### The response data
 lsParameters,
 ### User controlled parameters needed specific to boosting
-strLog,
-### File to which to document logging
-lsForcedParameters = NULL
+lsForcedParameters = NULL,
 ### Force these predictors to be in the model
+strLog
+### File to which to document logging
 ){
   funcWrite( c("#Boost formula", strFormula), strLog )
   lmod = try( gbm( as.formula( strFormula ), data=frmeTmp, distribution="laplace", verbose=FALSE, n.minobsinnode=min(1, round(0.2 * nrow( frmeTmp ) ) ), n.trees=1000 ) )
@@ -308,8 +368,8 @@ lsForcedParameters = NULL
       #Collect metadata names
       astrTerms <- c(astrTerms, strTerm)
     }
-  } else { astrTerms = NA }
-  return(astrTerms)
+  } else { astrTerms = lsForcedParameters }
+  return(unique(c(astrTerms,lsForcedParameters)))
   ### Return a vector of predictor names to use in a reduced model
 }
 
@@ -324,52 +384,55 @@ adCur,
 ### Response data
 lsParameters,
 ### User controlled parameters needed specific to boosting
-strLog,
-### File to which to document logging
-lsForcedParameters = NULL
+lsForcedParameters = NULL,
 ### Force these predictors to be in the model
+strLog
+### File to which to document logging
 ){
-  astrTerms <- c()
   funcWrite( c("#Forward formula", strFormula), strLog )
 
-  lmodNull <- try( lm(as.formula( "adCur ~ 1"), data=frmeTmp))
+  strNULLFormula = ifelse(is.null(lsForcedParameter), "adCur ~ 1", paste( "adCur ~", paste( sprintf( "`%s`", lsForcedParameter ), collapse = " + " )))
+  lmodNull <- try( lm(as.formula( strNULLFormula ), data=frmeTmp))
   lmodFull <- try( lm(as.formula( strFormula ), data=frmeTmp ))
   if(!("try-error" %in% c(class( lmodNull ),class( lmodFull ))))
   {
     lmod = stepAIC(lmodNull, scope=list(lower=lmodNull,upper=lmodFull), direction="forward", trace=0)
-    return(funcGetStepPredictors(lmod,strLog))
+    return(funcGetStepPredictors(lmod, frmeTmp, strLog))
   }
-  return( NA )
+  print("Return lsForcedParameters")
+  return( lsForcedParameters )
   ### Return a vector of predictor names to use in a reduced model or NA on error
 }
 
-# Not done
+# OK
 # Select model with backwards selection
 funcBackwardsModel <- function(
 ### Perform model selection with backwards stepwise selection
 strFormula,
-### lm style string defining reposne and predictors 
+### lm style string defining reponse and predictors 
 frmeTmp,
 ### Data on which to perform analysis
 adCur,
 ### Response data
 lsParameters,
 ### User controlled parameters needed specific to boosting
-strLog,
-### File to which to document logging
-lsForcedParameters = NULL
+lsForcedParameters = NULL,
 ### Force these predictors to be in the model
+strLog
+### File to which to document logging
 ){
-  astrTerms <- c()
   funcWrite( c("#Backwards formula", strFormula), strLog )
 
+  strNULLFormula = ifelse(is.null(lsForcedParameter), "adCur ~ 1", paste( "adCur ~", paste( sprintf( "`%s`", lsForcedParameter ), collapse = " + " )))
+  lmodNull <- try( lm(as.formula( strNULLFormula ), data=frmeTmp))
   lmodFull <- try( lm(as.formula( strFormula ), data=frmeTmp ))
+
   if(! class( lmodFull ) == "try-error" )
   {
-    lmod = stepAIC(lmodFull, direction="backward")
-    return(funcGetStepPredictors(lmod,strLog))
-  } else { return( NA ) }
-  return(astrTerms)
+    lmod = stepAIC(lmodFull, scope=list(lower=lmodNull, upper=lmodFull), direction="backward")
+    return(funcGetStepPredictors(lmod, frmeTmp, strLog))
+  } else { 
+    return( lsForcedParameters ) }
   ### Return a vector of predictor names to use in a reduced model or NA on error
 }
 
@@ -377,11 +440,11 @@ lsForcedParameters = NULL
 ### Univariate options
 
 # Lefse
-#TODO# Implemented in sfle
+# Implemented in sfle
 
 # GUnifrac
 #TODO# Implemented in sfle
-
+# OK
 # Wilcoxon (T-Test)
 # Does multiple lmod results integrated into maaslin?
 funcWilcoxon <- function(
@@ -397,6 +460,7 @@ adCur
   ### List of contrast information, pvalue, contrast and std per univariate test
 }
 
+# OK
 # Correlation
 # Does multiple lmod results integrated into maaslin?
 funcSpearman <- function(
@@ -428,6 +492,7 @@ adCur
   ### lmod result object from lasso lm
 }
 
+# OK
 funcLM <- function(
 ### Perform vanilla linear regression
 strFormula,
@@ -437,6 +502,7 @@ frmeTmp,
 adCur
 ### Response data
 ){
+#  return(try( lmer(as.formula(strFormula), data=frmeTmp, na.action=c_strNA_Action) ))
   return(try( lm(as.formula(strFormula), data=frmeTmp, na.action=c_strNA_Action) ))
   ### lmod result object from lm
 }
@@ -463,16 +529,7 @@ adCur
 
 ### Link functions / Transformations
 
-## Arcsin square root
-#funcArcsinSqrt <- function(frmeData, aiData)
-#{
-#  for(aiDatum in aiData)
-#  {
-#    frmeData[,aiDatum] = asin(sqrt(frmeData[,aiDatum]))
-#  }
-#  return( frmeData=frmeData )
-#}
-
+# OK
 funcArcsinSqrt <- function(
 # Transform data with arcsin sqrt transformation
 aData
@@ -482,6 +539,7 @@ aData
   ### Transformed data
 }
 
+# OK
 funcNoTransform <-function(
 ### Pass data without transform
 aData
@@ -492,6 +550,7 @@ aData
   ### Transformed data
 }
 
+#OK
 funcBinomialMult <- function(
 ### Perform linear regression with binomial link
 strFormula,
@@ -501,10 +560,12 @@ frmeTmp,
 adCur
 ### Response data
 ){
-  return(try( glm(as.formula(strFormula), family=binomial(link=logit), data=frmeTmp, na.action=c_strNA_Action) ))
+  return(try ( glmer(as.formula(strFormula), data=frmTmp, family=binomial(link=logit), na.action=c_strNA_Action) ))
+#  return(try( glm(as.formula(strFormula), family=binomial(link=logit), data=frmeTmp, na.action=c_strNA_Action) ))
   ### lmod result object from lm
 }
 
+#OK
 funcQuasiMult <- function(
 ### Perform linear regression with quasi-poisson link
 strFormula,
@@ -514,6 +575,7 @@ frmeTmp,
 adCur
 ### Response data
 ){
-  return(try( glm(as.formula(strFormula), family=quasipoisson, data=frmeTmp, na.action=c_strNA_Action) ))
+  return(try ( glmer(as.formula(strFormula), data=frmTmp, family=quasipoisson, na.action=c_strNA_Action) ))
+#  return(try( glm(as.formula(strFormula), family=quasipoisson, data=frmeTmp, na.action=c_strNA_Action) ))
   ### lmod result object from lm
 }

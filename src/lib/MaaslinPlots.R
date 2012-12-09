@@ -29,9 +29,10 @@ inlinedocs <- function(
 ) { return( pArgs ) }
 
 funcPDF <- function(
-### Function to plt raw data with linear model information.
+### Function to plot raw data with linear model information.
 ### Continuous and integer variables are plotted with a line of best fit.
 ### Other data is plotted as boxplots.
+frmeTmp,
 lsCur,
 ### Linear model information
 curPValue,
@@ -82,6 +83,10 @@ fInvert
       adMar[2] <- adMar[2] + 1
     }
   } else { dCEX = 1 }
+
+  #Plot 1x2 graphs per page if there are multiple coefficients
+  iNumberCoefficients = length(setdiff(names(lsCur$allCoefs),c("(Intercept)")))
+  if(iNumberCoefficients>1){ par(mfrow=c(1,2)) }else{ par(mfrow=c(1,1)) }
 
   # Plot factor data as boxplot if is descrete data
   # Otherwise plot as a line
@@ -147,6 +152,42 @@ fInvert
     strColor <- sprintf( "%sDD", funcColor( dColor, adMax = adColorMin, adMin = adColorMax, adMed = adColorMed ) )
     abline( reg = lmod, col = strColor, lwd = 3 )
   }
+
+  ### Plot the residual plot
+#  funcResidualPlot(lsCur=lsCur, frmeTmp= frmeTmp)
+
   return(strFilePDF)
   ### File to which the pdf was written
+}
+
+funcResidualPlot <- function(
+### Plot to data after confounding.
+### That is, in a linear model with significant coefficient b1 for variable x1,
+### that's been sparsified to some subset of terms: y = b0 + b1*x1 + sum(bi*xi)
+### Plot x1 on the X axis, and instead of y on the Y axis, instead plot:
+### y' = b0 + sum(bi*xi)
+lsCur,
+frmeTmp
+){
+  print("lsCur")
+  print(lsCur)
+  #Now plot residual hat plot
+  #Get coefficient names
+  lsAllCoefs = setdiff(names(lsCur$allCoefs),c("(Intercept)"))
+
+  #All coefficients except for the one of interest
+  lsOtherCoefs = setdiff(lsAllCoefs, c(lsCur$orig))
+
+  #If there are no other coefficients then skip plot
+  if(!length(lsOtherCoefs)){return()}
+
+  #Get xi (raw data)
+  mtrxRawData = as.matrix(lsCur$metadata)
+
+  lmod = lm(as.formula(paste( "mtrxRawData ~", paste( sprintf( "`%s`", lsOtherCoefs ), collapse = " + " ))),frmeTmp)
+
+  #Plot
+  plot(bi ~ mtrxRawData, xlab = lsCur$orig, ylab = paste(lsOtherCoefs,sep="", collapse="+"), main = paste(lsCur$taxon,"~",paste(lsOtherCoefs,sep="+")), pch = 20)
+  rug(mtrxRawData, side=1)
+  rug(bi, side=2)
 }

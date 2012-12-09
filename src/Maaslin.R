@@ -100,12 +100,13 @@ for( strR in dir( strDir, pattern = "*.R$" ) )
 ### Create command line argument parser
 pArgs <- OptionParser( usage = "%prog [options] <output.txt> <data.tsv>" )
 
-# Settings for MaAsLin
+# Input files for MaAsLin
 ## Data configuration file
 pArgs <- add_option( pArgs, c("-i", "--input_config"), type="character", action="store", dest="strInputConfig", metavar="data.read.config", help="Optional configuration file describing data input format.")
 ## Data manipulation/normalization file
 pArgs <- add_option( pArgs, c("-I", "--input_process"), type="character", action="store", dest="strInputR", metavar="data.R", help="Optional configuration script normalizing or processing data.")
 
+# Settings for MaAsLin
 ## Maximum false discovery rate
 pArgs <- add_option( pArgs, c("-d", "--fdr"), type="double", action="store", dest="dSignificanceLevel", default=0.25, metavar="significance", help="The threshold to use for significance for the generated q-values (BH FDR). Anything equal to or lower than this is significant.")
 ## Minimum feature relative abundance filtering
@@ -114,6 +115,8 @@ pArgs <- add_option( pArgs, c("-r", "--minRelativeAbundance"), type="double", ac
 pArgs <- add_option( pArgs, c("-p", "--minPrevalence"), type="double", action="store", dest="dMinSamp", default=0.1, metavar="minPrevalence", help="The minimum percentage of samples a feature can have abudance in before being removed.")
 ## Fence for outlier, if not set Grubbs test is used
 pArgs <- add_option( pArgs, c("-o", "--outlierFence"), type="double", action="store", dest="dOutlierFence", default=3.0, metavar="outlierFence", help="Outliers are defined as this number times the interquartile range added/subtracted from the 3rd/1st quartiles respectively. If set to 0, outliers are defined by the Grubbs test.")
+## Fixed (not random) covariates
+pArgs <- add_option( pArgs, c("x","--fixed"), type="character", action="store", dest="strFixedCovariates", default=NULL, metavar="fixed", help="These metadata will be treated as fixed covariates. Comma delimited data feature names. Example 'FixedMetadata1,FixedMEtadata2'")
 
 # Arguments used in validation of MaAsLin
 ## Model selection (enumerate) c("none","boost","forward","backward")
@@ -125,9 +128,9 @@ pArgs <- add_option( pArgs, c("-l", "--link"), type="character", action="store",
 
 # Arguments to supress MaAsLin actions on certain data
 ## Do not perform model selection on the following data
-pArgs <- add_option( pArgs, c("-F","--forced"), type="character", action="store", dest="strForcedPredictors", default=NULL, metavar="forced_predictors", help="Metadata features that will be forced into the model. Example 'Metadata2|Metadata6|Metadata10'")
+pArgs <- add_option( pArgs, c("-F","--forced"), type="character", action="store", dest="strForcedPredictors", default=NULL, metavar="forced_predictors", help="Metadata features that will be forced into the model seperated by commas. Example 'Metadata2,Metadata6,Metadata10'")
 ## Do not impute the following
-pArgs <- add_option( pArgs, c("-n","--noImpute"), type="character", action="store", dest="strNoImpute", default=NULL, metavar="no_impute", help="These data will not be imputed. Pipe delimited data feature names. Example 'Feature1|Feature4|Feature6'")
+pArgs <- add_option( pArgs, c("-n","--noImpute"), type="character", action="store", dest="strNoImpute", default=NULL, metavar="no_impute", help="These data will not be imputed. Comma delimited data feature names. Example 'Feature1,Feature4,Feature6'")
 
 #Miscellaneouse arguments
 ### Argument to control logging (enumerate)
@@ -166,8 +169,25 @@ lsArgs <- parse_args( pArgs, positional_arguments = TRUE )
 #c_lsConfigurationDefaults <- list(NULL, lsArgs$options$fInvert, lsArgs$options$dSignificanceLevel, NA, NULL)
 
 # Parse Piped parameters
-lsForcedParameters = if(!is.null(lsArgs$strForcedPredictors)){unlist(strsplit(lsArgs$strForcedPredictors,"[|]"))}else{NULL}
-xNoImpute = if(!is.null(lsArgs$strNoImpute)){unlist(strsplit(lsArgs$strNoImpute,"[|]"))}else{NULL}
+print("Start")
+lsForcedParameters = NULL
+if(!is.null(lsArgs$options$strForcedPredictors))
+{
+  lsForcedParameters  = unlist(strsplit(lsArgs$options$strForcedPredictors,","))
+}
+print(lsForcedParameters)
+xNoImpute = NULL
+if(!is.null(lsArgs$options$strNoImpute))
+{
+  xNoImpute = unlist(strsplit(lsArgs$options$strNoImpute,"[,]"))
+}
+print(xNoImpute)
+lsFixedCovariates = NULL
+if(!is.null(lsArgs$options$strFixedCovariates))
+{
+  lsFixedCovariates = unlist(strsplit(lsArgs$options$strFixedCovariates,"[,]"))
+}
+print(lsFixedCovariates)
 
 #If logging is not an allowable value, inform user and set to INFO
 if(length(intersect(names(loglevels), c(lsArgs$options$strVerbosity))) == 0)
@@ -329,8 +349,8 @@ lsRet$lsQCCounts$iLms = 0
 #Run analysis
 alsRetBugs = funcBugs( lsRet$frmeData, lsRet, lsRet$aiMetadata, lsRet$aiData, strBase,
 	lsArgs$options$dSelectionFrequency, lsArgs$options$dSignificanceLevel, lsArgs$options$dMinSamp, lsArgs$options$fInvert,
-        outputDirectory, astrScreen = c(), funcReg=afuncVariableAnalysis[[c_iSelection]],
-        funcAnalysis=afuncVariableAnalysis[[c_iAnalysis]], funcGetResults=afuncVariableAnalysis[[c_iResults]] )
+        outputDirectory, astrScreen = c(), funcReg=afuncVariableAnalysis[[c_iSelection]], lsForcedParameters,
+        funcAnalysis=afuncVariableAnalysis[[c_iAnalysis]], lsFixedCovariates, funcGetResults=afuncVariableAnalysis[[c_iResults]] )
 aiBugs = alsRetBugs$aiReturnBugs
 
 #Write QC files only in certain modes of verbosity

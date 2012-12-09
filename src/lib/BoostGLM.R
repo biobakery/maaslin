@@ -280,8 +280,12 @@ astrScreen = c(),
 ### 
 funcReg=NULL,
 ### Function for regularization
+lsNonPenalizedPredictors=NULL,
+### These predictors will not be penalized in the feature (model) selection step
 funcAnalysis=NULL,
 ### Function to perform association analysis
+lsFixedCovariates=NULL,
+### List of string names of metadata which will be treated as fixed covariates
 funcGetResults=NULL
 ### Function to unpack results from analysis
 ){
@@ -307,7 +311,7 @@ funcGetResults=NULL
       c_logrMaaslin$info( "Taxon %d/%d", iTaxon, max( aiData ) )
     }
     #Call analysis method
-    lsOne <- funcBugHybrid( iTaxon, frmeData, lsData, aiMetadata, dFreq, dSig, dMinSamp, adP, lsSig, strLog, funcReg, funcAnalysis, funcGetResults )
+    lsOne <- funcBugHybrid( iTaxon, frmeData, lsData, aiMetadata, dFreq, dSig, dMinSamp, adP, lsSig, strLog, funcReg, lsNonPenalizedPredictors, funcAnalysis, lsFixedCovariates, funcGetResults )
 
     #Update pvalue array
     adP <- lsOne$adP
@@ -390,7 +394,7 @@ funcGetResults=NULL
       ## If the significance meets the threshold
       ## Write PDF file output
       if( adQ[j] > dSig ) { next }
-      strFilePDF = funcPDF( lsCur=lsCur, curPValue=adP[j], curQValue=adQ[j], strFilePDF=strFilePDF, strBaseOut=strBaseOut, strName=strName, fInvert=fInvert )
+      strFilePDF = funcPDF( frmeTmp= frmeData, lsCur=lsCur, curPValue=adP[j], curQValue=adQ[j], strFilePDF=strFilePDF, strBaseOut=strBaseOut, strName=strName, fInvert=fInvert )
     }
 
     if( dev.cur( ) != 1 ) { dev.off( ) }
@@ -439,8 +443,12 @@ strLog = NA,
 ### String, file to which to log
 funcReg=NULL,
 ### Function to perform regularization
+lsNonPenalizedPredictors=NULL,
+### These predictors will not be penalized in the feature (model) selection step
 funcAnalysis=NULL,
 ### Function to perform association analysis
+lsFixedCovariates=NULL,
+### List of string names of metadata which will be treated as fixed covariates
 funcGetResult=NULL
 ### Function to unpack results from analysis
 ){
@@ -494,7 +502,9 @@ funcGetResult=NULL
 
   #Create a linear additive model including all metadata or genetics which were not filtered
   lmod <- NA
-  strFormula <- paste( "adCur ~", paste( sprintf( "`%s`", astrMetadata ), collapse = " + " ))
+
+  #Build formula for simple mixed effects models
+  strFormula <- paste( "adCur ~", paste( sprintf( "`%s`", astrMetadata ), collapse = " + " ), sep = " " )
 
   # Document the model
   funcWrite( c("#taxon", colnames( frmeTmp )[iTaxon]), strLog )
@@ -504,20 +514,20 @@ funcGetResult=NULL
   # Regularisation terms
   astrTerms <- c()
 
-  # Attempt model selection
+  # Attempt feature (model) selection
   lmod <- NA
   if(!is.null(funcReg))
   {
     #Count model selection method attempts
     lsData$lsQCCounts$iBoosts = lsData$lsQCCounts$iBoosts + 1
     #Perform model selection
-    astrTerms <- funcReg(strFormula, frmeTmp, adCur, list(dFreq=dFreq), strLog)
-    #If the boosting is set to None, set all terms of the model to all the metadata
+    astrTerms <- funcReg(strFormula=strFormula, frmeTmp=frmeTmp, adCur=adCur, lsParameters=list(dFreq=dFreq), lsForcedParameters=lsNonPenalizedPredictors, strLog=strLog)
+    #If the feature selection function is set to None, set all terms of the model to all the metadata
   } else { astrTerms = astrMetadata }
 
   #Get look through the boosting results to get a model
   #Holds the predictors in the predictors in the model that were selected by the boosting
-  if(is.na( astrTerms ))
+  if(is.null( astrTerms ))
   {lsData$lsQCCounts$iBoostErrors = lsData$lsQCCounts$iBoostErrors + 1}
 
   #Run association analysis if predictors exist and an analysis function is specified
@@ -528,14 +538,25 @@ funcGetResult=NULL
     #Count the association attempt
     lsData$lsQCCounts$iLms = lsData$lsQCCounts$iLms + 1
     #Make the lm formula
-    strFormula <- paste( "adCur ~", paste( sprintf( "`%s`", astrTerms ), collapse = " + " ), sep = " " )
+    #Build formula for simple mixed effects models
+    strAnalysisFormula = strFormula
+#    strAnalysisFormula <- "adCur ~"
+#    if(!is.null(lsFixedCovariates))
+#    {
+#      strAnalysisFormula <- paste( strAnalysisFormula, paste( sprintf( "`%s`", lsFixedCovariates ), collapse = " + " ))
+#    }
+#    if(!is.null(astrTerms))
+#    {
+#      strAnalysisFormula <- paste( strAnalysisFormula," + ", paste( sprintf( "(1|`%s`)", astrTerms ), collapse = " + " ))
+#    }   
     #Run the association
-    lmod <- funcAnalysis(strFormula, frmeTmp, adCur)
+    lmod <- funcAnalysis(strFormula= strAnalysisFormula, frmeTmp=frmeTmp, adCur=adCur)
   } else {
     lsData$lsQCCounts$iNoTerms = lsData$lsQCCounts$iNoTerms + 1
   }
 
   #Call funBugResults and return it's return
+  print("RIGHT BEFORE")
   return( funcGetResult( lmod=lmod, frmeData=frmeData, iTaxon=iTaxon, dSig=dSig, adP=adP, lsSig=lsSig, strLog=strLog, lsQCCounts=lsData$lsQCCounts, astrCols=astrTerms ) )
   ### List containing a list of pvalues, a list of significant data per association, and a list of QC data
 }

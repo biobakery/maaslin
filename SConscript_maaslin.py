@@ -18,7 +18,7 @@ def MaAsLin( filePCL, fileDirOut = fileDirOutput, fileDirInt = fileDirTmp ):
 		strT, astrSs = sfle.ts( target, source )
 		strProg, strTSV = astrSs[:2]
 		return sfle.ex( [strProg] + ( ["-i", fileRC] if fileRC else [] ) +
-			( ["-I", fileR] if fileR else [] ) + [strT, strTSV])
+			( ["-I", fileR] if fileR else [] ) +[strT, strTSV])
 	
 	strBase = os.path.basename( strBase )
 	strDir = sfle.d( fileDirOut, strBase )
