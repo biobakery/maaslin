@@ -1,0 +1,12 @@
+title	Metadata Associations
+title_font_size	13
+start_rotation	70
+annotation_background_alpha	0.15
+clade_separation	0.35
+class_legend_font_size	12
+annotation_legend_font_size	11
+annotation_font_size	5
+annotation_font_stretch	0
+clade_marker_size	3
+branch_bracket_depth	0.5
+branch_thickness	1.2

@@ -46,35 +46,35 @@ sMethodKey
   lRetMethods = list()
   #Insert selection methods here
   lRetMethods[[c_iSelection]] = switch(sModelSelectionKey,
-    boost			= funcBoostModel,
-    forward			= funcForwardModel,
-    backward		= funcBackwardsModel,
-    none			= NULL)
+    boost = funcBoostModel,
+    forward = funcForwardModel,
+    backward = funcBackwardsModel,
+    none = NA)
 
   #Insert transforms
   lRetMethods[[c_iTransform]] = switch(sTransformKey,
-    asinsqrt		= funcArcsinSqrt,
-    none			= funcNoTransform)
+    asinsqrt = funcArcsinSqrt,
+    none = funcNoTransform)
 
   #Insert analysis
   lRetMethods[[c_iAnalysis]] = switch(sMethodKey,
-    neg_binomial	= funcBinomialMult,
-    quasi			= funcQuasiMult,
-    spearman		= funcSpearman,
-    wilcoxon		= funcWilcoxon,
-    lasso			= funcLasso,
-    lm				= funcLM,
-    none			= NULL)
+    neg_binomial = funcBinomialMult,
+    quasi = funcQuasiMult,
+    spearman = funcSpearman,
+    wilcoxon = funcWilcoxon,
+    lasso = funcLasso,
+    lm = funcLM,
+    none = NA)
 
   #Insert method to get results
   lRetMethods[[c_iResults]] = switch(sMethodKey,
-    neg_binomial	= funcGetLMResults,
-    quasi			= funcGetLMResults,
-    spearman		= funcGetUnivariateResults,
-    wilcoxon		= funcGetUnivariateResults,
-    lasso			= funcGetLassoResults,
-    lm				= funcGetLMResults,
-    none			= NULL)
+    neg_binomial = funcGetLMResults,
+    quasi = funcGetLMResults,
+    spearman = NA,
+    wilcoxon = NA,
+    lasso = funcGetLassoResults,
+    lm = funcGetLMResults,
+    none = NA)
 
   return(lRetMethods)
   ### Returns a list of functions to be passed for regularization, data transformation, analysis,
@@ -122,7 +122,7 @@ pArgs <- add_option( pArgs, c("x","--fixed"), type="character", action="store", 
 ## Model selection (enumerate) c("none","boost","forward","backward")
 pArgs <- add_option( pArgs, c("-s", "--selection"), type="character", action="store", dest="strModelSelection", default="boost", metavar="model_selection", help="Indicates which of the model selection techniques to use.")
 ## Argument indicating which method should be ran (enumerate) c("wilcoxon","spearman","lm","lasso","neg_binomial","quasi")
-pArgs <- add_option( pArgs, c("-m", "--method"), type="character", action="store", dest="strMethod", default="lm", metavar="analysis_method", help="Indicates which of the statistical analysis methods to run.")
+pArgs <- add_option( pArgs, c("-m", "--method"), type="character", action="store", dest="strMethod", default="spearman", metavar="analysis_method", help="Indicates which of the statistical analysis methods to run.")
 ## Argument indicating which link function is used c("none","asinsqrt")
 pArgs <- add_option( pArgs, c("-l", "--link"), type="character", action="store", dest="strTransform", default="asinsqrt", metavar="transform_method", help="Indicates which link or transformation to use with a glm, if glm is not selected this argument will be set to none.")
 
@@ -169,25 +169,21 @@ lsArgs <- parse_args( pArgs, positional_arguments = TRUE )
 #c_lsConfigurationDefaults <- list(NULL, lsArgs$options$fInvert, lsArgs$options$dSignificanceLevel, NA, NULL)
 
 # Parse Piped parameters
-print("Start")
 lsForcedParameters = NULL
 if(!is.null(lsArgs$options$strForcedPredictors))
 {
   lsForcedParameters  = unlist(strsplit(lsArgs$options$strForcedPredictors,","))
 }
-print(lsForcedParameters)
 xNoImpute = NULL
 if(!is.null(lsArgs$options$strNoImpute))
 {
   xNoImpute = unlist(strsplit(lsArgs$options$strNoImpute,"[,]"))
 }
-print(xNoImpute)
 lsFixedCovariates = NULL
 if(!is.null(lsArgs$options$strFixedCovariates))
 {
   lsFixedCovariates = unlist(strsplit(lsArgs$options$strFixedCovariates,"[,]"))
 }
-print(lsFixedCovariates)
 
 #If logging is not an allowable value, inform user and set to INFO
 if(length(intersect(names(loglevels), c(lsArgs$options$strVerbosity))) == 0)

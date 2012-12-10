@@ -36,26 +36,31 @@ c_afileDocsR = c_afileTestsR + [sfle.d( pE, c_fileDirLib, s ) for s in
 						("AnalysisModules.R", "BoostGLM.R", "MaaslinPlots.R", "MFA.R")]
 
 ##Test scripts
-#for fileInputR in c_afileTestsR:
-#  strBase = sfle.rebase( fileInputR, True )
-#  #Testing summary file
-#  fileTestingSummary = sfle.d( pE, fileDirOutput, strBase +"-TestReport.txt" )
-#  dirTestingR = Dir( sfle.d( fileDirSrc, "test-" + strBase ) )
-#  Default( sfle.testthat( pE, fileInputR, dirTestingR, fileTestingSummary ) )
+for fileInputR in c_afileTestsR:
+  strBase = sfle.rebase( fileInputR, True )
+  #Testing summary file
+  fileTestingSummary = sfle.d( pE, fileDirOutput, strBase +"-TestReport.txt" )
+  dirTestingR = Dir( sfle.d( fileDirSrc, "test-" + strBase ) )
+  Default( sfle.testthat( pE, fileInputR, dirTestingR, fileTestingSummary ) )
 
 ##Inline doc
-#for fileProg in c_afileDocsR:
-#  filePDF = sfle.d( pE, fileDirOutput, sfle.rebase( fileProg, sfle.c_strSufR, sfle.c_strSufPDF ) )
-#  Default( sfle.inlinedocs( pE, fileProg, filePDF, fileDirTmp ) )
+for fileProg in c_afileDocsR:
+  filePDF = sfle.d( pE, fileDirOutput, sfle.rebase( fileProg, sfle.c_strSufR, sfle.c_strSufPDF ) )
+  Default( sfle.inlinedocs( pE, fileProg, filePDF, fileDirTmp ) )
 
 ##Start regression suite
-#execfile( "SConscript_maaslin.py" )
+execfile( "SConscript_maaslin.py" )
 
 ##Input pcl files
 lsMaaslinInputFiles = Glob( sfle.d( fileDirInput, "*" + sfle.c_strSufPCL ) )
 
-## Run Graphlan on all output projects
+## Run MaAsLin and generate output
 for strPCLFile in lsMaaslinInputFiles:
+
+  ## Run MaAsLin
+  Default( MaAsLin( strPCLFile ) )
+
+  ## Run Graphlan on all output projects
   strProjectName = os.path.splitext(os.path.split(strPCLFile.get_abspath())[1])[0]
   strMaaslinOutputDir = sfle.d(fileDirOutput,strProjectName)
 

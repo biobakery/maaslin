@@ -53,27 +53,36 @@ adCur,
 iTaxon,
 ### Taxon
 functionContrast,
-### functionContrast The univariate test to perfom
+### functionContrast The univariate test to perform
+lsQCCounts,
+### QC info
 fDummy = FALSE
 ### Indicates if dummy variables are need is needed (tests of heterogenous data types will be encountered but the test can not handle them)
 ){
-  lldTests = list()
-  ### Holds all the univariate test information (final return container)
+#  print("Start funcMakeContrasts")
+#print("strFormula")
+#print(strFormula)
+#print("adCur")
+#print(adCur)
+#print("iTaxon")
+#print(iTaxon)
+#print("functionContrast")
+#print(functionContrast)
+#print("fDummy")
+#print(fDummy)
+
+
+  #TODO are we updating the QCCounts?
   lsSig = list()
   ### Holds all the significance results from the tests
-  aaP = list()
+  adP = c()
   ### Holds the p-values
 
   #Get test comparisons (predictor names from formula string)
   asComparisons = gsub("`","",setdiff(unlist(strsplit(unlist(strsplit(strFormula,"~"))[2]," ")),c("","+")))
-  asConvComparisons = c()
-  for( sCompar in asComparisons )
-  {
-    lsParse = unlist(strsplit(sComparison, "[\\(\\|\\)]", perl=FALSE))
-    asConvComparisons = c( lsParse[length(lsParse)], asConvComparisons )
-  }
 
-  for(sComparison in asConvComparisons)
+  #Change metadata in formula to univariate comparisons
+  for(sComparison in asComparisons)
   {
     #Removed fixed covariate formating
     lsParse = unlist(strsplit(sComparison, "[\\(\\|\\)]", perl=FALSE))
@@ -82,39 +91,70 @@ fDummy = FALSE
     viTest = as.vector(frmeTmp[[sComparison]])
     if(is.character(viTest)){viTest = as.factor(viTest)}
 
+    #Only create dummy variables on univariate comparisons that require homogenous data.
     #I am dummy variabling it because that is equivalent to the handling in the lms
-    
 #    if(is.factor(viTest)){viTest = as.numeric(viTest)}
+    if(is.factor(viTest) && fDummy)
+    {
+      lsLevels = levels(viTest)
+      for(sLevel in lsLevels)
+      {
+        liLevelTest = ifelse(viTest == sLevel, 1, 0)
 
+        sComparisonResults = functionContrast(x=liLevelTest, y=adCur)
+        dPvalue = sComparisonResults$p.value
+        if( is.na( dPvalue ) ) { next }
 
-    sComparisonResults = functionContrast(x=viTest, y=adCur)
+        #Bonferonni correct the factor p-values based on the factor levels-1 comparisons
+        adP = c(dPvalue * ( nlevels( viTest ) - 1 ),adP)
 
-    aaP = c(sComparisonResults$p.value,aaP)
+        lsSig[[length( lsSig ) + 1]] <- list(
+          #Current metadata name
+          name = sComparison,
+          #Current metadatda name (as a factor level if existing as such)
+          orig = sLevel,
+          #Taxon feature name
+          taxon = colnames( frmeTmp )[iTaxon],
+          #Taxon data / response
+          data = frmeTmp[,iTaxon],
+          #All levels
+          factors = levels(liLevelTest),
+          #Metadata values
+          metadata = liLevelTest,
+          #Current coefficient value
+          value = sComparison,
+          #Standard deviation
+          std = sd(liLevelTest),
+          #Model coefficients
+          allCoefs = sComparison)
+      }
+    } else {
+      sComparisonResults = functionContrast(x=viTest, y=adCur)
+      if( is.na( sComparisonResults$p.value ) ) { next }
+      adP = c(sComparisonResults$p.value,adP)
 
-    lsSig[[length( lsSig ) + 1]] <- list(
-      #Current metadata name
-      name = sComparison,
-      #Current metadatda name (as a factor level if existing as such)
-      orig = sComparison,
-      #Taxon feature name
-      taxon = colnames( frmeData )[iTaxon],
-      #Taxon data / response
-      data = frmeTmp[,iTaxon],
-      #All levels
-      factors = levels(viTest),
-      #Metadata values
-      metadata = sComparison,
-      #Current coeficient value
-      value = sComparison,
-      #Standard deviation
-      std = sd(viTest),
-      #Model coefficients
-      allCoefs = asConvComparisons)
-
-    #Pass important data.
-    lldTests[[length(lldTests)+1]] = list(aaP,lsSig,sMetadata=sComparison)
+      lsSig[[length( lsSig ) + 1]] <- list(
+        #Current metadata name
+        name = sComparison,
+        #Current metadatda name (as a factor level if existing as such)
+        orig = sComparison,
+        #Taxon feature name
+        taxon = colnames( frmeTmp )[iTaxon],
+        #Taxon data / response
+        data = frmeTmp[,iTaxon],
+        #All levels
+        factors = levels(viTest),
+        #Metadata values
+        metadata = viTest,
+        #Current coefficient value
+        value = sComparison,
+        #Standard deviation
+        std = sd(viTest),
+        #Model coefficients
+        allCoefs = sComparison)
+    }
   }
-
+#  print("Stop funcMakeContrasts")
   return(list(adP=adP, lsSig=lsSig, lsQCCounts=lsQCCounts))
   ### Returns a list of p-value, standard deviation, and comparison which produced the p-value
 }
@@ -167,6 +207,7 @@ lsQCCounts=lsData$lsQCCounts,
 astrCols=astrTerms
 ### Predictors used in the association
 ){
+  #TODO are we updating the QCCounts?
   #Exclude none and errors
   if( !is.na( lmod ) && ( class( lmod ) != "try-error" ) )
   {
@@ -274,44 +315,11 @@ astrCols=astrTerms
   ### List containing a list of pvalues, a list of significant data per association, and a list of QC data
 }
 
-#TODO finish
-
-funcGetUnivariateResults <- function( 
-### Reduce the lm object return to just the data needed for further analysis
-lmod=lmod,
-### The result from a linear model
-frmeData=frmeData,
-### Data analysis is performed on
-iTaxon=iTaxon,
-### The response id
-dSig=dSig,
-
-adP=adP,
-### List of pvalues from all associations performed
-lsSig=lsSig,
-
-strLog=strLog,
-### File to which to document logging
-lsQCCounts=lsData$lsQCCounts,
-### Records of counts associated with quality control
-astrCols=astrTerms
-### Predictors used in the association
-){
-  print("START UNIVARIATE RESULTS")
-  print(lmod)
-  ldpvalue = lapply(lmod, function(x) x[[1]]$p.value)
-  print("ldpvalue")
-  print(ldpvalue)
-  gffs
-  return(list(adP=adP, lsSig=lsSig, lsQCCounts=lsQCCounts))
-  ### List containing a list of pvalues, a list of significant data per association, and a list of QC data
-}
-
-
 ### Options for regularization 
 
 #TODO# Add in forced into regularization
-#TODO# make sure the qvuale are made of the right number, univariate case has more comaprisons
+#TODO# make sure the qvuale are made of the right number, univariate case has more comparisons
+# I now dummy the variable levels and have a pvalue for each. Should be ok.
 
 # OK
 funcBoostModel <- function(
@@ -399,7 +407,6 @@ strLog
     lmod = stepAIC(lmodNull, scope=list(lower=lmodNull,upper=lmodFull), direction="forward", trace=0)
     return(funcGetStepPredictors(lmod, frmeTmp, strLog))
   }
-  print("Return lsForcedParameters")
   return( lsForcedParameters )
   ### Return a vector of predictor names to use in a reduced model or NA on error
 }
@@ -439,24 +446,25 @@ strLog
 ### Analysis methods
 ### Univariate options
 
-# Lefse
-# Implemented in sfle
-
 # GUnifrac
 #TODO# Implemented in sfle
+
 # OK
 # Wilcoxon (T-Test)
 # Does multiple lmod results integrated into maaslin?
 funcWilcoxon <- function(
-### Perform multiple univariate comparisons performing wilcoxon tess to measure association
+### Perform multiple univariate comparisons performing wilcoxon tests to measure association
 strFormula,
 ### lm style string defining reposne and predictors 
 frmeTmp,
 ### Data on which to perform analysis
-adCur
-### Response data
+iTaxon,
+### Index of the response data
+lsQCCounts
+### List recording anything important to QC
 ){
-  return(funcMakeContrasts(strFormula, frmeTmp, adCur, function(x,y){wilcox.test(x=x,y=y, na.action=c_strNA_Action)}))
+  adCur = frmeTmp[,iTaxon]
+  return(funcMakeContrasts(strFormula, frmeTmp, adCur, iTaxon=iTaxon,  functionContrast=function(x,y){wilcox.test(x=x,y=y, na.action=c_strNA_Action)}, lsQCCounts, fDummy=TRUE))
   ### List of contrast information, pvalue, contrast and std per univariate test
 }
 
@@ -469,10 +477,13 @@ strFormula,
 ### lm style string defining reposne and predictors 
 frmeTmp,
 ### Data on which to perform analysis
-adCur
-### Response data
+iTaxon,
+### Index of the response data
+lsQCCounts
+### List recording anything important to QC
 ){
-  return(funcMakeContrasts(strFormula, frmeTmp, adCur, function(x,y){cor.test(x=x, y=y, method="spearman", na.action=c_strNA_Action)}))
+  adCur = frmeTmp[,iTaxon]
+  return(funcMakeContrasts(strFormula=strFormula, frmeTmp=frmeTmp, adCur=adCur, iTaxon=iTaxon,  functionContrast=function(x,y){cor.test(x=x, y=y, method="spearman", na.action=c_strNA_Action)}, lsQCCounts, fDummy=TRUE))
   ### List of contrast information, pvalue, contrast and std per univariate test
 }
 
@@ -485,9 +496,12 @@ strFormula,
 ### lm style string defining reposne and predictors 
 frmeTmp,
 ### Data on which to perform analysis
-adCur
-### Response data
+iTaxon,
+### Index of the response data
+lsQCCounts
+### List recording anything important to QC
 ){
+  adCur = frmeTmp[,iTaxon]
   return(try(penalized(response=adCur, penalized=as.formula(strFormula), lambda1=1, data=frmeTmp, standardize=TRUE)))
   ### lmod result object from lasso lm
 }
@@ -499,9 +513,12 @@ strFormula,
 ### lm style string defining reposne and predictors 
 frmeTmp,
 ### Data on which to perform analysis
-adCur
-### Response data
+iTaxon,
+### Index of the response data
+lsQCCounts
+### List recording anything important to QC
 ){
+  adCur = frmeTmp[,iTaxon]
 #  return(try( lmer(as.formula(strFormula), data=frmeTmp, na.action=c_strNA_Action) ))
   return(try( lm(as.formula(strFormula), data=frmeTmp, na.action=c_strNA_Action) ))
   ### lmod result object from lm
@@ -557,9 +574,12 @@ strFormula,
 ### lm style string defining reposne and predictors 
 frmeTmp,
 ### Data on which to perform analysis
-adCur
-### Response data
+iTaxon,
+### Index of the response data
+lsQCCounts
+### List recording anything important to QC
 ){
+  adCur = frmeTmp[,iTaxon]
   return(try ( glmer(as.formula(strFormula), data=frmTmp, family=binomial(link=logit), na.action=c_strNA_Action) ))
 #  return(try( glm(as.formula(strFormula), family=binomial(link=logit), data=frmeTmp, na.action=c_strNA_Action) ))
   ### lmod result object from lm
@@ -572,9 +592,12 @@ strFormula,
 ### lm style string defining reposne and predictors 
 frmeTmp,
 ### Data on which to perform analysis
-adCur
-### Response data
+iTaxon,
+### Index of the response data
+lsQCCounts
+### List recording anything important to QC
 ){
+  adCur = frmeTmp[,iTaxon]
   return(try ( glmer(as.formula(strFormula), data=frmTmp, family=quasipoisson, na.action=c_strNA_Action) ))
 #  return(try( glm(as.formula(strFormula), family=quasipoisson, data=frmeTmp, na.action=c_strNA_Action) ))
   ### lmod result object from lm

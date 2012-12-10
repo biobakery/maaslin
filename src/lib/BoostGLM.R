@@ -80,7 +80,7 @@ funcTransform
 
   for(aiDatum in aiData)
   {
-	  frmeData[,aiDatum] = funcTransform(frmeData[,aiDatum])
+    frmeData[,aiDatum] = funcTransform(frmeData[,aiDatum])
   }
 	  
   # Set data indicies after custom QC process.
@@ -326,6 +326,8 @@ funcGetResults=NULL
   #Presort for order for FDR calculation
   if( is.null( adP ) ) { return( NULL ) }
   #Get indices of sorted data
+  print("adP")
+  print(adP)
   aiSig <- sort.list( adP )
   adQ <- adP
   iTests <- length( intersect( lsData$astrMetadata, colnames( frmeData )[aiMetadata] ) ) * length( aiData )
@@ -452,7 +454,7 @@ lsFixedCovariates=NULL,
 funcGetResult=NULL
 ### Function to unpack results from analysis
 ){
-
+#  print("Start funcBugHybrid")
 #dTime00 <- proc.time()[3]
   #Get metadata column names
   astrMetadata = intersect( lsData$astrMetadata, colnames( frmeData )[aiMetadata] )
@@ -516,7 +518,7 @@ funcGetResult=NULL
 
   # Attempt feature (model) selection
   lmod <- NA
-  if(!is.null(funcReg))
+  if(!is.na(funcReg))
   {
     #Count model selection method attempts
     lsData$lsQCCounts$iBoosts = lsData$lsQCCounts$iBoosts + 1
@@ -533,30 +535,50 @@ funcGetResult=NULL
   #Run association analysis if predictors exist and an analysis function is specified
   #Reset model for the glm
   lmod <- NA
-  if( length( astrTerms ) && !is.null(funcAnalysis) )
+  if(!is.na(funcAnalysis) )
   {
-    #Count the association attempt
-    lsData$lsQCCounts$iLms = lsData$lsQCCounts$iLms + 1
-    #Make the lm formula
-    #Build formula for simple mixed effects models
-    strAnalysisFormula = strFormula
-#    strAnalysisFormula <- "adCur ~"
-#    if(!is.null(lsFixedCovariates))
-#    {
-#      strAnalysisFormula <- paste( strAnalysisFormula, paste( sprintf( "`%s`", lsFixedCovariates ), collapse = " + " ))
-#    }
-#    if(!is.null(astrTerms))
-#    {
-#      strAnalysisFormula <- paste( strAnalysisFormula," + ", paste( sprintf( "(1|`%s`)", astrTerms ), collapse = " + " ))
-#    }   
-    #Run the association
-    lmod <- funcAnalysis(strFormula= strAnalysisFormula, frmeTmp=frmeTmp, adCur=adCur)
-  } else {
-    lsData$lsQCCounts$iNoTerms = lsData$lsQCCounts$iNoTerms + 1
+    if( length( astrTerms ) )
+    {
+      #Count the association attempt
+      lsData$lsQCCounts$iLms = lsData$lsQCCounts$iLms + 1
+      #Make the lm formula
+      #Build formula for simple mixed effects models
+      strAnalysisFormula <- "adCur ~"
+      strAnalysisFormula = paste( strAnalysisFormula, paste( sprintf( "`%s`", astrTerms ), collapse = " + " ))
+      print("strAnalysisFormula")
+      print(strAnalysisFormula)
+#      if(!is.null(lsFixedCovariates))
+#      {
+#        strAnalysisFormula <- paste( strAnalysisFormula, paste( sprintf( "`%s`", lsFixedCovariates ), collapse = " + " ))
+#      }
+#      if(!is.null(astrTerms))
+#      {
+#        strAnalysisFormula <- paste( strAnalysisFormula," + ", paste( sprintf( "(1|`%s`)", astrTerms ), collapse = " + " ))
+#      }   
+      #Run the association
+      lmod <- funcAnalysis(strFormula=strAnalysisFormula, frmeTmp=frmeTmp, iTaxon=iTaxon, lsQCCounts=lsData$lsQCCounts)
+    } else {
+      lsData$lsQCCounts$iNoTerms = lsData$lsQCCounts$iNoTerms + 1
+    }
   }
 
-  #Call funBugResults and return it's return
-  print("RIGHT BEFORE")
+  #Call funcBugResults and return it's return
+  if(is.na(funcGetResult))
+  {
+    if(is.na(lmod))
+    {
+      return(list(adP=list(), lsSig=list(), lsQCCounts=lsData$lsQCCounts))
+    } else {
+      #This is performed because it is assumed that the lmod object was actually given not a lm result
+      # In the previous analysis but a result that is already formatted and therefore this get result step
+      # Is not needed, this is how the univariates work. If this is not the case, the switchs in Maaslin.R
+      # Should be updated with the function that will translate the analysis results to the return value of
+      # this function. For an example, see how the lm results are handled in the switch and in the AnalysisModules.R
+      return(lmod)
+    }
+  }
+  #Format the results to a consistent expected result.
+#  print("Stop funcBugHybrid")
   return( funcGetResult( lmod=lmod, frmeData=frmeData, iTaxon=iTaxon, dSig=dSig, adP=adP, lsSig=lsSig, strLog=strLog, lsQCCounts=lsData$lsQCCounts, astrCols=astrTerms ) )
   ### List containing a list of pvalues, a list of significant data per association, and a list of QC data
 }
