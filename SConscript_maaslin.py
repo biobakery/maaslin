@@ -8,17 +8,24 @@ c_strSufRC		= ".read.config"
 c_fileDirSrc		= Dir( sfle.d( os.path.dirname( sfle.current_file( ) ), sfle.c_strDirSrc ) )
 c_fileProgMaaslin	= File( sfle.d( c_fileDirSrc, "Maaslin.R" ) )
 
-def MaAsLin( filePCL, fileDirOut = fileDirOutput, fileDirInt = fileDirTmp ):
+def MaAsLin( filePCL, strModel=None, strAnalysis=None, strLink=None, strForcedCovariates=None, strRandomCovariates=None, fileDirOut = fileDirOutput, fileDirInt = fileDirTmp ):
 	strBase = str(filePCL).replace( sfle.c_strSufPCL, "" )
 	strR, strRC = (( strBase + s ) for s in (sfle.c_strSufR, c_strSufRC))
 	fileR, fileRC = (( File( s ) if os.path.isfile( s ) else "" ) for s in (strR, strRC))
 
 	# Ugly - make this use sfle.op or similar instead
-	def funcMaaslin( target, source, env, fileR = fileR, fileRC = fileRC ):
+	def funcMaaslin( target, source, env, fileR = fileR, fileRC = fileRC, strRandomCovariates=strRandomCovariates ):
 		strT, astrSs = sfle.ts( target, source )
 		strProg, strTSV = astrSs[:2]
-		return sfle.ex( [strProg] + ( ["-i", fileRC] if fileRC else [] ) +
-			( ["-I", fileR] if fileR else [] ) +[strT, strTSV])
+		return sfle.ex( [strProg] + 
+                                ( ["-i", fileRC] if fileRC else [] ) +
+			        ( ["-I", fileR] if fileR else [] ) + 
+                                ( [-s, strModel] if strModel else []) + 
+                                ( [-m, strAnalysis] if strAnalysis else []) + 
+                                ( [-l, strLink] if strLink else []) + 
+                                ( [-F, strForcedCovariates] if strForcedCovariates else []) + 
+                                ( [-R, strRandomCovariates] if strRandomCovariates else []) + 
+                                  [strT, strTSV])
 	
 	strBase = os.path.basename( strBase )
 	strDir = sfle.d( fileDirOut, strBase )

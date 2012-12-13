@@ -238,7 +238,7 @@ strFile
 ){
   if(!is.na(strFile))
   {
-    if( length( intersect( class( pOut ), c("character", "numeric") ) ) )
+   if( length( intersect( class( pOut ), c("character", "numeric") ) ) )
     {
       write.table( t(pOut), strFile, quote = FALSE, sep = c_cTableDelimiter, col.names = FALSE, row.names = FALSE, na = "", append = TRUE )
     } else {

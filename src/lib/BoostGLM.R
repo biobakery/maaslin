@@ -284,8 +284,8 @@ lsNonPenalizedPredictors=NULL,
 ### These predictors will not be penalized in the feature (model) selection step
 funcAnalysis=NULL,
 ### Function to perform association analysis
-lsFixedCovariates=NULL,
-### List of string names of metadata which will be treated as fixed covariates
+lsRandomCovariates=NULL,
+### List of string names of metadata which will be treated as random covariates
 funcGetResults=NULL
 ### Function to unpack results from analysis
 ){
@@ -311,7 +311,10 @@ funcGetResults=NULL
       c_logrMaaslin$info( "Taxon %d/%d", iTaxon, max( aiData ) )
     }
     #Call analysis method
-    lsOne <- funcBugHybrid( iTaxon, frmeData, lsData, aiMetadata, dFreq, dSig, dMinSamp, adP, lsSig, strLog, funcReg, lsNonPenalizedPredictors, funcAnalysis, lsFixedCovariates, funcGetResults )
+    lsOne <- funcBugHybrid( iTaxon, frmeData, lsData, aiMetadata, dFreq, dSig, dMinSamp, adP, lsSig, strLog, funcReg, lsNonPenalizedPredictors, funcAnalysis, lsRandomCovariates, funcGetResults )
+
+    #TODO Check#If you get a NA (happens when the lmm gets all random covariates) move on
+    if(is.na(lsOne)){next}
 
     #Update pvalue array
     adP <- lsOne$adP
@@ -326,8 +329,6 @@ funcGetResults=NULL
   #Presort for order for FDR calculation
   if( is.null( adP ) ) { return( NULL ) }
   #Get indices of sorted data
-  print("adP")
-  print(adP)
   aiSig <- sort.list( adP )
   adQ <- adP
   iTests <- length( intersect( lsData$astrMetadata, colnames( frmeData )[aiMetadata] ) ) * length( aiData )
@@ -379,6 +380,7 @@ funcGetResults=NULL
       astrFactors	<- lsCur$factors
       adCur		<- lsCur$metadata
       adY <- adData
+
       if( is.na( strData ) ) { next }
 
       ## If the text file output is not written to yet
@@ -449,12 +451,11 @@ lsNonPenalizedPredictors=NULL,
 ### These predictors will not be penalized in the feature (model) selection step
 funcAnalysis=NULL,
 ### Function to perform association analysis
-lsFixedCovariates=NULL,
-### List of string names of metadata which will be treated as fixed covariates
+lsRandomCovariates=NULL,
+### List of string names of metadata which will be treated as random covariates
 funcGetResult=NULL
 ### Function to unpack results from analysis
 ){
-#  print("Start funcBugHybrid")
 #dTime00 <- proc.time()[3]
   #Get metadata column names
   astrMetadata = intersect( lsData$astrMetadata, colnames( frmeData )[aiMetadata] )
@@ -529,8 +530,7 @@ funcGetResult=NULL
 
   #Get look through the boosting results to get a model
   #Holds the predictors in the predictors in the model that were selected by the boosting
-  if(is.null( astrTerms ))
-  {lsData$lsQCCounts$iBoostErrors = lsData$lsQCCounts$iBoostErrors + 1}
+  if(is.null( astrTerms )){lsData$lsQCCounts$iBoostErrors = lsData$lsQCCounts$iBoostErrors + 1}
 
   #Run association analysis if predictors exist and an analysis function is specified
   #Reset model for the glm
@@ -541,22 +541,27 @@ funcGetResult=NULL
     {
       #Count the association attempt
       lsData$lsQCCounts$iLms = lsData$lsQCCounts$iLms + 1
+      #These are the fixed covariates (or all covariates if this is not a mixed effects model)
+      strFixedCovariates = setdiff(astrTerms, lsRandomCovariates)
       #Make the lm formula
-      #Build formula for simple mixed effects models
-      strAnalysisFormula <- "adCur ~"
-      strAnalysisFormula = paste( strAnalysisFormula, paste( sprintf( "`%s`", astrTerms ), collapse = " + " ))
-      print("strAnalysisFormula")
-      print(strAnalysisFormula)
-#      if(!is.null(lsFixedCovariates))
-#      {
-#        strAnalysisFormula <- paste( strAnalysisFormula, paste( sprintf( "`%s`", lsFixedCovariates ), collapse = " + " ))
-#      }
-#      if(!is.null(astrTerms))
-#      {
-#        strAnalysisFormula <- paste( strAnalysisFormula," + ", paste( sprintf( "(1|`%s`)", astrTerms ), collapse = " + " ))
-#      }   
+      #Build formula for simple mixed effects models or standard lms
+      strRandomCovariatesFormula = NULL
+      if(length(intersect(lsRandomCovariates, astrTerms))>0)
+      {
+        #Format for lmer
+        #strRandomCovariatesFormula <- paste( "adCur ~ ", paste( sprintf( "(1|`%s)`)", intersect(lsRandomCovariates, astrTerms)), collapse = " + " ))
+        #Format for glmmpql
+        strRandomCovariatesFormula <- paste( "adCur ~ ", paste( sprintf( "1|`%s`", intersect(lsRandomCovariates, astrTerms)), collapse = " + " ))
+      }
+
+      # Can not run a model with no fixed covariate, restriction of lmm
+      if(is.null(strFixedCovariates) || length(strFixedCovariates)==0){return(NA)}
+
+      #This is either the formula for all covariates in an lm or fixed covariates in the lmm
+      strAnalysisFormula <- paste( "adCur ~ ", paste( sprintf( "`%s`", strFixedCovariates ), collapse = " + " ))
+
       #Run the association
-      lmod <- funcAnalysis(strFormula=strAnalysisFormula, frmeTmp=frmeTmp, iTaxon=iTaxon, lsQCCounts=lsData$lsQCCounts)
+      lmod <- funcAnalysis(strFormula= strAnalysisFormula, frmeTmp=frmeTmp, iTaxon=iTaxon, lsQCCounts=lsData$lsQCCounts, strRandomFormula=strRandomCovariatesFormula)
     } else {
       lsData$lsQCCounts$iNoTerms = lsData$lsQCCounts$iNoTerms + 1
     }
@@ -578,7 +583,6 @@ funcGetResult=NULL
     }
   }
   #Format the results to a consistent expected result.
-#  print("Stop funcBugHybrid")
-  return( funcGetResult( lmod=lmod, frmeData=frmeData, iTaxon=iTaxon, dSig=dSig, adP=adP, lsSig=lsSig, strLog=strLog, lsQCCounts=lsData$lsQCCounts, astrCols=astrTerms ) )
+ return( funcGetResult( lmod=lmod, frmeData=frmeData, iTaxon=iTaxon, dSig=dSig, adP=adP, lsSig=lsSig, strLog=strLog, lsQCCounts=lsData$lsQCCounts, astrCols=astrTerms ) )
   ### List containing a list of pvalues, a list of significant data per association, and a list of QC data
 }

@@ -67,6 +67,8 @@ fInvert
   }
 
   #Create linear model title data string
+  print("ls")
+  print(lsCur)
   strTitle <- sprintf( "%s (%.3g sd %.3g, p=%.3g, q=%.3g)", lsCur$orig, lsCur$value, lsCur$std, curPValue, curQValue )
   adMar <- c(5, 4, 4, 2) + 0.1
   dLine <- NA

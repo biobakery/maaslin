@@ -37,8 +37,8 @@ suppressMessages(library( gam, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE
 # Needed for boosting
 suppressMessages(library( gbm, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
 # Needed for mixed models
-suppressMessages(library( lme4, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
-
+#suppressMessages(library( lme4, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
+suppressMessages(library( nlme, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
 
 ### Helper functions
 # OK
@@ -59,19 +59,6 @@ lsQCCounts,
 fDummy = FALSE
 ### Indicates if dummy variables are need is needed (tests of heterogenous data types will be encountered but the test can not handle them)
 ){
-#  print("Start funcMakeContrasts")
-#print("strFormula")
-#print(strFormula)
-#print("adCur")
-#print(adCur)
-#print("iTaxon")
-#print(iTaxon)
-#print("functionContrast")
-#print(functionContrast)
-#print("fDummy")
-#print(fDummy)
-
-
   #TODO are we updating the QCCounts?
   lsSig = list()
   ### Holds all the significance results from the tests
@@ -84,12 +71,16 @@ fDummy = FALSE
   #Change metadata in formula to univariate comparisons
   for(sComparison in asComparisons)
   {
-    #Removed fixed covariate formating
+    #Removed random covariate formating
     lsParse = unlist(strsplit(sComparison, "[\\(\\|\\)]", perl=FALSE))
     sComparison = lsParse[length(lsParse)]
  
     viTest = as.vector(frmeTmp[[sComparison]])
     if(is.character(viTest)){viTest = as.factor(viTest)}
+
+    #Value
+    #TODO update se value
+    sValue = 0.0
 
     #Only create dummy variables on univariate comparisons that require homogenous data.
     #I am dummy variabling it because that is equivalent to the handling in the lms
@@ -112,17 +103,17 @@ fDummy = FALSE
           #Current metadata name
           name = sComparison,
           #Current metadatda name (as a factor level if existing as such)
-          orig = sLevel,
+          orig = paste(sComparison,sLevel, sep=""),
           #Taxon feature name
           taxon = colnames( frmeTmp )[iTaxon],
           #Taxon data / response
           data = frmeTmp[,iTaxon],
           #All levels
-          factors = levels(liLevelTest),
+          factors = sComparison,
           #Metadata values
-          metadata = liLevelTest,
+          metadata = viTest,
           #Current coefficient value
-          value = sComparison,
+          value = sValue,
           #Standard deviation
           std = sd(liLevelTest),
           #Model coefficients
@@ -143,18 +134,17 @@ fDummy = FALSE
         #Taxon data / response
         data = frmeTmp[,iTaxon],
         #All levels
-        factors = levels(viTest),
+        factors = sComparison,
         #Metadata values
         metadata = viTest,
         #Current coefficient value
-        value = sComparison,
+        value = sValue,
         #Standard deviation
         std = sd(viTest),
         #Model coefficients
         allCoefs = sComparison)
     }
   }
-#  print("Stop funcMakeContrasts")
   return(list(adP=adP, lsSig=lsSig, lsQCCounts=lsQCCounts))
   ### Returns a list of p-value, standard deviation, and comparison which produced the p-value
 }
@@ -185,7 +175,7 @@ strLog
   return( asStepCoefsFactors )
   ### Vector of string predictor names
 }
-# ok
+# OK
 funcGetLMResults <- function
 ### Reduce the lm object return to just the data needed for further analysis
 ( lmod=lmod,
@@ -208,9 +198,18 @@ astrCols=astrTerms
 ### Predictors used in the association
 ){
   #TODO are we updating the QCCounts?
+
+  #TODO add in to summary or somewhere
+  # Evaluate Collinearity
+  #vif(fit) # variance inflation factors 
+  #sqrt(vif(fit)) > 2 # problem?
+
   #Exclude none and errors
   if( !is.na( lmod ) && ( class( lmod ) != "try-error" ) )
   {
+    #holds the location of the pvlaues if an lm, if lmm is detected this will be changed
+    iPValuePosition = 4
+
     #Get the column name of the iTaxon index
     #frmeTmp needs to be what?
     strTaxon = colnames( frmeData )[iTaxon]
@@ -230,10 +229,16 @@ astrCols=astrTerms
     try( funcWrite( lsSum, strLog ) )
 
     #Get the coefficients
+    #This should work for linear models
     frmeCoefs <- try( coefficients( lsSum ) )
+
     if( ( class( frmeCoefs ) == "try-error" ) || is.null( frmeCoefs ) )
     {
-      adCoefs = coefficients( lmod )
+      adCoefs = try(coefficients( lmod ))
+      if(class( adCoefs ) == "try-error")
+      {
+        adCoefs = coef(lmod)
+      }
       frmeCoefs <- NA
     } else {
       if( class( frmeCoefs ) == "list" )
@@ -245,6 +250,15 @@ astrCols=astrTerms
 
     #Go through each coefficient
     astrRows <- names( adCoefs )
+
+    ##lmm
+    if(is.null(astrRows))
+    {
+      astrRows = rownames(lsSum$tTable)
+      frmeCoefs = lsSum$tTable
+      iPValuePosition = 5
+    }
+
     for( iMetadata in 1:length( astrRows ) )
     {
       #Current coef which is being evaluated 
@@ -252,34 +266,26 @@ astrCols=astrTerms
       #Skip y interscept
       if( strOrig %in% c("(Intercept)", "Intercept", "Log(theta)") ) { next }
 
-      dP = frmeCoefs[strOrig,4]
+      #Extract pvalue and std in standard model
+      dP = frmeCoefs[strOrig, iPValuePosition]
       dStd = frmeCoefs[strOrig,2]
 
-      if( is.na( dP ) ) { next }
+      #Attempt to extract the pvalue and std in mixed effects summary 
+      #Could not get the pvalue so skip result
+      if(is.nan(dP) || is.na(dP) || is.null(dP)) { next }
 
       dCoef = adCoefs[iMetadata]
 
       #Setting adMetadata
       #Metadata values
-      #If it is a genetics run, switch alleles listing
-      #Else change coefficients to column names
-      if( strOrig == "aiAlleles" )
+      strMetadata = funcCoef2Col( strOrig, frmeData, astrCols )
+      if( is.na( strMetadata ) )
       {
-        strMetadata = strOrig
-        adMetadata = aiAlleles
-      } else if( length( grep( ":aiAlleles", strOrig, fixed = TRUE ) ) ){
-        strMetadata = "interaction"
-        adMetadata = aiAlleles
-      } else {
-        strMetadata = funcCoef2Col( strOrig, frmeData, astrCols )
-        if( is.na( strMetadata ) )
-        {
-          if( substring( strOrig, nchar( strOrig ) - 1 ) == "NA" ) { next }
-          c_logrMaaslin$error( "Unknown coefficient: %s", strOrig )
-        }
-        if( substring( strOrig, nchar( strMetadata ) + 1 ) == "NA" ) { next }
-        adMetadata <- frmeData[,strMetadata]
+        if( substring( strOrig, nchar( strOrig ) - 1 ) == "NA" ) { next }
+        c_logrMaaslin$error( "Unknown coefficient: %s", strOrig )
       }
+      if( substring( strOrig, nchar( strMetadata ) + 1 ) == "NA" ) { next }
+      adMetadata <- frmeData[,strMetadata]
 
       #Bonferonni correct the factor p-values based on the factor levels-1 comparisons
       if( class( adMetadata ) == "factor" )
@@ -294,7 +300,7 @@ astrCols=astrTerms
         #Current metadata name
         name		= strMetadata,
         #Current metadatda name (as a factor level if existing as such)
-        orig		= strOrig,
+        orig		= strOrig,#
         #Taxon feature name
         taxon		= strTaxon,
         #Taxon data / response
@@ -399,8 +405,12 @@ strLog
 ){
   funcWrite( c("#Forward formula", strFormula), strLog )
 
-  strNULLFormula = ifelse(is.null(lsForcedParameter), "adCur ~ 1", paste( "adCur ~", paste( sprintf( "`%s`", lsForcedParameter ), collapse = " + " )))
-  lmodNull <- try( lm(as.formula( strNULLFormula ), data=frmeTmp))
+  strNullFormula = "adCur ~ 1"
+  if(!is.null(lsForcedParameters))
+  {
+    strNullFormula = paste( "adCur ~", paste( sprintf( "`%s`", lsForcedParameter ), collapse = " + " ))
+  }
+  lmodNull <- try( lm(as.formula( strNullFormula ), data=frmeTmp))
   lmodFull <- try( lm(as.formula( strFormula ), data=frmeTmp ))
   if(!("try-error" %in% c(class( lmodNull ),class( lmodFull ))))
   {
@@ -430,8 +440,13 @@ strLog
 ){
   funcWrite( c("#Backwards formula", strFormula), strLog )
 
-  strNULLFormula = ifelse(is.null(lsForcedParameter), "adCur ~ 1", paste( "adCur ~", paste( sprintf( "`%s`", lsForcedParameter ), collapse = " + " )))
-  lmodNull <- try( lm(as.formula( strNULLFormula ), data=frmeTmp))
+  strNullFormula = "adCur ~ 1"
+  if(!is.null(lsForcedParameters))
+  {
+    strNullFormula = paste( "adCur ~", paste( sprintf( "`%s`", lsForcedParameter ), collapse = " + " ))
+  }
+
+  lmodNull <- try( lm(as.formula( strNullFormula ), data=frmeTmp))
   lmodFull <- try( lm(as.formula( strFormula ), data=frmeTmp ))
 
   if(! class( lmodFull ) == "try-error" )
@@ -455,13 +470,15 @@ strLog
 funcWilcoxon <- function(
 ### Perform multiple univariate comparisons performing wilcoxon tests to measure association
 strFormula,
-### lm style string defining reposne and predictors 
+### lm style string defining reponse and predictors, for mixed effects models this holds the fixed variables
 frmeTmp,
 ### Data on which to perform analysis
 iTaxon,
 ### Index of the response data
-lsQCCounts
+lsQCCounts,
 ### List recording anything important to QC
+strRandomFormula = NULL
+### Has the formula for random covariates
 ){
   adCur = frmeTmp[,iTaxon]
   return(funcMakeContrasts(strFormula, frmeTmp, adCur, iTaxon=iTaxon,  functionContrast=function(x,y){wilcox.test(x=x,y=y, na.action=c_strNA_Action)}, lsQCCounts, fDummy=TRUE))
@@ -474,13 +491,15 @@ lsQCCounts
 funcSpearman <- function(
 ### Perform multiple univariate comparisons producing spearman correlations for association
 strFormula,
-### lm style string defining reposne and predictors 
+### lm style string defining reponse and predictors, for mixed effects models this holds the fixed variables
 frmeTmp,
 ### Data on which to perform analysis
 iTaxon,
 ### Index of the response data
-lsQCCounts
+lsQCCounts,
 ### List recording anything important to QC
+strRandomFormula = NULL
+### Has the formula for random covariates
 ){
   adCur = frmeTmp[,iTaxon]
   return(funcMakeContrasts(strFormula=strFormula, frmeTmp=frmeTmp, adCur=adCur, iTaxon=iTaxon,  functionContrast=function(x,y){cor.test(x=x, y=y, method="spearman", na.action=c_strNA_Action)}, lsQCCounts, fDummy=TRUE))
@@ -491,61 +510,114 @@ lsQCCounts
 
 #TODO do I need to standardize?
 funcLasso <- function(
-### Perform lasso for regualrization and associations
+### Perform lasso for L1 regualrization and associations
 strFormula,
-### lm style string defining reposne and predictors 
+### lm style string defining reponse and predictors, for mixed effects models this holds the fixed variables
 frmeTmp,
 ### Data on which to perform analysis
 iTaxon,
 ### Index of the response data
-lsQCCounts
+lsQCCounts,
 ### List recording anything important to QC
+strRandomFormula = NULL
+### Has the formula for random covariates
 ){
   adCur = frmeTmp[,iTaxon]
-  return(try(penalized(response=adCur, penalized=as.formula(strFormula), lambda1=1, data=frmeTmp, standardize=TRUE)))
-  ### lmod result object from lasso lm
+  if(!is.null(strRandomFormula))
+  {
+    #TODO
+    #Maybe use the lasso mixed effects model in the glmmLasso package?Émake sure we can get p-values...
+    #glmmLasso(fix=formula, rnd=formula, data, lambda, family = NULL, control = list())
+    print("Currently the glmm Lasso is not implemented..TODO")
+    return(NA)
+  } else {
+    #May need to change this, currently can not find the coef p-values (coefficients/coef does work however just no p-value)
+    return(try(penalized(response=adCur, penalized=as.formula(strFormula), lambda1=1, data=frmeTmp, standardize=TRUE)))
+  }
+  ### lmod result object from lasso lm (lambda 1 = L1 = lasso (covariates weighted to 0), lambda 2 = L2 = ridge (covariates not weighted to 0), both = elastic net)
 }
 
 # OK
 funcLM <- function(
 ### Perform vanilla linear regression
 strFormula,
-### lm style string defining reposne and predictors 
+### lm style string defining reponse and predictors, for mixed effects models this holds the fixed variables
 frmeTmp,
 ### Data on which to perform analysis
 iTaxon,
 ### Index of the response data
-lsQCCounts
+lsQCCounts,
 ### List recording anything important to QC
+strRandomFormula = NULL
+### Has the formula for random covariates
 ){
   adCur = frmeTmp[,iTaxon]
-#  return(try( lmer(as.formula(strFormula), data=frmeTmp, na.action=c_strNA_Action) ))
-  return(try( lm(as.formula(strFormula), data=frmeTmp, na.action=c_strNA_Action) ))
+  if(!is.null(strRandomFormula))
+  {
+    return(try(glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=gaussian(link="identity"), data=frmeTmp)))
+    #lme4 package but does not have pvalues for the fixed variables (have to use a mcmcsamp/pvals.fnc function which are currently disabled)
+    #return(try( lmer(as.formula(strFormula), data=frmeTmp, na.action=c_strNA_Action) ))
+  } else {
+    return(try( lm(as.formula(strFormula), data=frmeTmp, na.action=c_strNA_Action) ))
+  }
   ### lmod result object from lm
 }
 
-# Multistep maaslin in Curtis' latest code
-#funcMultiStepLM <- function(strFormula, frmeTmp, adCur)
-#{
-#  lmod <- NA
-#  if( ( sum( !adCur, na.rm = TRUE ) / sum( !is.na( adCur ) ) ) >= c_dMinSamp )
-#  {
-#    adCur <- round( 1e1 * adCur / min( abs( adCur[adCur != 0] ), na.rm = TRUE ) )
-#    lmod <- try( zeroinfl( as.formula(strFormula), data = frmeTmp, dist = "negbin", link = "logit" ) )
-#  }
-#  if( is.na( lmod ) || ( class( lmod ) == "try-error" ) )
-#  {
-#    lmod <- try( ltsReg( as.formula(strFormula), data = frmeTmp, nsamp = "best", adjust = TRUE, alpha = 1, mcd = FALSE ) )
-#  }
-#  if( is.na( lmod ) || ( class( lmod ) == "try-error" ) )
-#  {
-#    lmod <- try( lm( as.formula(strFormula), data = frmeTmp ) )
-#  }
-#  return(lmod)
-#}
+#OK
+funcBinomialMult <- function(
+### Perform linear regression with binomial link
+strFormula,
+### lm style string defining reponse and predictors, for mixed effects models this holds the fixed variables
+frmeTmp,
+### Data on which to perform analysis
+iTaxon,
+### Index of the response data
+lsQCCounts,
+### List recording anything important to QC
+strRandomFormula = NULL
+### Has the formula for random covariates
+){
+  adCur = frmeTmp[,iTaxon]
 
-### Link functions / Transformations
+  if(!is.null(strRandomFormula))
+  {
+    return(try(glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=binomial(link=logit), data=frmeTmp)))
+    #lme4 package but does not have pvalues for the fixed variables (have to use a mcmcsamp/pvals.fnc function which are currently disabled)
+    #return(try ( glmer(as.formula(strFormula), data=frmeTmp, family=binomial(link=logit), na.action=c_strNA_Action) ))
+  } else {
+    return(try( glm(as.formula(strFormula), family=binomial(link=logit), data=frmeTmp, na.action=c_strNA_Action) ))
+  }
+  ### lmod result object from lm
+}
 
+#OK
+funcQuasiMult <- function(
+### Perform linear regression with quasi-poisson link
+strFormula,
+### lm style string defining reponse and predictors, for mixed effects models this holds the fixed variables
+frmeTmp,
+### Data on which to perform analysis
+iTaxon,
+### Index of the response data
+lsQCCounts,
+### List recording anything important to QC
+strRandomFormula = NULL
+### Has the formula for random covariates
+){
+  adCur = frmeTmp[,iTaxon]
+  #Check to see if | is in the model, if so use a lmm otherwise the standard glm is ok
+  if(!is.null(strRandomFormula))
+  {
+    return(try(glmmPQL(fixed=as.formula(strFixedFormula), random=as.formula(strRandomFormula), family= quasipoisson, data=frmeTmp)))
+    #lme4 package but does not have pvalues for the fixed variables (have to use a mcmcsamp/pvals.fnc function which are currently disabled)
+    #return(try ( glmer(as.formula(strFormula), data=frmeTmp, family=quasipoisson, na.action=c_strNA_Action) ))
+  } else {
+    return(try( glm(as.formula(strFormula), family=quasipoisson, data=frmeTmp, na.action=c_strNA_Action) ))
+  }
+  ### lmod result object from lm
+}
+
+### Transformations
 # OK
 funcArcsinSqrt <- function(
 # Transform data with arcsin sqrt transformation
@@ -567,38 +639,22 @@ aData
   ### Transformed data
 }
 
-#OK
-funcBinomialMult <- function(
-### Perform linear regression with binomial link
-strFormula,
-### lm style string defining reposne and predictors 
-frmeTmp,
-### Data on which to perform analysis
-iTaxon,
-### Index of the response data
-lsQCCounts
-### List recording anything important to QC
-){
-  adCur = frmeTmp[,iTaxon]
-  return(try ( glmer(as.formula(strFormula), data=frmTmp, family=binomial(link=logit), na.action=c_strNA_Action) ))
-#  return(try( glm(as.formula(strFormula), family=binomial(link=logit), data=frmeTmp, na.action=c_strNA_Action) ))
-  ### lmod result object from lm
-}
-
-#OK
-funcQuasiMult <- function(
-### Perform linear regression with quasi-poisson link
-strFormula,
-### lm style string defining reposne and predictors 
-frmeTmp,
-### Data on which to perform analysis
-iTaxon,
-### Index of the response data
-lsQCCounts
-### List recording anything important to QC
-){
-  adCur = frmeTmp[,iTaxon]
-  return(try ( glmer(as.formula(strFormula), data=frmTmp, family=quasipoisson, na.action=c_strNA_Action) ))
-#  return(try( glm(as.formula(strFormula), family=quasipoisson, data=frmeTmp, na.action=c_strNA_Action) ))
-  ### lmod result object from lm
-}
+# Multistep maaslin in Curtis' latest code
+#funcMultiStepLM <- function(strFormula, frmeTmp, adCur)
+#{
+#  lmod <- NA
+#  if( ( sum( !adCur, na.rm = TRUE ) / sum( !is.na( adCur ) ) ) >= c_dMinSamp )
+#  {
+#    adCur <- round( 1e1 * adCur / min( abs( adCur[adCur != 0] ), na.rm = TRUE ) )
+#    lmod <- try( zeroinfl( as.formula(strFormula), data = frmeTmp, dist = "negbin", link = "logit" ) )
+#  }
+#  if( is.na( lmod ) || ( class( lmod ) == "try-error" ) )
+#  {
+#    lmod <- try( ltsReg( as.formula(strFormula), data = frmeTmp, nsamp = "best", adjust = TRUE, alpha = 1, mcd = FALSE ) )
+#  }
+#  if( is.na( lmod ) || ( class( lmod ) == "try-error" ) )
+#  {
+#    lmod <- try( lm( as.formula(strFormula), data = frmeTmp ) )
+#  }
+#  return(lmod)
+#}

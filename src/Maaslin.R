@@ -116,19 +116,19 @@ pArgs <- add_option( pArgs, c("-p", "--minPrevalence"), type="double", action="s
 ## Fence for outlier, if not set Grubbs test is used
 pArgs <- add_option( pArgs, c("-o", "--outlierFence"), type="double", action="store", dest="dOutlierFence", default=3.0, metavar="outlierFence", help="Outliers are defined as this number times the interquartile range added/subtracted from the 3rd/1st quartiles respectively. If set to 0, outliers are defined by the Grubbs test.")
 ## Fixed (not random) covariates
-pArgs <- add_option( pArgs, c("x","--fixed"), type="character", action="store", dest="strFixedCovariates", default=NULL, metavar="fixed", help="These metadata will be treated as fixed covariates. Comma delimited data feature names. Example 'FixedMetadata1,FixedMEtadata2'")
+pArgs <- add_option( pArgs, c("-R","--random"), type="character", action="store", dest="strRandomCovariates", default=NULL, metavar="fixed", help="These metadata will be treated as random covariates. Comma delimited data feature names. These features must be listed in the read.config file and will be required to pass any model selection before being used. Example 'RandomMetadata1,RandomMetadata2'")
 
 # Arguments used in validation of MaAsLin
 ## Model selection (enumerate) c("none","boost","forward","backward")
 pArgs <- add_option( pArgs, c("-s", "--selection"), type="character", action="store", dest="strModelSelection", default="boost", metavar="model_selection", help="Indicates which of the model selection techniques to use.")
 ## Argument indicating which method should be ran (enumerate) c("wilcoxon","spearman","lm","lasso","neg_binomial","quasi")
-pArgs <- add_option( pArgs, c("-m", "--method"), type="character", action="store", dest="strMethod", default="spearman", metavar="analysis_method", help="Indicates which of the statistical analysis methods to run.")
+pArgs <- add_option( pArgs, c("-m", "--method"), type="character", action="store", dest="strMethod", default="lm", metavar="analysis_method", help="Indicates which of the statistical analysis methods to run.")
 ## Argument indicating which link function is used c("none","asinsqrt")
 pArgs <- add_option( pArgs, c("-l", "--link"), type="character", action="store", dest="strTransform", default="asinsqrt", metavar="transform_method", help="Indicates which link or transformation to use with a glm, if glm is not selected this argument will be set to none.")
 
 # Arguments to supress MaAsLin actions on certain data
 ## Do not perform model selection on the following data
-pArgs <- add_option( pArgs, c("-F","--forced"), type="character", action="store", dest="strForcedPredictors", default=NULL, metavar="forced_predictors", help="Metadata features that will be forced into the model seperated by commas. Example 'Metadata2,Metadata6,Metadata10'")
+pArgs <- add_option( pArgs, c("-F","--forced"), type="character", action="store", dest="strForcedPredictors", default=NULL, metavar="forced_predictors", help="Metadata features that will be forced into the model seperated by commas. These features must be listed in the read.config file. Example 'Metadata2,Metadata6,Metadata10'")
 ## Do not impute the following
 pArgs <- add_option( pArgs, c("-n","--noImpute"), type="character", action="store", dest="strNoImpute", default=NULL, metavar="no_impute", help="These data will not be imputed. Comma delimited data feature names. Example 'Feature1,Feature4,Feature6'")
 
@@ -179,10 +179,10 @@ if(!is.null(lsArgs$options$strNoImpute))
 {
   xNoImpute = unlist(strsplit(lsArgs$options$strNoImpute,"[,]"))
 }
-lsFixedCovariates = NULL
-if(!is.null(lsArgs$options$strFixedCovariates))
+lsRandomCovariates = NULL
+if(!is.null(lsArgs$options$strRandomCovariates))
 {
-  lsFixedCovariates = unlist(strsplit(lsArgs$options$strFixedCovariates,"[,]"))
+  lsRandomCovariates = unlist(strsplit(lsArgs$options$strRandomCovariates,"[,]"))
 }
 
 #If logging is not an allowable value, inform user and set to INFO
@@ -346,7 +346,7 @@ lsRet$lsQCCounts$iLms = 0
 alsRetBugs = funcBugs( lsRet$frmeData, lsRet, lsRet$aiMetadata, lsRet$aiData, strBase,
 	lsArgs$options$dSelectionFrequency, lsArgs$options$dSignificanceLevel, lsArgs$options$dMinSamp, lsArgs$options$fInvert,
         outputDirectory, astrScreen = c(), funcReg=afuncVariableAnalysis[[c_iSelection]], lsForcedParameters,
-        funcAnalysis=afuncVariableAnalysis[[c_iAnalysis]], lsFixedCovariates, funcGetResults=afuncVariableAnalysis[[c_iResults]] )
+        funcAnalysis=afuncVariableAnalysis[[c_iAnalysis]], lsRandomCovariates, funcGetResults=afuncVariableAnalysis[[c_iResults]] )
 aiBugs = alsRetBugs$aiReturnBugs
 
 #Write QC files only in certain modes of verbosity

@@ -199,7 +199,6 @@ tempHeight=6,
 tempPCH=20
 ### Point size
 ){
-
   #Set pdf settings
   pdf(paste(tempSaveFileName,".pdf",sep=""), width = c_dHeight * 1.5, height = c_dHeight, useDingbats=FALSE )
   if( fInvert )
