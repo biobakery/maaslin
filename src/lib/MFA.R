@@ -211,14 +211,10 @@ tempPCH=20
   #Plot colors
   astrCols = funcGetRandomColors( length( lsPCA$ind$coord ) )
   if(exists("funcPlotColors",mode="function")){astrCols = funcPlotColors( frmeData )}
-  print("MFA colors")
-  print(astrCols)
 
   #Plot points
   aiPoints = 16
   if(exists("funcPlotPoints",mode="function")){aiPoints = funcPlotPoints( frmeData )}
-  print("MFA points")
-  print(aiPoints)
 
   dX1 = max( lsPCA$ind$coord[,1] ) / max( lsPCA$var$coord[,1] )
   dX2 = min( lsPCA$ind$coord[,1] ) / min( lsPCA$var$coord[,1] )

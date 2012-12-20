@@ -66,6 +66,7 @@ for strPCLFile in lsMaaslinInputFiles:
   ## Run MaAsLin
   Default( MaAsLin( strPCLFile ) )
 
+if False:
   ## Run Graphlan on all output projects
   strProjectName = os.path.splitext(os.path.split(strPCLFile.get_abspath())[1])[0]
   strMaaslinOutputDir = sfle.d(fileDirOutput,strProjectName)
