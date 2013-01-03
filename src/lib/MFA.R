@@ -81,18 +81,18 @@ funcGetHighestContribution = function(MFAOut,dfOriginal,fAllValues=FALSE,iCount=
           lsReducedValuesList = unique(c(lsReducedValuesList, lsTargetGroupNames[iTargetNameIndex]))
         }
         lsTargetGroupColumnNames = c(lsTargetGroupColumnNames, sCurrentColumnName)
-        if(length(lsTargetGroupColumnNames) == iCount){print("break");print(lsTargetGroupColumnNames );break}
+#        if(length(lsTargetGroupColumnNames) == iCount){print("break");print(lsTargetGroupColumnNames );break}
       }
     }
     #This process can get values that were not influential (or in the components of interest, in that case remove those values)
-    print("lsTargetGroupNames")
-    print(lsTargetGroupNames)
-    print("lsReducedValuesList")
-    print(lsReducedValuesList)
-    #lsTargetGroupNames = intersect(lsReducedValuesList, lsTargetGroupNames)
-    return(lsReducedValuesList)
-    print("lsTargetGroupNames")
-    print(lsTargetGroupNames)
+#    print("lsTargetGroupNames")
+#    print(lsTargetGroupNames)
+#    print("lsReducedValuesList")
+#    print(lsReducedValuesList)
+#    #lsTargetGroupNames = intersect(lsReducedValuesList, lsTargetGroupNames)
+#    return(lsReducedValuesList)
+#    print("lsTargetGroupNames")
+#    print(lsTargetGroupNames)
     return(lsTargetGroupNames[!is.na(lsTargetGroupNames)])
   }
 
@@ -446,62 +446,62 @@ tempPCH=20
   if(exists("funcPlotPoints",mode="function") && is.null(strMFAShapeCovariate)){aiPoints = funcPlotPoints( frmeData )}
 
   #Get metadata names
-  print("****************************")
+#  print("****************************")
   lsMetadata = funcGetHighestContribution(MFAOut=lsMFA,dfOriginal=frmeData,fAllValues=TRUE,iCount=iMaxFeatures,lsNames=lsMetadata)
   if(exists("funcPlotMetadata",mode="function")){lsMetadata = funcPlotMetadata()}
   afMetadata <- rownames(lsPCA$var$coord) %in% lsMetadata
-  print("lsMetadata")
-  print(lsMetadata)
+#  print("lsMetadata")
+#  print(lsMetadata)
 
   #Get feature names
   lsFeaturesToPlot = funcGetHighestContribution(MFAOut=lsMFA,dfOriginal=frmeData,iCount=iMaxFeatures,lsNames=lsFeatures)
   if(exists("funcPlotFeatures",mode="function")){lsFeaturesToPlot = funcPlotFeatures()}
   afFeatures = rownames(lsPCA$var$coord) %in% lsFeaturesToPlot
 
-  print("************** lsFeaturesToPlot")
-  print(lsFeaturesToPlot)
+#  print("************** lsFeaturesToPlot")
+#  print(lsFeaturesToPlot)
 
   #Scale the metadate labels so they are viewable
   # Max coordinates for samples (dim1,dim2)
   sdDim1Max = max(abs(lsMFA$global.pca$ind$coord[,1]))
   sdDim2Max = max(abs(lsMFA$global.pca$ind$coord[,2]))
-  print("************** 1a")
+#  print("************** 1a")
   # Max x and y coordinates for the select metadata
-  print("lsMetadata")
-  print(lsMetadata)
-  print("lsMFA$global.pca$var$coord[,1]")
-  print(lsMFA$global.pca$var$coord[1])
-  print("lsMFA$global.pca$var$coord[,2]")
-  print(lsMFA$global.pca$var$coord[2])
+#  print("lsMetadata")
+#  print(lsMetadata)
+#  print("lsMFA$global.pca$var$coord[,1]")
+#  print(lsMFA$global.pca$var$coord[1])
+#  print("lsMFA$global.pca$var$coord[,2]")
+#  print(lsMFA$global.pca$var$coord[2])
   sdDim1MaxVar = max(abs(lsMFA$global.pca$var$coord[lsMetadata,1]))
   sdDim2MaxVar = max(abs(lsMFA$global.pca$var$coord[lsMetadata,2]))
-  print("************** 1b")
+#  print("************** 1b")
   # Max and min x and y coordinates for the select data
   sdDim1MaxInd = max(abs(lsMFA$global.pca$var$coord[lsFeaturesToPlot,1]))
   sdDim2MaxInd = max(abs(lsMFA$global.pca$var$coord[lsFeaturesToPlot,2]))
-  print("************** 1c")
+#  print("************** 1c")
   # Get the scale for metadata
   dScale = NA
   if(sdDim1MaxVar > sdDim2MaxVar){dScale = sdDim1Max/sdDim1MaxVar*.9
   } else{
     dScale = sdDim2Max/sdDim2MaxVar*.9
   }
-  print("************** 2")
+#  print("************** 2")
   # Get the scale for data
   dBugScale = NA
   if(sdDim1MaxInd > sdDim2MaxInd){dBugScale = sdDim1Max/sdDim1MaxInd*.9
   } else{
     dBugScale = sdDim2Max/sdDim2MaxInd*.9
   }
-  print("************** 3")
+#  print("************** 3")
   #Set X and Y coordinates and plot points
   strX <- sprintf( "Dimension 1 (%.2f%%)", lsPCA$eig$`percentage of variance`[1] )
   strY <- sprintf( "Dimension 2 (%.2f%%)", lsPCA$eig$`percentage of variance`[2] )
-  print("************** 4")
+#  print("************** 4")
   #Do plots
   #Plot just points 
   funcPlotMFAPage(coordinatesPlot=lsPCA$ind$coord, coordinatesText=NA, strX=strX, strY=strY, aiPoints=aiPoints, astrCols=astrCols)
-  print("************** 5t")
+#  print("************** 5t")
   if( sum( afMetadata ) )
   {
     funcPlotMFAPage(coordinatesPlot=lsPCA$ind$coord, coordinatesText=lsPCA$var$coord, strX=strX, strY=strY, aiPoints=aiPoints,
@@ -522,7 +522,7 @@ tempPCH=20
         dBugScale=dBugScale, lsFeatureLabels=funcRename( rownames( lsPCA$var$coord )[afFeatures] ), lLegendLoc=llMarkerInfo$lLegendInfo)
     }
   }
-  print("Func Plot MFA 15")
+#  print("Func Plot MFA 15")
   dev.off( )
 }
 
