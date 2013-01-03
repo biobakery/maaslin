@@ -60,8 +60,7 @@ sMethodKey
   lRetMethods[[c_iAnalysis]] = switch(sMethodKey,
     neg_binomial = funcBinomialMult,
     quasi = funcQuasiMult,
-    spearman = funcSpearman,
-    wilcoxon = funcWilcoxon,
+    univariate = funcDoUnivariate,
     lasso = funcLasso,
     lm = funcLM,
     none = NA)
@@ -70,8 +69,7 @@ sMethodKey
   lRetMethods[[c_iResults]] = switch(sMethodKey,
     neg_binomial = funcGetLMResults,
     quasi = funcGetLMResults,
-    spearman = NA,
-    wilcoxon = NA,
+    univariate = NA,
     lasso = funcGetLassoResults,
     lm = funcGetLMResults,
     none = NA)
@@ -121,12 +119,12 @@ pArgs <- add_option( pArgs, c("-R","--random"), type="character", action="store"
 # Arguments used in validation of MaAsLin
 ## Model selection (enumerate) c("none","boost","forward","backward")
 pArgs <- add_option( pArgs, c("-s", "--selection"), type="character", action="store", dest="strModelSelection", default="boost", metavar="model_selection", help="Indicates which of the model selection techniques to use.")
-## Argument indicating which method should be ran (enumerate) c("wilcoxon","spearman","lm","lasso","neg_binomial","quasi")
+## Argument indicating which method should be ran (enumerate) c("univariate","lm","lasso","neg_binomial","quasi")
 pArgs <- add_option( pArgs, c("-m", "--method"), type="character", action="store", dest="strMethod", default="lm", metavar="analysis_method", help="Indicates which of the statistical analysis methods to run.")
 ## Argument indicating which link function is used c("none","asinsqrt")
 pArgs <- add_option( pArgs, c("-l", "--link"), type="character", action="store", dest="strTransform", default="asinsqrt", metavar="transform_method", help="Indicates which link or transformation to use with a glm, if glm is not selected this argument will be set to none.")
 
-# Arguments to supress MaAsLin actions on certain data
+# Arguments to suppress MaAsLin actions on certain data
 ## Do not perform model selection on the following data
 pArgs <- add_option( pArgs, c("-F","--forced"), type="character", action="store", dest="strForcedPredictors", default=NULL, metavar="forced_predictors", help="Metadata features that will be forced into the model seperated by commas. These features must be listed in the read.config file. Example 'Metadata2,Metadata6,Metadata10'")
 ## Do not impute the following
@@ -137,9 +135,14 @@ pArgs <- add_option( pArgs, c("-n","--noImpute"), type="character", action="stor
 strDefaultLogging = "INFO"
 pArgs <- add_option( pArgs, c("-v", "--verbosity"), type="character", action="store", dest="strVerbosity", default=strDefaultLogging, metavar="verbosity", help="Logging verbosity")
 ### Argument for inverting background to black
-pArgs <- add_option( pArgs, c("-t", "--invert"), type="logical", action="store_true", dest="fInvert", default="FALSE", metavar="invert", help="When given, flag indicates to invert the background of figures to black.")
+pArgs <- add_option( pArgs, c("-O","--omitLogFile"), type="logical", action="store_true", default=FALSE, dest="fOmitLogFile", metavar="omitlogfile",help="Including this flag will stop the creation of the output log file.")
+### Run maaslin without creating a log file
+pArgs <- add_option( pArgs, c("-t", "--invert"), type="logical", action="store_true", dest="fInvert", default=FALSE, metavar="invert", help="When given, flag indicates to invert the background of figures to black.")
 ### Selection Frequency
-pArgs <- add_option( pArgs, c("-f","--selectionFrequency"), type="double", action="store", dest="dSelectionFrequency", default= NA, metavar="selectionFrequency", help="Selection Frequency")
+pArgs <- add_option( pArgs, c("-f","--selectionFrequency"), type="double", action="store", dest="dSelectionFrequency", default= NA, metavar="selectionFrequency", help="Selection Frequency for boosting (max 100 will remove almost everything). Interpreted as requiring boosting to select metadata 100% percent of the time (or less if given a number that is less).")
+pArgs <- add_option( pArgs, c("-c","--MFAFeatureCount"), type="integer", action="store", dest="iMFAMaxFeatures", default = 3, metavar="maxMFAFeature", help="Number of Features or number of bugs to plot).")
+pArgs <- add_option( pArgs, c("-C", "--MFAColor"), type="character", action="store", dest="strMFAColor", default=NULL, metavar="MFAColorCovariate", help="A continuous covariate that will be used to color samples in the MFA ordination plot.")
+pArgs <- add_option( pArgs, c("-S", "--MFAShape"), type="character", action="store", dest="strMFAShape", default=NULL, metavar="MFAShapeCovariate", help="A discontinuous covariate that will be used to indicate shapes of samples in the MFA ordination plot.")
 
 main <- function(
 ### The main function manages the following:
@@ -213,7 +216,7 @@ if(!lsArgs$options$strModelSelection %in% c("none","boost","forward","backward")
   stop( print_help( pArgs ) )
 }
 lsArgs$options$strMethod = tolower(lsArgs$options$strMethod)
-if(!lsArgs$options$strMethod %in% c("wilcoxon","spearman","lm","lasso","neg_binomial","quasi"))
+if(!lsArgs$options$strMethod %in% c("univariate","lm","lasso","neg_binomial","quasi"))
 {
   logerror(paste("Received an invalid value for the method argument, received '",lsArgs$options$strMethod,"'"), c_logrMaaslin)
   stop( print_help( pArgs ) )
@@ -227,7 +230,7 @@ if(!lsArgs$options$strTransform %in% c("none","asinsqrt"))
 # If lasso is selected, do not use a regularization technique. This will happen in the lasso call
 if(lsArgs$options$strMethod == "lasso")
 {
-  logdebug(paste("Lasso was selected so no model selection ocurred outside the lasso call."), c_logrMaaslin)
+  logdebug(paste("Lasso was selected so no model selection will occure outside the lasso procedure."), c_logrMaaslin)
   lsArgs$options$strModelSelection = "none"
 }
 
@@ -269,6 +272,10 @@ funcSourceScript <- function(strFunctionPath)
 inputFileData = funcReadMatrices(lsArgs$options$strInputConfig, strInputTSV, log=TRUE)
 if(is.null(inputFileData[[c_strMatrixMetadata]])) { names(inputFileData)[1] <- c_strMatrixMetadata }
 if(is.null(inputFileData[[c_strMatrixData]])) { names(inputFileData)[2] <- c_strMatrixData }
+
+#Metadata and bug names
+lsOriginalMetadataNames = names(inputFileData[[c_strMatrixMetadata]])
+lsOriginalFeatureNames = names(inputFileData[[c_strMatrixData]])
 
 #Dimensions of the datasets
 liMetaData = dim(inputFileData[[c_strMatrixMetadata]])
@@ -342,11 +349,16 @@ lsRet$lsQCCounts$iBoostErrors = 0
 lsRet$lsQCCounts$iNoTerms = 0
 lsRet$lsQCCounts$iLms = 0
 
+#Indicate if the residuals plots should occur
+fDoRPlot=TRUE
+#Should not occur for univariates
+if(lsArgs$options$strMethod %in% c("univariate")){ fDoRPlot=FALSE }
+
 #Run analysis
 alsRetBugs = funcBugs( lsRet$frmeData, lsRet, lsRet$aiMetadata, lsRet$aiData, strBase,
 	lsArgs$options$dSelectionFrequency, lsArgs$options$dSignificanceLevel, lsArgs$options$dMinSamp, lsArgs$options$fInvert,
         outputDirectory, astrScreen = c(), funcReg=afuncVariableAnalysis[[c_iSelection]], lsForcedParameters,
-        funcAnalysis=afuncVariableAnalysis[[c_iAnalysis]], lsRandomCovariates, funcGetResults=afuncVariableAnalysis[[c_iResults]] )
+        funcAnalysis=afuncVariableAnalysis[[c_iAnalysis]], lsRandomCovariates, funcGetResults=afuncVariableAnalysis[[c_iResults]], fDoRPlot=fDoRPlot, fOmitLogFile=lsArgs$options$fOmitLogFile )
 aiBugs = alsRetBugs$aiReturnBugs
 
 #Write QC files only in certain modes of verbosity
@@ -366,7 +378,7 @@ if( length( aiBugs ) )
   if( class( lsMFA ) != "try-error" )
   {
     logdebug("PlotMFA:in", c_logrMaaslin)
-    funcPlotMFA( lsMFA=lsMFA, frmeData=lsRet$frmeData, fInvert=lsArgs$options$fInvert, tempSaveFileName=file.path(outputDirectory,strBase), funcPlotColors=lsRet$funcPlotColors, funcPlotPoints=lsRet$funcPlotPoints, funcPlotLegend=lsRet$funcPlotLegend )
+#    funcPlotMFA( lsMFA=lsMFA, frmeData=lsRet$frmeData, iMaxFeatures=lsArgs$options$iMFAMaxFeatures, strMFAColorCovariate=lsArgs$options$strMFAColor, strMFAShapeCovariate=lsArgs$options$strMFAShape, fInvert=lsArgs$options$fInvert, tempSaveFileName=file.path(outputDirectory,strBase), lsMetadata=lsOriginalMetadataNames, lsFeatures=lsOriginalFeatureNames, funcPlotColors=lsRet$funcPlotColors, funcPlotPoints=lsRet$funcPlotPoints, funcPlotLegend=lsRet$funcPlotLegend )
     logdebug("PlotMFA:out", c_logrMaaslin)
   }
 }

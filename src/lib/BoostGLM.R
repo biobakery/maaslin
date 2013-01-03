@@ -272,7 +272,7 @@ dSig,
 ### Signifcance threshold for the qvalue cut off
 dMinSamp,
 ### Minimum number of samples
-fInvert,
+fInvert=FALSE,
 ### Invert images to have a black background
 strDirOut = NA,
 ### Output project directory
@@ -286,20 +286,37 @@ funcAnalysis=NULL,
 ### Function to perform association analysis
 lsRandomCovariates=NULL,
 ### List of string names of metadata which will be treated as random covariates
-funcGetResults=NULL
+funcGetResults=NULL,
 ### Function to unpack results from analysis
+fDoRPlot=TRUE,
+### Plot residuals
+fOmitLogFile = FALSE
+### Stops the creation of the log file
 ){
+  print("###1")
   c_logrMaaslin$debug("Start funcBugs")
-  if( is.na( strDirOut ) )
+  if( is.na( strDirOut )||is.null(strDirOut))
   {
-    strDirOut <- paste( dirname( strData ), "/", sep = "" )
+    if(!is.na(strData))
+    {
+      strDirOut <- paste( dirname( strData ), "/", sep = "" )
+    } else { strDirOut = "" }
   }
-  strBaseOut <- paste( strDirOut, sub( "\\.([^.]+)$", "", basename(strData) ), sep = "/" )
 
-  strLog <- paste( strBaseOut,c_sLogFileSuffix, ".txt", sep = "" )
-  c_logrMaaslin$info( "Outputting to: %s", strLog )
-  unlink( strLog )
-
+  strLog = NA
+  strBase = ""
+  if(!is.na(strData))
+  {
+    strBaseOut <- paste( strDirOut, sub( "\\.([^.]+)$", "", basename(strData) ), sep = "/" )
+    strLog <- paste( strBaseOut,c_sLogFileSuffix, ".txt", sep = "" )
+  }
+  if(fOmitLogFile){ strLog = NA }
+  if(!is.na(strLog))
+  {
+    c_logrMaaslin$info( "Outputting to: %s", strLog )
+    unlink( strLog )
+  }
+  print("###2")
   #Will contain pvalues
   #Will contain objects associated with significance
   adP = c()
@@ -311,8 +328,9 @@ funcGetResults=NULL
       c_logrMaaslin$info( "Taxon %d/%d", iTaxon, max( aiData ) )
     }
     #Call analysis method
+    print("###3")
     lsOne <- funcBugHybrid( iTaxon, frmeData, lsData, aiMetadata, dFreq, dSig, dMinSamp, adP, lsSig, strLog, funcReg, lsNonPenalizedPredictors, funcAnalysis, lsRandomCovariates, funcGetResults )
-
+    print("###4")
     #TODO Check#If you get a NA (happens when the lmm gets all random covariates) move on
     if(is.na(lsOne)){next}
 
@@ -325,13 +343,14 @@ funcGetResults=NULL
   }
   c_logrMaaslin$debug("lsData$lsQCCounts")
   c_logrMaaslin$debug(format(lsData$lsQCCounts))
-
+  print("###5")
   #Presort for order for FDR calculation
   if( is.null( adP ) ) { return( NULL ) }
   #Get indices of sorted data
   aiSig <- sort.list( adP )
   adQ <- adP
   iTests <- length( intersect( lsData$astrMetadata, colnames( frmeData )[aiMetadata] ) ) * length( aiData )
+  print("###6")
   #Perform FDR BH
   for( i in 1:length( aiSig ) )
   {
@@ -339,14 +358,14 @@ funcGetResults=NULL
     adQ[iSig] <- adP[iSig] * iTests / i
   }
 
-  #
+  print("###7")
   astrNames <- c()
   for( i in 1:length( lsSig ) )
   {
     astrNames <- c(astrNames, lsSig[[i]]$name)
   }
   astrNames <- unique( astrNames )
-
+  print("###8")
   # Sets up named label return for MFA
   astrRet <- c()
   for( j in aiSig )
@@ -365,7 +384,7 @@ funcGetResults=NULL
     }
     astrRet <- unique( astrRet )
   }
-			
+  print("###9")			
   for( strName in astrNames )
   {
     strFileTXT <- NA
@@ -398,7 +417,8 @@ funcGetResults=NULL
       ## If the significance meets the threshold
       ## Write PDF file output
       if( adQ[j] > dSig ) { next }
-      strFilePDF = funcPDF( frmeTmp= frmeData, lsCur=lsCur, curPValue=adP[j], curQValue=adQ[j], strFilePDF=strFilePDF, strBaseOut=strBaseOut, strName=strName, fInvert=fInvert )
+      # Do not make residuals plots if univariate is selected
+      strFilePDF = funcPDF( frmeTmp=frmeData, lsCur=lsCur, curPValue=adP[j], curQValue=adQ[j], strFilePDF=strFilePDF, strBaseOut=strBaseOut, strName=strName, fDoResidualPlot=fDoRPlot, fInvert=fInvert )
     }
 
     if( dev.cur( ) != 1 ) { dev.off( ) }
@@ -413,6 +433,7 @@ funcGetResults=NULL
   ### List of data features successfully associated without error and quality control data
 }
 
+#Lightly Tested
 ### Performs analysis for 1 feature
 ### iTaxon: integer Taxon index to be associated with data
 ### frmeData: Data frame The full data
@@ -465,7 +486,6 @@ funcGetResult=NULL
 
   #Get the dataframe of non-na data measurements
   frmeTmp <- frmeData[aiRows,]
-
   #For each metadata, check it's data and see if there are too many NA to move forward.
   astrRemove <- c()
   for( strMetadatum in astrMetadata )

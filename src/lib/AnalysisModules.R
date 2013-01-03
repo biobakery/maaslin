@@ -29,8 +29,10 @@ inlinedocs <- function(
 ) { return( pArgs ) }
 
 # Libraries
+suppressMessages(library( agricolae, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
+# Needed for the pot-hoc Kruskal wallis comparisons
 suppressMessages(library( penalized, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
-# Need for stepAIC
+# Needed for stepAIC
 suppressMessages(library( MASS, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
 # Needed for na action behavior
 suppressMessages(library( gam, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
@@ -45,104 +47,68 @@ suppressMessages(library( nlme, warn.conflicts=FALSE, quietly=TRUE, verbose=FALS
 funcMakeContrasts <- function
 ### Makes univariate contrasts of all predictors in the model formula with the response.
 (strFormula, 
-### lm style string defining reponse and predictors 
+### lm style string defining reponse and predictors
+strRandomFormula,
+### mixed model string defining the fixed covariates
 frmeTmp,
 ### The data frame to find predictor data in
-adCur,
-### adCur Response data
 iTaxon,
 ### Taxon
 functionContrast,
 ### functionContrast The univariate test to perform
-lsQCCounts,
+lsQCCounts
 ### QC info
-fDummy = FALSE
-### Indicates if dummy variables are need is needed (tests of heterogenous data types will be encountered but the test can not handle them)
 ){
   #TODO are we updating the QCCounts?
   lsSig = list()
   ### Holds all the significance results from the tests
   adP = c()
   ### Holds the p-values
-
+  sCurDataName = names(frmeTmp)[iTaxon]
+  ### The name of the taxon (data row) that is being associated (always assumed to be numeric)
   #Get test comparisons (predictor names from formula string)
-  asComparisons = gsub("`","",setdiff(unlist(strsplit(unlist(strsplit(strFormula,"~"))[2]," ")),c("","+")))
-
+  asComparisons  = unique(c(funcFormulaStrToList(strFormula),funcFormulaStrToList(strRandomFormula)))
   #Change metadata in formula to univariate comparisons
   for(sComparison in asComparisons)
   {
-    #Removed random covariate formating
-    lsParse = unlist(strsplit(sComparison, "[\\(\\|\\)]", perl=FALSE))
-    sComparison = lsParse[length(lsParse)]
- 
-    viTest = as.vector(frmeTmp[[sComparison]])
-    if(is.character(viTest)){viTest = as.factor(viTest)}
+    # Metadata values
+    vxTest = frmeTmp[[sComparison]]
 
-    #Value
-    #TODO update se value
-    sValue = 0.0
+    # Get the levels in the comparison
+    # Can ignore the first level because it is the reference level
+    asLevels = sComparison
+    if(is.factor(vxTest)){asLevels = levels(vxTest)[2:length(vxTest)]}
 
-    #Only create dummy variables on univariate comparisons that require homogenous data.
-    #I am dummy variabling it because that is equivalent to the handling in the lms
-#    if(is.factor(viTest)){viTest = as.numeric(viTest)}
-    if(is.factor(viTest) && fDummy)
+    lasComparisonResults = functionContrast(x=sComparison, adCur=frmeTmp[[sCurDataName]], dfData=frmeTmp)
+    for(asComparison in lasComparisonResults)
     {
-      lsLevels = levels(viTest)
-      for(sLevel in lsLevels)
-      {
-        liLevelTest = ifelse(viTest == sLevel, 1, 0)
-
-        sComparisonResults = functionContrast(x=liLevelTest, y=adCur)
-        dPvalue = sComparisonResults$p.value
-        if( is.na( dPvalue ) ) { next }
-
-        #Bonferonni correct the factor p-values based on the factor levels-1 comparisons
-        adP = c(dPvalue * ( nlevels( viTest ) - 1 ),adP)
-
-        lsSig[[length( lsSig ) + 1]] <- list(
-          #Current metadata name
-          name = sComparison,
-          #Current metadatda name (as a factor level if existing as such)
-          orig = paste(sComparison,sLevel, sep=""),
-          #Taxon feature name
-          taxon = colnames( frmeTmp )[iTaxon],
-          #Taxon data / response
-          data = frmeTmp[,iTaxon],
-          #All levels
-          factors = sComparison,
-          #Metadata values
-          metadata = viTest,
-          #Current coefficient value
-          value = sValue,
-          #Standard deviation
-          std = sd(liLevelTest),
-          #Model coefficients
-          allCoefs = sComparison)
-      }
-    } else {
-      sComparisonResults = functionContrast(x=viTest, y=adCur)
-      if( is.na( sComparisonResults$p.value ) ) { next }
-      adP = c(sComparisonResults$p.value,adP)
+      if( is.na( asComparison$p.value ) ) { next }
+      # Get pvalue
+      adP = c(adP, asComparison$p.value)
+      # Get SD, if not available, give SD of covariate
+      dSTD = asComparison$SD
+      # TODO Is using sd on factor and binary data correct?
+      if(is.na(dSTD) || is.null(dSTD)){dSTD = sd(vxTest)}
 
       lsSig[[length( lsSig ) + 1]] <- list(
-        #Current metadata name
+        #Current metadata name (string column name) ok
         name = sComparison,
-        #Current metadatda name (as a factor level if existing as such)
-        orig = sComparison,
-        #Taxon feature name
+        #Current metadatda name (string, as a factor level if existing as such) ok
+        orig = asComparison$name,
+        #Taxon feature name (string) ok
         taxon = colnames( frmeTmp )[iTaxon],
-        #Taxon data / response
+        #Taxon data / response (double vector) ok
         data = frmeTmp[,iTaxon],
-        #All levels
+        #Name of column ok
         factors = sComparison,
-        #Metadata values
-        metadata = viTest,
-        #Current coefficient value
-        value = sValue,
-        #Standard deviation
-        std = sd(viTest),
-        #Model coefficients
-        allCoefs = sComparison)
+        #Metadata values (metadata as a factor or raw numeric) ok
+        metadata = vxTest,
+        #Current coefficient value (named coef value with level name (from coefs) ok
+        value = asComparison$coef,
+        #Standard deviation (numeric) ok
+        std = dSTD,
+        #Model coefficients (output from coefs with intercept) ok
+        allCoefs = asComparison$coef)
     }
   }
   return(list(adP=adP, lsSig=lsSig, lsQCCounts=lsQCCounts))
@@ -175,13 +141,14 @@ strLog
   return( asStepCoefsFactors )
   ### Vector of string predictor names
 }
+
 # OK
 funcGetLMResults <- function
 ### Reduce the lm object return to just the data needed for further analysis
 ( lmod=lmod,
 ### The result from a linear model
 frmeData=frmeData,
-### Data analysis is perfromed on
+### Data analysis is performed on
 iTaxon=iTaxon,
 ### The response id
 dSig=dSig,
@@ -464,30 +431,9 @@ strLog
 # GUnifrac
 #TODO# Implemented in sfle
 
-# OK
-# Wilcoxon (T-Test)
-# Does multiple lmod results integrated into maaslin?
-funcWilcoxon <- function(
-### Perform multiple univariate comparisons performing wilcoxon tests to measure association
-strFormula,
-### lm style string defining reponse and predictors, for mixed effects models this holds the fixed variables
-frmeTmp,
-### Data on which to perform analysis
-iTaxon,
-### Index of the response data
-lsQCCounts,
-### List recording anything important to QC
-strRandomFormula = NULL
-### Has the formula for random covariates
-){
-  adCur = frmeTmp[,iTaxon]
-  return(funcMakeContrasts(strFormula, frmeTmp, adCur, iTaxon=iTaxon,  functionContrast=function(x,y){wilcox.test(x=x,y=y, na.action=c_strNA_Action)}, lsQCCounts, fDummy=TRUE))
-  ### List of contrast information, pvalue, contrast and std per univariate test
-}
-
-# OK
+# Tested
 # Correlation
-# Does multiple lmod results integrated into maaslin?
+# NOTE: Ignores the idea of random and fixed covariates
 funcSpearman <- function(
 ### Perform multiple univariate comparisons producing spearman correlations for association
 strFormula,
@@ -501,16 +447,153 @@ lsQCCounts,
 strRandomFormula = NULL
 ### Has the formula for random covariates
 ){
-  adCur = frmeTmp[,iTaxon]
-  return(funcMakeContrasts(strFormula=strFormula, frmeTmp=frmeTmp, adCur=adCur, iTaxon=iTaxon,  functionContrast=function(x,y){cor.test(x=x, y=y, method="spearman", na.action=c_strNA_Action)}, lsQCCounts, fDummy=TRUE))
+  return(funcMakeContrasts(strFormula=strFormula, strRandomFormula=strRandomFormula, frmeTmp=frmeTmp, iTaxon=iTaxon,
+    functionContrast=function(x,adCur,dfData)
+    {
+      retList = list()
+      ret = cor.test(as.formula(paste("~",x,"+ adCur")), data=dfData, method="spearman", na.action=c_strNA_Action)
+      #Returning rho for the coef in a named vector
+      vdCoef = c()
+      vdCoef[[x]]=ret$estimate
+      retList[[1]]=list(p.value=ret$p.value,SD=sd(dfData[[x]]),name=x,coef=vdCoef)
+      return(retList)
+    }, lsQCCounts))
   ### List of contrast information, pvalue, contrast and std per univariate test
+}
+
+# Tested
+# Wilcoxon (T-Test)
+# NOTE: Ignores the idea of random and fixed covariates
+funcWilcoxon <- function(
+### Perform multiple univariate comparisons performing wilcoxon tests on discontinuous data with 2 levels
+strFormula,
+### lm style string defining reponse and predictors, for mixed effects models this holds the fixed variables
+frmeTmp,
+### Data on which to perform analysis
+iTaxon,
+### Index of the response data
+lsQCCounts,
+### List recording anything important to QC
+strRandomFormula = NULL
+### Has the formula for random covariates
+){
+  return(funcMakeContrasts(strFormula=strFormula, strRandomFormula=strRandomFormula, frmeTmp=frmeTmp, iTaxon=iTaxon,
+    functionContrast=function(x,adCur,dfData)
+    {
+      retList = list()
+      ret = wilcox.test(as.formula(paste("adCur",x,sep=" ~ ")), data=dfData, na.action=c_strNA_Action)
+      #Returning NA for the coef in a named vector
+      vdCoef = c()
+      vdCoef[[x]]=NA
+      retList[[1]]=list(p.value=ret$p.value,SD=sd(dfData[[x]]),name=x,coef=vdCoef)
+      return(retList)
+    }, lsQCCounts))
+  ### List of contrast information, pvalue, contrast and std per univariate test
+}
+
+# Tested
+# Kruskal.Wallis (Nonparameteric anova)
+# NOTE: Ignores the idea of random and fixed covariates
+funcKruskalWallis <- function(
+### Perform multiple univariate comparisons performing Kruskal wallis rank sum tests on discontuous data with more than 2 levels
+strFormula,
+### lm style string defining reponse and predictors, for mixed effects models this holds the fixed variables
+frmeTmp,
+### Data on which to perform analysis
+iTaxon,
+### Index of the response data
+lsQCCounts,
+### List recording anything important to QC
+strRandomFormula = NULL
+### Has the formula for random covariates
+){
+  return(funcMakeContrasts(strFormula=strFormula, strRandomFormula=strRandomFormula, frmeTmp=frmeTmp, iTaxon=iTaxon,
+    functionContrast=function(x,adCur,dfData)
+    {
+      retList = list()
+      lmodKW = kruskal(adCur,dfData[[x]],group=FALSE,p.adj="holm")
+      asLevels = levels(dfData[[x]])
+      # The names of the generated comparisons, sometimes the control is first sometimes it is not so
+      # We will just check which is in the names and use that
+      asComparisons = row.names(lmodKW$comparisons)
+      #Get the comparison with the control
+      for(sLevel in asLevels[2:length(asLevels)])
+      {
+        sComparison = intersect(c(paste(asLevels[1],sLevel,sep=" - "),paste(sLevel,asLevels[1],sep=" - ")),asComparisons)
+        #Returning NA for the coef in a named vector
+        vdCoef = c()
+        vdCoef[[paste(x,sLevel,sep="")]]=NA
+        retList[[length(retList)+1]]=list(p.value=lmodKW$comparisons[sComparison,"p.value"],SD=NA,name=paste(x,sLevel,sep=""),coef=vdCoef)
+      }
+      return(retList)
+    }, lsQCCounts))
+  ### List of contrast information, pvalue, contrast and std per univariate test
+}
+
+# Tested
+# NOTE: Ignores the idea of random and fixed covariates
+funcDoUnivariate <- function(
+### Perform multiple univariate comparisons producing spearman correlations for association
+strFormula,
+### lm style string defining reponse and predictors, for mixed effects models this holds the fixed variables
+frmeTmp,
+### Data on which to perform analysis
+iTaxon,
+### Index of the response data
+lsQCCounts,
+### List recording anything important to QC
+strRandomFormula = NULL
+### Has the formula for random covariates
+){
+  # List of results
+  lsUnivariateResults = list(adP=c(), lsSig=list(), lsQCCounts=list())
+
+  # Get covariates
+  astrCovariates = unique(c(funcFormulaStrToList(strFormula),funcFormulaStrToList(strRandomFormula)))
+  print("astrCovariates")
+  print(astrCovariates)
+  # For each covariate
+  for(sCovariate in astrCovariates)
+  {
+    print("sCovariate")
+    print(sCovariate)
+    ## Check to see if it is discrete
+    axData = frmeTmp[[sCovariate]]
+    lsRet = NA
+    if(is.factor(axData) || is.logical(axData))
+    {
+      ## If discrete check how many levels
+      lsDataLevels = levels(axData)
+      ## If 2 levels do wilcoxon test
+      if(length(lsDataLevels) < 3)
+      {
+        print("START wilcoxon")
+        lsRet = funcWilcoxon(strFormula=paste("adCur",sCovariate,sep=" ~ "), frmeTmp=frmeTmp, iTaxon=iTaxon, lsQCCounts=lsQCCounts)
+        print("STOP wilcoxon")
+      } else {
+      ## If 3 or more levels do kruskal wallis test
+        print("Start KW")
+        lsRet = funcKruskalWallis(strFormula=paste("adCur",sCovariate,sep=" ~ "), frmeTmp=frmeTmp, iTaxon=iTaxon, lsQCCounts=lsQCCounts)
+        print("Stop KW")
+      }
+    } else {
+      ## If not discrete do spearman test (list(adP=adP, lsSig=lsSig, lsQCCounts=lsQCCounts))
+      print("START spearman")
+      lsRet = funcSpearman(strFormula=paste("adCur",sCovariate,sep=" ~ "), frmeTmp=frmeTmp, iTaxon=iTaxon, lsQCCounts=lsQCCounts)
+      print("STOP spearman")
+    }
+    lsUnivariateResults[["adP"]] = c(lsUnivariateResults[["adP"]], lsRet[["adP"]])
+    lsUnivariateResults[["lsSig"]] = c(lsUnivariateResults[["lsSig"]], lsRet[["lsSig"]])
+    lsUnivariateResults[["lsQCCounts"]] = c(lsRet[["lsQCCounts"]])
+  }
+  return(lsUnivariateResults)
 }
 
 ### Multivariate
 
 #TODO do I need to standardize?
 funcLasso <- function(
-### Perform lasso for L1 regualrization and associations
+### Perform lasso for L1 regularization and associations
 strFormula,
 ### lm style string defining reponse and predictors, for mixed effects models this holds the fixed variables
 frmeTmp,
@@ -537,7 +620,7 @@ strRandomFormula = NULL
   ### lmod result object from lasso lm (lambda 1 = L1 = lasso (covariates weighted to 0), lambda 2 = L2 = ridge (covariates not weighted to 0), both = elastic net)
 }
 
-# OK
+# Tested
 funcLM <- function(
 ### Perform vanilla linear regression
 strFormula,
@@ -551,6 +634,15 @@ lsQCCounts,
 strRandomFormula = NULL
 ### Has the formula for random covariates
 ){
+  print("LM")
+  print("LM strFormula")
+  print(strFormula)
+  print("iTaxon")
+  print(iTaxon)
+  print("strRandomFormula")
+  print(strRandomFormula)
+  print("frmeTmp")
+  print(frmeTmp)
   adCur = frmeTmp[,iTaxon]
   if(!is.null(strRandomFormula))
   {
@@ -563,7 +655,7 @@ strRandomFormula = NULL
   ### lmod result object from lm
 }
 
-#OK
+# Tested
 funcBinomialMult <- function(
 ### Perform linear regression with binomial link
 strFormula,
@@ -590,7 +682,7 @@ strRandomFormula = NULL
   ### lmod result object from lm
 }
 
-#OK
+# Tested
 funcQuasiMult <- function(
 ### Perform linear regression with quasi-poisson link
 strFormula,
@@ -608,7 +700,7 @@ strRandomFormula = NULL
   #Check to see if | is in the model, if so use a lmm otherwise the standard glm is ok
   if(!is.null(strRandomFormula))
   {
-    return(try(glmmPQL(fixed=as.formula(strFixedFormula), random=as.formula(strRandomFormula), family= quasipoisson, data=frmeTmp)))
+    return(try(glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family= quasipoisson, data=frmeTmp)))
     #lme4 package but does not have pvalues for the fixed variables (have to use a mcmcsamp/pvals.fnc function which are currently disabled)
     #return(try ( glmer(as.formula(strFormula), data=frmeTmp, family=quasipoisson, na.action=c_strNA_Action) ))
   } else {
@@ -618,7 +710,7 @@ strRandomFormula = NULL
 }
 
 ### Transformations
-# OK
+# Tested
 funcArcsinSqrt <- function(
 # Transform data with arcsin sqrt transformation
 aData
@@ -628,7 +720,7 @@ aData
   ### Transformed data
 }
 
-# OK
+# Tested
 funcNoTransform <-function(
 ### Pass data without transform
 aData
@@ -639,22 +731,144 @@ aData
   ### Transformed data
 }
 
-# Multistep maaslin in Curtis' latest code
-#funcMultiStepLM <- function(strFormula, frmeTmp, adCur)
-#{
-#  lmod <- NA
-#  if( ( sum( !adCur, na.rm = TRUE ) / sum( !is.na( adCur ) ) ) >= c_dMinSamp )
-#  {
-#    adCur <- round( 1e1 * adCur / min( abs( adCur[adCur != 0] ), na.rm = TRUE ) )
-#    lmod <- try( zeroinfl( as.formula(strFormula), data = frmeTmp, dist = "negbin", link = "logit" ) )
-#  }
-#  if( is.na( lmod ) || ( class( lmod ) == "try-error" ) )
-#  {
-#    lmod <- try( ltsReg( as.formula(strFormula), data = frmeTmp, nsamp = "best", adjust = TRUE, alpha = 1, mcd = FALSE ) )
-#  }
-#  if( is.na( lmod ) || ( class( lmod ) == "try-error" ) )
-#  {
-#    lmod <- try( lm( as.formula(strFormula), data = frmeTmp ) )
-#  }
-#  return(lmod)
-#}
+### Modified Code
+### This code is from the package agricolae by Felipe de Mendiburu
+### Modifications here are minimal and allow one to use the p.values from the post hoc comparisons
+### Authors do not claim credit for this solution only needed to modify code to use the output.
+kruskal <- function (y, trt, alpha = 0.05, p.adj = c("none", "holm", "hochberg", 
+    "bonferroni", "BH", "BY", "fdr"), group = TRUE, main = NULL) 
+{
+    dfComparisons=NULL
+    dfMeans=NULL
+    dntStudent=NULL
+    dLSD=NULL
+    dHMean=NULL
+    name.y <- paste(deparse(substitute(y)))
+    name.t <- paste(deparse(substitute(trt)))
+    p.adj <- match.arg(p.adj)
+    junto <- subset(data.frame(y, trt), is.na(y) == FALSE)
+    N <- nrow(junto)
+    junto[, 1] <- rank(junto[, 1])
+    means <- tapply.stat(junto[, 1], junto[, 2], stat = "sum")
+    sds <- tapply.stat(junto[, 1], junto[, 2], stat = "sd")
+    nn <- tapply.stat(junto[, 1], junto[, 2], stat = "length")
+    means <- data.frame(means, replication = nn[, 2])
+    names(means)[1:2] <- c(name.t, name.y)
+    ntr <- nrow(means)
+    nk <- choose(ntr, 2)
+    DFerror <- N - ntr
+    rs <- 0
+    U <- 0
+    for (i in 1:ntr) {
+        rs <- rs + means[i, 2]^2/means[i, 3]
+        U <- U + 1/means[i, 3]
+    }
+    S <- (sum(junto[, 1]^2) - (N * (N + 1)^2)/4)/(N - 1)
+    H <- (rs - (N * (N + 1)^2)/4)/S
+#    cat("\nStudy:", main)
+#    cat("\nKruskal-Wallis test's\nTies or no Ties\n")
+#    cat("\nValue:", H)
+#    cat("\ndegrees of freedom:", ntr - 1)
+    p.chisq <- 1 - pchisq(H, ntr - 1)
+#    cat("\nPvalue chisq  :", p.chisq, "\n\n")
+    DFerror <- N - ntr
+    Tprob <- qt(1 - alpha/2, DFerror)
+    MSerror <- S * ((N - 1 - H)/(N - ntr))
+    means[, 2] <- means[, 2]/means[, 3]
+#    cat(paste(name.t, ",", sep = ""), " means of the ranks\n\n")
+    dfMeans=data.frame(row.names = means[, 1], means[, -1])
+    if (p.adj != "none") {
+#        cat("\nP value adjustment method:", p.adj)
+        a <- 1e-06
+        b <- 1
+        for (i in 1:100) {
+            x <- (b + a)/2
+            xr <- rep(x, nk)
+            d <- p.adjust(xr, p.adj)[1] - alpha
+            ar <- rep(a, nk)
+            fa <- p.adjust(ar, p.adj)[1] - alpha
+            if (d * fa < 0) 
+                b <- x
+            if (d * fa > 0) 
+                a <- x
+        }
+        Tprob <- qt(1 - x/2, DFerror)
+    }
+    nr <- unique(means[, 3])
+    if (group) {
+        Tprob <- qt(1 - alpha/2, DFerror)
+#        cat("\nt-Student:", Tprob)
+#        cat("\nAlpha    :", alpha)
+        dntStudent=Tprob
+        dAlpha=alpha
+        if (length(nr) == 1) {
+            LSD <- Tprob * sqrt(2 * MSerror/nr)
+#            cat("\nLSD      :", LSD, "\n")
+            dLSD=LSD
+        }
+        else {
+            nr1 <- 1/mean(1/nn[, 2])
+            LSD1 <- Tprob * sqrt(2 * MSerror/nr1)
+#            cat("\nLSD      :", LSD1, "\n")
+            dLSD =LSD1
+#            cat("\nHarmonic Mean of Cell Sizes ", nr1)
+            dHMean=nr1
+        }
+#        cat("\nMeans with the same letter are not significantly different\n")
+#        cat("\nGroups, Treatments and mean of the ranks\n")
+        output <- order.group(means[, 1], means[, 2], means[, 
+            3], MSerror, Tprob, std.err = sqrt(MSerror/means[, 
+            3]))
+        dfComparisons=order.group(means[, 1], means[, 2], means[, 
+            3], MSerror, Tprob, std.err = sqrt(MSerror/means[, 
+            3]))
+    }
+    if (!group) {
+        comb <- combn(ntr, 2)
+        nn <- ncol(comb)
+        dif <- rep(0, nn)
+        LCL <- dif
+        UCL <- dif
+        pvalue <- dif
+        sdtdif <- dif
+        for (k in 1:nn) {
+            i <- comb[1, k]
+            j <- comb[2, k]
+            if (means[i, 2] < means[j, 2]) {
+                comb[1, k] <- j
+                comb[2, k] <- i
+            }
+            dif[k] <- abs(means[i, 2] - means[j, 2])
+            sdtdif[k] <- sqrt(S * ((N - 1 - H)/(N - ntr)) * (1/means[i, 
+                3] + 1/means[j, 3]))
+            pvalue[k] <- 2 * round(1 - pt(dif[k]/sdtdif[k], DFerror), 
+                6)
+        }
+        if (p.adj != "none") 
+            pvalue <- round(p.adjust(pvalue, p.adj), 6)
+        LCL <- dif - Tprob * sdtdif
+        UCL <- dif + Tprob * sdtdif
+        sig <- rep(" ", nn)
+        for (k in 1:nn) {
+            if (pvalue[k] <= 0.001) 
+                sig[k] <- "***"
+            else if (pvalue[k] <= 0.01) 
+                sig[k] <- "**"
+            else if (pvalue[k] <= 0.05) 
+                sig[k] <- "*"
+            else if (pvalue[k] <= 0.1) 
+                sig[k] <- "."
+        }
+        tr.i <- means[comb[1, ], 1]
+        tr.j <- means[comb[2, ], 1]
+        dfComparisons <- data.frame(Difference = dif, p.value = pvalue, 
+            sig, LCL, UCL)
+        rownames(dfComparisons) <- paste(tr.i, tr.j, sep = " - ")
+#        cat("\nComparison between treatments mean of the ranks\n\n")
+#        print(output)
+        dfMeans <- data.frame(trt = means[, 1], means = means[, 
+            2], M = "", N = means[, 3])
+    }
+#    invisible(output)
+     invisible(list(study=main,test="Kruskal-Wallis test",value=H,df=(ntr - 1),chisq.p.value=p.chisq,p.adj.method=p.adj,ntStudent=dntStudent,alpha=alpha,LSD=dLSD,Harmonic.mean=dHMean,comparisons=dfComparisons,means=dfMeans))
+}

@@ -122,6 +122,28 @@ astrCols = c()
   ### Coefficient name
 }
 
+funcValue2Col = function(
+xValue,
+dfData,
+aiColumnIndicesToSearch = NULL
+){
+  lsColumnNames = names(dfData)
+
+  if(xValue %in% lsColumnNames){return(xValue)}
+  
+  if(is.null(aiColumnIndicesToSearch))
+  {
+    aiColumnIndicesToSearch = c(1:dim(dfData)[2])
+  }
+
+  for(iColIndex in aiColumnIndicesToSearch)
+  {
+    if(xValue %in% dfData[[lsColumnNames[iColIndex]]]){return(lsColumnNames[iColIndex])}
+  }
+  return(NULL)
+}
+
+
 funcColorHelper <- function(
 ### Makes sure the max is max and the min is min, and dmed is average
 dMax = 1,
@@ -256,7 +278,10 @@ strFile,
 fAppend = FALSE
 ### Append when writing
 ){
-  write.table( frmeTable, strFile, quote = FALSE, sep = c_cTableDelimiter, na = "", col.names = NA, append = fAppend )
+  if(!is.na(strFile))
+  {
+    write.table( frmeTable, strFile, quote = FALSE, sep = c_cTableDelimiter, na = "", col.names = NA, append = fAppend )
+  }
 }
 
 funcWriteQCReport <- function(
@@ -320,6 +345,69 @@ adCur
   astrCoefNames = setdiff(names(dfCoef[as.vector(!is.na(dfCoef))==TRUE]),"(Intercept)")
   astrPredictors = unique(as.vector(sapply(astrCoefNames,funcCoef2Col, frmeData=frmeTmp)))
   strFormula = paste( "adCur ~", paste( sprintf( "`%s`", astrPredictors ), collapse = " + " ), sep = " " )
-  print(strFormula)
   return(try( lm(as.formula( strFormula ), data=frmeTmp )))
+}
+
+funcFormulaStrToList <- function(
+#Takes a lm or mixed model formula and returns a list of covariate names in the formula
+strFormula
+#Formula to extract covariates from
+){
+  #Return list
+  lsRetComparisons = c()
+
+  #If you get a null or na just return
+  if(is.null(strFormula)||is.na(strFormula)){return(lsRetComparisons)}
+
+  #Get test comparisons (predictor names from formula string)
+  asComparisons = gsub("`","",setdiff(unlist(strsplit(unlist(strsplit(strFormula,"~"))[2]," ")),c("","+")))
+
+  #Change metadata in formula to univariate comparisons
+  for(sComparison in asComparisons)
+  {
+    #Removed random covariate formating
+    lsParse = unlist(strsplit(sComparison, "[\\(\\|\\)]", perl=FALSE))
+    lsRetComparisons = c(lsRetComparisons,lsParse[length(lsParse)])
+  }
+  return(lsRetComparisons)
+}
+
+funcFormulaListToString <- function(
+# Using covariate and random covariate names, creates a lm or mixed model formula
+# returns a vector of c(strLM, strMixedModel), one will be NA given the existance of random covariates.
+# On error c(NA,NA) is given
+astrTerms,
+#Fixed covariates or all covariates if using an lm
+astrRandomCovariates = NULL
+#Random covariates for a mixed model
+){
+  strRetLMFormula = NA
+  strRetMMFormula = NA
+
+  #If no covariates return NA
+  if(is.null(astrTerms)){return(c(strRetLMFormula, strRetMMFormula))}
+
+  #Get fixed covariates
+  astrFixedCovariates = setdiff(astrTerms,astrRandomCovariates)
+
+  #If no fixed coavariates return NA
+  # Can not run a model with no fixed covariate, restriction of lmm
+  if(length(astrFixedCovariates)==0){return(c(strRetLMFormula, strRetMMFormula))}
+
+  # Fixed Covariates
+  strFixedCovariates = paste( sprintf( "`%s`", astrFixedCovariates ), collapse = " + " )
+
+  #If random covariates, set up a formula for mixed models
+  if(length(astrRandomCovariates)>0)
+  {
+    #Format for lmer
+    #strRetFormula <- paste( "adCur ~ ", paste( sprintf( "(1|`%s`))", intersect(astrRandomCovariates, astrTerms)), collapse = " + " ))
+    #Format for glmmpql
+    strRandomCovariates = paste( sprintf( "1|`%s`", setdiff(astrRandomCovariates, astrTerms)), collapse = " + " )
+    strRetMMFormula <- paste( "adCur ~ ", strFixedCovariates, " + ", strRandomCovariates, sep="")
+  } else {
+    #This is either the formula for all covariates in an lm or fixed covariates in the lmm
+    strRetLMFormula <- paste( "adCur ~ ", strFixedCovariates, sep="")
+  }
+  return(c(strRetLMFormula, strRetMMFormula))
 }

@@ -35,12 +35,33 @@ __status__ = "Development"
 
 import argparse
 import csv
+import math
 from operator import itemgetter
 import re
+import string
 import sys
 
+def funcGetColor(fNumeric,fMax):
+  if fNumeric>0:
+    return("#"+str(int(99*fNumeric/fMax)).zfill(2)+"0000")
+  if fNumeric<0:
+    return("#00"+str(int(99*abs(fNumeric/fMax))).zfill(2)+"00")
+  return("#000000")
+
 #Constants
+sAnnotation = "annotation"
+sAnnotationColor = "annotation_background_color"
 sClass = "class"
+sRingColor = "ring_color"
+sRingHeight = "ring_height"
+sRingHeightMin = 0.5
+sRingLabel = "ring_label"
+sRingLabelSizeWord = "ring_label_font_size"
+sRingLabelSize = 10
+sRingLineColor = "#999999"
+sRingLineColorWord = "ring_separator_color"
+sRingLineThickness = "0.5"
+sRingLineThicknessWord = "ring_internal_separator_thickness"
 
 #Set up arguments reader
 argp = argparse.ArgumentParser( prog = "MaaslinToGraphlanAnnotation.py",
@@ -59,15 +80,56 @@ fSum = csv.reader(csvSum, delimiter="\t")
 #Skip header (until i do this a better way)
 fSum.next()
 
-#Extract just class info
-lsClassData = [[sLine[2],sClass,sLine[1]] for sLine in fSum]
-
+#Extract associations (Metadata,taxon,coef,qvalue)
+lsAssociations = [[sLine[1],sLine[2],sLine[4],sLine[7]] for sLine in fSum]
 csvSum.close()
 
 #Manipulate names to graphlan complient names (clades seperated by .)
-lsClassData = sorted(lsClassData, key=itemgetter(0))
-lsClassData = [[re.sub("^[A-Za-z]__","",sBug[0])]+sBug[1:] for sBug in lsClassData]
-lsClassData = [[re.sub("\|*[A-Za-z]__|\|",".",sBug[0])]+sBug[1:] for sBug in lsClassData]
+lsAssociations = sorted(lsAssociations, key=itemgetter(1))
+lsAssociations = [[sBug[0]]+[re.sub("^[A-Za-z]__","",sBug[1])]+sBug[2:] for sBug in lsAssociations]
+lsAssociations = [[sBug[0]]+[re.sub("\|*[A-Za-z]__|\|",".",sBug[1])]+sBug[2:] for sBug in lsAssociations]
+
+#Extract just class info
+#lsClassData = [[sLine[2],sClass,sLine[1]] for sLine in fSum]
+
+#Setup rings
+dictRings = dict([[enumData[1],enumData[0]] for enumData in enumerate(set([lsData[0] for lsData in lsAssociations]))])
+
+#Ring graphlan setting: rings represent a metadata that associates with a feature
+#Rings have a line to help differetiate them
+lsRingSettings = [[sRingLabel,lsPair[1],lsPair[0]] for lsPair in dictRings.items()]
+lsRingLineColors = [[sRingLineColorWord,lsPair[1],sRingLineColor] for lsPair in dictRings.items()]
+lsRingLineThick = [[sRingLineThicknessWord,lsPair[1],sRingLineThickness] for lsPair in dictRings.items()]
+lsRingLineLabelSize = [[sRingLabelSizeWord,lsPair[1], sRingLabelSize] for lsPair in dictRings.items()]
+
+#Create coloring for rings color represents the directionality of the relationship
+dMaxCoef = max([abs(float(sAssociation[2])) for sAssociation in lsAssociations])
+lsRingColors = [[lsAssociation[1], sRingColor, dictRings[lsAssociation[0]], funcGetColor(float(lsAssociation[2]), dMaxCoef)] for lsAssociation in lsAssociations]
+
+#Create height for rings representing the log tranformed q-value?
+dMaxQValue = max([-1*math.log(float(sAssociation[3])) for sAssociation in lsAssociations])
+lsRingHeights = [[lsAssociation[1], sRingHeight, dictRings[lsAssociation[0]], ((-1*math.log(float(lsAssociation[3])))/dMaxQValue)+sRingHeightMin] for lsAssociation in lsAssociations]
+
+#Highlight the associated clades
+lsUniqueAssociatedTaxa = sorted(list(set([lsAssociation[1] for lsAssociation in lsAssociations])))
+print("lsUniqueAssociatedTaxa")
+print(lsUniqueAssociatedTaxa)
+lsHighlights = []
+sABCPrefix = ""
+sListABC = string.ascii_lowercase
+iListABCIndex = 0
+for lsHighlight in lsUniqueAssociatedTaxa:
+  lsTaxa = lsHighlight.split(".")
+  sLabel = sABCPrefix+sListABC[iListABCIndex]+":"+lsTaxa[-1] if len(lsTaxa) > 2 else lsTaxa[-1]
+  lsHighlights.append([lsHighlight, sAnnotation, sLabel])
+  iListABCIndex = iListABCIndex + 1
+  if iListABCIndex > 25:
+    iListABCIndex = 0
+    sABCPrefix = sABCPrefix + sListABC[len(sABCPrefix)]
+#Add in all phylum just incase they were not already included here
+lsAddSecondLevel = list(set([sUnique.split(".")[1] for sUnique in lsUniqueAssociatedTaxa if len(sUnique.split(".")) > 1]))
+lsHighlights.extend([[sSecondLevel, sAnnotation, sSecondLevel] for sSecondLevel in lsAddSecondLevel])
+lsHighlightColor = [[lsHighlight[0], sAnnotationColor,"b"] for lsHighlight in lsHighlights]
 
 #Read in the annotation header file
 csvHdr = open(args.strInputHeader,'r') if isinstance(args.strInputHeader, str) else args.strInputHeader
@@ -77,6 +139,13 @@ fHdr = csv.reader(csvHdr, delimiter="\t")
 csvAnn = open(args.strOutputAnnotation,'w') if isinstance(args.strOutputAnnotation, str) else args.strOutputAnnotation
 fAnn = csv.writer(csvAnn, delimiter="\t")
 fAnn.writerows(fHdr)
-fAnn.writerows(lsClassData)
+fAnn.writerows(lsRingSettings)
+fAnn.writerows(lsRingLineColors)
+fAnn.writerows(lsRingColors)
+fAnn.writerows(lsRingLineThick)
+fAnn.writerows(lsRingLineLabelSize)
+fAnn.writerows(lsRingHeights)
+fAnn.writerows(lsHighlights)
+fAnn.writerows(lsHighlightColor)
 csvAnn.close()
 csvHdr.close()

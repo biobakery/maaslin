@@ -36,10 +36,10 @@ strGraphlanDirectory = "graphlan"
 c_fileDirLib = sfle.d( fileDirSrc, "lib" )
 c_fileInputMaaslinR = sfle.d( pE, fileDirSrc, "Maaslin.R" )
 c_afileTestsR = [sfle.d( pE, c_fileDirLib, s ) for s in
-						("IO.R", "SummarizeMaaslin.R", "Utility.R", "ValidateData.R")]
+						("AnalysisModules.R", "BoostGLM.R", "IO.R", "SummarizeMaaslin.R", "Utility.R", "ValidateData.R")]
 
 c_afileDocsR = c_afileTestsR + [sfle.d( pE, c_fileDirLib, s ) for s in
-						("AnalysisModules.R", "BoostGLM.R", "MaaslinPlots.R", "MFA.R")]
+						("Constants.R", "MaaslinPlots.R", "MFA.R")]
 
 ##Test scripts
 for fileInputR in c_afileTestsR:
@@ -64,7 +64,7 @@ lsMaaslinInputFiles = Glob( sfle.d( fileDirInput, "*" + sfle.c_strSufPCL ) )
 for strPCLFile in lsMaaslinInputFiles:
 
   ## Run MaAsLin
-  Default( MaAsLin( strPCLFile ) )
+  Default( MaAsLin( strPCLFile))
 
   ## Run Graphlan on all output projects
   strProjectName = os.path.splitext(os.path.split(strPCLFile.get_abspath())[1])[0]

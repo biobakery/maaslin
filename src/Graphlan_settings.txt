@@ -1,6 +1,7 @@
 title	Metadata Associations
 title_font_size	13
-start_rotation	70
+start_rotation	91
+total_plotted_degrees	340
 annotation_background_alpha	0.15
 clade_separation	0.35
 class_legend_font_size	12
