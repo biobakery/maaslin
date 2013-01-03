@@ -550,13 +550,9 @@ strRandomFormula = NULL
 
   # Get covariates
   astrCovariates = unique(c(funcFormulaStrToList(strFormula),funcFormulaStrToList(strRandomFormula)))
-  print("astrCovariates")
-  print(astrCovariates)
   # For each covariate
   for(sCovariate in astrCovariates)
   {
-    print("sCovariate")
-    print(sCovariate)
     ## Check to see if it is discrete
     axData = frmeTmp[[sCovariate]]
     lsRet = NA
@@ -567,20 +563,14 @@ strRandomFormula = NULL
       ## If 2 levels do wilcoxon test
       if(length(lsDataLevels) < 3)
       {
-        print("START wilcoxon")
         lsRet = funcWilcoxon(strFormula=paste("adCur",sCovariate,sep=" ~ "), frmeTmp=frmeTmp, iTaxon=iTaxon, lsQCCounts=lsQCCounts)
-        print("STOP wilcoxon")
       } else {
       ## If 3 or more levels do kruskal wallis test
-        print("Start KW")
         lsRet = funcKruskalWallis(strFormula=paste("adCur",sCovariate,sep=" ~ "), frmeTmp=frmeTmp, iTaxon=iTaxon, lsQCCounts=lsQCCounts)
-        print("Stop KW")
       }
     } else {
       ## If not discrete do spearman test (list(adP=adP, lsSig=lsSig, lsQCCounts=lsQCCounts))
-      print("START spearman")
       lsRet = funcSpearman(strFormula=paste("adCur",sCovariate,sep=" ~ "), frmeTmp=frmeTmp, iTaxon=iTaxon, lsQCCounts=lsQCCounts)
-      print("STOP spearman")
     }
     lsUnivariateResults[["adP"]] = c(lsUnivariateResults[["adP"]], lsRet[["adP"]])
     lsUnivariateResults[["lsSig"]] = c(lsUnivariateResults[["lsSig"]], lsRet[["lsSig"]])
@@ -634,15 +624,6 @@ lsQCCounts,
 strRandomFormula = NULL
 ### Has the formula for random covariates
 ){
-  print("LM")
-  print("LM strFormula")
-  print(strFormula)
-  print("iTaxon")
-  print(iTaxon)
-  print("strRandomFormula")
-  print(strRandomFormula)
-  print("frmeTmp")
-  print(frmeTmp)
   adCur = frmeTmp[,iTaxon]
   if(!is.null(strRandomFormula))
   {

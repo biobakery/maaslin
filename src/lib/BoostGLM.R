@@ -293,7 +293,6 @@ fDoRPlot=TRUE,
 fOmitLogFile = FALSE
 ### Stops the creation of the log file
 ){
-  print("###1")
   c_logrMaaslin$debug("Start funcBugs")
   if( is.na( strDirOut )||is.null(strDirOut))
   {
@@ -316,7 +315,7 @@ fOmitLogFile = FALSE
     c_logrMaaslin$info( "Outputting to: %s", strLog )
     unlink( strLog )
   }
-  print("###2")
+
   #Will contain pvalues
   #Will contain objects associated with significance
   adP = c()
@@ -328,9 +327,9 @@ fOmitLogFile = FALSE
       c_logrMaaslin$info( "Taxon %d/%d", iTaxon, max( aiData ) )
     }
     #Call analysis method
-    print("###3")
+
     lsOne <- funcBugHybrid( iTaxon, frmeData, lsData, aiMetadata, dFreq, dSig, dMinSamp, adP, lsSig, strLog, funcReg, lsNonPenalizedPredictors, funcAnalysis, lsRandomCovariates, funcGetResults )
-    print("###4")
+
     #TODO Check#If you get a NA (happens when the lmm gets all random covariates) move on
     if(is.na(lsOne)){next}
 
@@ -343,14 +342,14 @@ fOmitLogFile = FALSE
   }
   c_logrMaaslin$debug("lsData$lsQCCounts")
   c_logrMaaslin$debug(format(lsData$lsQCCounts))
-  print("###5")
+
   #Presort for order for FDR calculation
   if( is.null( adP ) ) { return( NULL ) }
   #Get indices of sorted data
   aiSig <- sort.list( adP )
   adQ <- adP
   iTests <- length( intersect( lsData$astrMetadata, colnames( frmeData )[aiMetadata] ) ) * length( aiData )
-  print("###6")
+
   #Perform FDR BH
   for( i in 1:length( aiSig ) )
   {
@@ -358,14 +357,13 @@ fOmitLogFile = FALSE
     adQ[iSig] <- adP[iSig] * iTests / i
   }
 
-  print("###7")
   astrNames <- c()
   for( i in 1:length( lsSig ) )
   {
     astrNames <- c(astrNames, lsSig[[i]]$name)
   }
   astrNames <- unique( astrNames )
-  print("###8")
+
   # Sets up named label return for MFA
   astrRet <- c()
   for( j in aiSig )
@@ -384,7 +382,7 @@ fOmitLogFile = FALSE
     }
     astrRet <- unique( astrRet )
   }
-  print("###9")			
+		
   for( strName in astrNames )
   {
     strFileTXT <- NA

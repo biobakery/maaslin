@@ -66,6 +66,7 @@ for strPCLFile in lsMaaslinInputFiles:
   ## Run MaAsLin
   Default( MaAsLin( strPCLFile))
 
+if False:
   ## Run Graphlan on all output projects
   strProjectName = os.path.splitext(os.path.split(strPCLFile.get_abspath())[1])[0]
   strMaaslinOutputDir = sfle.d(fileDirOutput,strProjectName)
@@ -96,7 +97,7 @@ for strPCLFile in lsMaaslinInputFiles:
 
   Default(sCoreGeneFile,sAnnotationFile,sCoreGeneAnnotationFile,sGraphlanFigure)
 
-if False:
+
   # Permuting the following:
   #1# Model Selection 4 (Boost, forwards select, backwards selection, none)
   #2# Analysis 5 (LM, Neg-binomial, quasi-poisson, spearman, wilcoxon) Add Lasso
