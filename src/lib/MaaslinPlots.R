@@ -227,8 +227,10 @@ adMar
   # Get model matrix (raw data)
   adCur = frmTmp[[sResponseFeature]]
   # Make a formula to calculate the new model to get the full model residuals
+
   strFormula = paste("adCur",paste(sprintf( "`%s`", lsFullModelCovariateNames ),sep="", collapse="+"),sep="~")
   # Calculate lm
+
   lmod = (lm(as.formula(strFormula),frmTmp))
   # Get all coefficient data in the new model
   dfdCoefs = coefficients(lmod)
@@ -289,7 +291,9 @@ adMar
 
   } else {
     plot( frmTmp[[sCovariateOfInterest]], vY[[sCovariateOfInterest]], mar = adMar, main = sTitle, xlab=sCovariateOfInterest, col = sprintf( "%s99", funcGetColor( ) ), pch = 20,ylab = sYLabel, xaxt = "s" )
+
     lmodLine = lm(vY[[sCovariateOfInterest]]~frmTmp[[sCovariateOfInterest]])
+
     dColor <- lmodLine$coefficients[2] * mean( frmTmp[[sCovariateOfInterest]], na.rm = TRUE ) / mean( vY[[sCovariateOfInterest]], na.rm = TRUE )
     strColor <- sprintf( "%sDD", funcColor( dColor, adMax = adColorMin, adMin = adColorMax, adMed = adColorMed ) )
     abline( reg =lmodLine, col = strColor, lwd = 3 )

@@ -64,7 +64,7 @@ lsMaaslinInputFiles = Glob( sfle.d( fileDirInput, "*" + sfle.c_strSufPCL ) )
 for strPCLFile in lsMaaslinInputFiles:
 
   ## Run MaAsLin
-  Default( MaAsLin( strPCLFile))
+  Default( MaAsLin( strPCLFile ))
 
 if False:
   ## Run Graphlan on all output projects

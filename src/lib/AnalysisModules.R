@@ -224,6 +224,7 @@ astrCols=astrTerms
       astrRows = rownames(lsSum$tTable)
       frmeCoefs = lsSum$tTable
       iPValuePosition = 5
+      adCoefs = frmeCoefs[,1]
     }
 
     for( iMetadata in 1:length( astrRows ) )

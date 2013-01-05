@@ -252,6 +252,31 @@ test_that("funcBugHybrid works with the univariate option with 1 covariates.",{e
 
 
 context("Test funcBugs")
+#One LM run
+frmeData=frmeTmp
+aiMetadata=c(1)
+aiData=c(iTaxon)
+strData=NA
+dFreq= 0.5 / length( aiMetadata )
+dSig=0.25
+dMinSamp=0.1
+strDirOut=NA
+funcReg=NA
+lsNonPenalizedPredictors=NULL
+lsRandomCovariates=NULL
+funcAnalysis=funcLM
+funcGetResults=funcGetLMResults
+fDoRPlot=FALSE
+lsData = list(frmeData=frmeData, aiMetadata=aiMetadata, aiData=aiData, lsQCCounts=list())
+lsData$astrMetadata = names(frmeTmp)[aiMetadata]
+QCExpected = list(iLms=numeric(0))
+
+expectedReturn = list(aiReturnBugs=aiData,lsQCCounts=QCExpected)
+receivedReturn = funcBugs(frmeData=frmeData, lsData=lsData, aiMetadata=aiMetadata, aiData=aiData, strData=strData, dFreq=dFreq, dSig=dSig, dMinSamp=dMinSamp,strDirOut=strDirOut, funcReg=funcReg,lsNonPenalizedPredictors=lsNonPenalizedPredictors,funcAnalysis=funcAnalysis,lsRandomCovariates=lsRandomCovariates,funcGetResults=funcGetResults,fDoRPlot=fDoRPlot)
+
+test_that("funcBugs works with the lm option with 1 covariate.",{expect_equal(receivedReturn,expectedReturn)})
+
+#multiple LM run
 frmeData=frmeTmp
 aiMetadata=c(1:5)
 aiData=c(iTaxon)
@@ -268,5 +293,15 @@ funcGetResults=funcGetLMResults
 fDoRPlot=FALSE
 lsData = list(frmeData=frmeData, aiMetadata=aiMetadata, aiData=aiData, lsQCCounts=list())
 lsData$astrMetadata = names(frmeTmp)[aiMetadata]
+QCExpected = list(iLms=numeric(0))
 
-#receivedReturn = funcBugs(frmeData=frmeData, lsData=lsData, aiMetadata=aiMetadata, aiData=aiData, strData=strData, dFreq=dFreq, dSig=dSig, dMinSamp=dMinSamp,strDirOut=strDirOut, funcReg=funcReg,lsNonPenalizedPredictors=lsNonPenalizedPredictors,funcAnalysis=funcAnalysis,lsRandomCovariates=lsRandomCovariates,funcGetResults=funcGetResults,fDoRPlot=fDoRPlot)
+expectedReturn = list(aiReturnBugs=aiData,lsQCCounts=QCExpected)
+receivedReturn = funcBugs(frmeData=frmeData, lsData=lsData, aiMetadata=aiMetadata, aiData=aiData, strData=strData, dFreq=dFreq, dSig=dSig, dMinSamp=dMinSamp,strDirOut=strDirOut, funcReg=funcReg,lsNonPenalizedPredictors=lsNonPenalizedPredictors,funcAnalysis=funcAnalysis,lsRandomCovariates=lsRandomCovariates,funcGetResults=funcGetResults,fDoRPlot=fDoRPlot)
+
+print("START START")
+print(expectedReturn)
+print("RECEIVED")
+print(receviedReturn)
+print("STOP STOP")
+
+test_that("funcBugs works with the lm option with multiple covariates.",{expect_equal(receivedReturn,expectedReturn)})
