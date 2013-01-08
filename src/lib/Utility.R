@@ -122,27 +122,77 @@ astrCols = c()
   ### Coefficient name
 }
 
-funcValue2Col = function(
+funcColToMFAValue = function(
+### Given a column name, return the MFA values that could be associated with the name
+lsColNames,
+### String list of column names (as you would get from names(dataframe))
+dfData
+### Data frame of data the column names refer to
+){
+  lsMFAValues = c()
+
+  for(sColName in lsColNames)
+  {
+    axCur = dfData[[sColName]]
+
+    if(is.logical(axCur)){axCur=as.factor(axCur)}
+    if(is.factor(axCur))
+    {
+      lsLevels = levels(axCur)
+      if((length(lsLevels)==2) && (lsLevels[1]=="0") && (lsLevels[2]=="1"))
+      {
+        lsMFAValues = c(lsMFAValues,paste(sColName,"0",sep=c_sMFANameSep),paste(sColName,"1",sep=c_sMFANameSep))
+      }else{
+        for(sLevel in levels(axCur))
+        {
+          lsMFAValues = c(lsMFAValues,sLevel)
+        }
+      }
+    } else {
+      lsMFAValues = c(lsMFAValues,sColName)
+    }
+  }
+  return(setdiff(lsMFAValues,c("NA",NA)))
+}
+
+funcMFAValue2Col = function(
+### Given a value in a column, the column name is returned.
 xValue,
 dfData,
 aiColumnIndicesToSearch = NULL
 ){
   lsColumnNames = names(dfData)
 
-  if(xValue %in% lsColumnNames){return(xValue)}
-  
   if(is.null(aiColumnIndicesToSearch))
   {
     aiColumnIndicesToSearch = c(1:dim(dfData)[2])
   }
 
+  # Could be the column name
+  if(xValue %in% lsColumnNames){return(xValue)}
+
+  # Could be the column name and value
+  iValueLength = length(xValue)
+  for( iColIndex in c(1:length(lsColumnNames) ))
+  {
+    adCur = dfData[[lsColumnNames[iColIndex]]]
+    if(is.factor(adCur))
+    {
+      for(strValue in levels(adCur))
+      {
+        strCur <- paste( lsColumnNames[iColIndex], strValue, sep = c_sMFANameSep )
+        if(xValue == strCur){return(lsColumnNames[iColIndex])}
+      }
+    }
+  }
+
+  # Could be the value
   for(iColIndex in aiColumnIndicesToSearch)
   {
     if(xValue %in% dfData[[lsColumnNames[iColIndex]]]){return(lsColumnNames[iColIndex])}
   }
   return(NULL)
 }
-
 
 funcColorHelper <- function(
 ### Makes sure the max is max and the min is min, and dmed is average

@@ -139,10 +139,13 @@ pArgs <- add_option( pArgs, c("-O","--omitLogFile"), type="logical", action="sto
 ### Run maaslin without creating a log file
 pArgs <- add_option( pArgs, c("-t", "--invert"), type="logical", action="store_true", dest="fInvert", default=FALSE, metavar="invert", help="When given, flag indicates to invert the background of figures to black.")
 ### Selection Frequency
-pArgs <- add_option( pArgs, c("-f","--selectionFrequency"), type="double", action="store", dest="dSelectionFrequency", default= NA, metavar="selectionFrequency", help="Selection Frequency for boosting (max 100 will remove almost everything). Interpreted as requiring boosting to select metadata 100% percent of the time (or less if given a number that is less).")
-pArgs <- add_option( pArgs, c("-c","--MFAFeatureCount"), type="integer", action="store", dest="iMFAMaxFeatures", default = 3, metavar="maxMFAFeature", help="Number of Features or number of bugs to plot).")
-pArgs <- add_option( pArgs, c("-C", "--MFAColor"), type="character", action="store", dest="strMFAColor", default=NULL, metavar="MFAColorCovariate", help="A continuous covariate that will be used to color samples in the MFA ordination plot.")
-pArgs <- add_option( pArgs, c("-S", "--MFAShape"), type="character", action="store", dest="strMFAShape", default=NULL, metavar="MFAShapeCovariate", help="A discontinuous covariate that will be used to indicate shapes of samples in the MFA ordination plot.")
+pArgs <- add_option( pArgs, c("-f","--selectionFrequency"), type="double", action="store", dest="dSelectionFrequency", default=NA, metavar="selectionFrequency", help="Selection Frequency for boosting (max 100 will remove almost everything). Interpreted as requiring boosting to select metadata 100% percent of the time (or less if given a number that is less).")
+pArgs <- add_option( pArgs, c("-c","--MFAFeatureCount"), type="integer", action="store", dest="iMFAMaxFeatures", default=5, metavar="maxMFAFeature", help="Number of Features or number of bugs to plot (default=3; 3 metadata and 3 data).")
+pArgs <- add_option( pArgs, c("-M","--MFAMetadataScale"), type="double", action="store", dest="dMFAMetadataScale", default=NULL, metavar="scaleForMetadata", help="A real number used to scale the metadata labels on the MFA plot (otherwise a default will be selected from the data).")
+pArgs <- add_option( pArgs, c("-D","--MFADataScale"), type="double", action="store", dest="dMFADataScale", default=NULL, metavar="scaleForMetadata", help="A real number used to scale the metadata labels on the MFA plot (otherwise a default will be selected from the data).")
+pArgs <- add_option( pArgs, c("-C", "--MFAColor"), type="character", action="store", dest="strMFAColor", default=NULL, metavar="MFAColorCovariate", help="A continuous metadata that will be used to color samples in the MFA ordination plot (otherwise a default will be selected from the data).")
+pArgs <- add_option( pArgs, c("-S", "--MFAShape"), type="character", action="store", dest="strMFAShape", default=NULL, metavar="MFAShapeCovariate", help="A discontinuous metadata that will be used to indicate shapes of samples in the MFA ordination plot (otherwise a default will be selected from the data).")
+pArgs <- add_option( pArgs, c("-P", "--MFAPlotFeatures"), type="character", action="store", dest="strMFAPlotFeatures", default=NULL, metavar="MFAFeaturesToPlot", help="Metadata and data features to plot (otherwise a default will be selected from the data).")
 
 main <- function(
 ### The main function manages the following:
@@ -186,6 +189,11 @@ lsRandomCovariates = NULL
 if(!is.null(lsArgs$options$strRandomCovariates))
 {
   lsRandomCovariates = unlist(strsplit(lsArgs$options$strRandomCovariates,"[,]"))
+}
+lsFeaturesToPlot = NULL
+if(!is.null(lsArgs$options$strMFAPlotFeatures))
+{
+  lsFeaturesToPlot = unlist(strsplit(lsArgs$options$strMFAPlotFeatures,"[,]"))
 }
 
 #If logging is not an allowable value, inform user and set to INFO
@@ -370,6 +378,17 @@ aiUMD <- intersect( lsRet$aiMetadata, which( colnames( lsRet$frmeData ) %in% lsR
 
 #Run MFA and plot covariance of factors
 if( !length( aiBugs ) ) { aiBugs <- lsRet$aiData }
+
+#If a user defines a feature, make sure it is in the bugs/data indices
+if(!is.null(lsFeaturesToPlot) || !is.null(lsArgs$options$strMFAColor) || !is.null(lsArgs$options$strMFAShape))
+{
+  lsCombinedFeaturesToPlot = unique(c(lsFeaturesToPlot,lsArgs$options$strMFAColor,lsArgs$options$strMFAShape))
+  lsCombinedFeaturesToPlot = lsCombinedFeaturesToPlot[!is.null(lsCombinedFeaturesToPlot)]
+
+  aiUMD = unique(c(aiUMD,which( colnames( lsRet$frmeData ) %in% intersect(lsCombinedFeaturesToPlot, lsOriginalMetadataNames))))
+  aiBugs = unique(c(aiBugs,which( colnames( lsRet$frmeData ) %in% intersect(lsCombinedFeaturesToPlot, lsOriginalFeatureNames))))
+}
+
 if( length( aiBugs ) )
 {
   logdebug("MFA:in", c_logrMaaslin)
@@ -378,7 +397,7 @@ if( length( aiBugs ) )
   if( class( lsMFA ) != "try-error" )
   {
     logdebug("PlotMFA:in", c_logrMaaslin)
-#    funcPlotMFA( lsMFA=lsMFA, frmeData=lsRet$frmeData, iMaxFeatures=lsArgs$options$iMFAMaxFeatures, strMFAColorCovariate=lsArgs$options$strMFAColor, strMFAShapeCovariate=lsArgs$options$strMFAShape, fInvert=lsArgs$options$fInvert, tempSaveFileName=file.path(outputDirectory,strBase), lsMetadata=lsOriginalMetadataNames, lsFeatures=lsOriginalFeatureNames, funcPlotColors=lsRet$funcPlotColors, funcPlotPoints=lsRet$funcPlotPoints, funcPlotLegend=lsRet$funcPlotLegend )
+    funcPlotMFA( lsMFA=lsMFA, frmeData=lsRet$frmeData, lsMetadata=lsOriginalMetadataNames, lsFeatures=lsOriginalFeatureNames, iMaxFeatures=lsArgs$options$iMFAMaxFeatures, strMFAColorCovariate=lsArgs$options$strMFAColor, strMFAShapeCovariate=lsArgs$options$strMFAShape, dMFAMetadataScale=lsArgs$options$dMFAMetadataScale, dMFADataScale=lsArgs$options$dMFADataScale, lsPlotFeatures=lsFeaturesToPlot, fInvert=lsArgs$options$fInvert, tempSaveFileName=file.path(outputDirectory,strBase), funcPlotColors=lsRet$funcPlotColors, funcPlotPoints=lsRet$funcPlotPoints, funcPlotLegend=lsRet$funcPlotLegend )
     logdebug("PlotMFA:out", c_logrMaaslin)
   }
 }

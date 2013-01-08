@@ -33,7 +33,7 @@ suppressMessages(library( FactoMineR, warn.conflicts=FALSE, quietly=TRUE, verbos
 
 # Get the most influencial variables or individuals in the MFA output
 # A value for iCount less than 1 give you all variables or individuals
-funcGetHighestContribution = function(MFAOut,dfOriginal,fAllValues=FALSE,iCount=-1,iOnlyInDimension=-1,lsNames=NULL)
+funcGetHighestContribution = function(MFAOut,dfOriginal,fReturnValues=FALSE,iCount=-1,iOnlyInDimension=-1,lsNames=NULL)
 {
   # Get and combine the first two components of the contributions unless a specific component is indicated
   adfFeatures = NULL
@@ -62,80 +62,72 @@ funcGetHighestContribution = function(MFAOut,dfOriginal,fAllValues=FALSE,iCount=
 
   #Filter to features or variables
   #Change the values to column names because values are being used in mfa but names are given as covariates or column names
-  if(!is.null(lsNames))
+  if(is.null(lsNames)){lsNames=names(dfOriginal)}
+
+  lsTargetGroupColumnNames = c()
+  lsReducedValuesList = c()
+  # Go through each of the values that contribute
+  for( iTargetNameIndex in 1:length(lsTargetGroupNames))
   {
-    lsTargetGroupColumnNames = c()
-    lsReducedValuesList = c()
-    # Go through each of the values that contribute
-    for( iTargetNameIndex in 1:length(lsTargetGroupNames))
+    #Change the value to a data column
+    sCurrentColumnName = funcMFAValue2Col(lsTargetGroupNames[iTargetNameIndex],dfOriginal)
+    
+    #If the column name is in the covariates to keep then either keep the value or all values associated with the covariate.
+    if(sCurrentColumnName %in% lsNames)
     {
-      #Change the value to a data column
-      sCurrentColumnName = funcValue2Col(lsTargetGroupNames[iTargetNameIndex],dfOriginal)
-      #If the column name is in the covariates to keep then eitehr keep the value or all values associated with the covariate.
-      if(sCurrentColumnName %in% lsNames)
-      {
-        if(fAllValues)
-        {
-          lsReducedValuesList = unique(c(lsReducedValuesList, as.character(dfOriginal[[sCurrentColumnName]])))
-        } else {
-          lsReducedValuesList = unique(c(lsReducedValuesList, lsTargetGroupNames[iTargetNameIndex]))
-        }
-        lsTargetGroupColumnNames = c(lsTargetGroupColumnNames, sCurrentColumnName)
-#        if(length(lsTargetGroupColumnNames) == iCount){print("break");print(lsTargetGroupColumnNames );break}
-      }
+      lsReducedValuesList = unique(c(lsReducedValuesList, as.character(dfOriginal[[sCurrentColumnName]])))
+      lsTargetGroupColumnNames = c(lsTargetGroupColumnNames, sCurrentColumnName)
+      if(length(lsTargetGroupColumnNames) == iCount){break}
     }
-    #This process can get values that were not influential (or in the components of interest, in that case remove those values)
-#    print("lsTargetGroupNames")
-#    print(lsTargetGroupNames)
-#    print("lsReducedValuesList")
-#    print(lsReducedValuesList)
-#    #lsTargetGroupNames = intersect(lsReducedValuesList, lsTargetGroupNames)
-#    return(lsReducedValuesList)
-#    print("lsTargetGroupNames")
-#    print(lsTargetGroupNames)
-    return(lsTargetGroupNames[!is.na(lsTargetGroupNames)])
   }
 
-  if(is.null(iCount) || (iCount< 1) || (iCount>length(lsTargetGroupNames))){iCount = length(lsTargetGroupNames)}
-  lsTargetGroupNames = lsTargetGroupNames[1:iCount]
-  return(lsTargetGroupNames[!is.na(lsTargetGroupNames)])
+  #This process can get values that were not influential (or in the components of interest, in that case remove those values)
+  if(fReturnValues)
+  {
+    return(unique(lsReducedValuesList))
+  } else {
+    return(unique(lsTargetGroupColumnNames))
+  }
 }
+
+#  if(is.null(iCount) || (iCount< 1) || (iCount>length(lsTargetGroupNames))){iCount = length(lsTargetGroupNames)}
+#  lsTargetGroupNames = lsTargetGroupNames[1:iCount]
+#  return(lsTargetGroupNames[!is.na(lsTargetGroupNames)])
+#}
 
 # Returns the first of a given data mode (discontinous or continuous)
 funcGetFirstOfDataMode = function(lsSortedNames,dfData,fContinuous=TRUE)
 {
   sMarkerMetadata = NULL
-  sCoef = NULL
+
   for(i in 1:length(lsSortedNames))
   {
-    sCurData = dfData[[lsSortedNames[i]]]
-    if(is.null(sCurData))
-    {
-      sCoef = funcValue2Col(lsSortedNames[i],dfData)
-      sCurData = dfData[[sCoef]]
-    }
+    # Get the column name from the mfa value which can be the column name or the value or a combination of both
+    strColumnName = funcMFAValue2Col(lsSortedNames[i], dfData)
+
+    sCurData = dfData[[strColumnName]]
+
     if(fContinuous)
     {
       if(is.numeric(sCurData) || is.integer(sCurData))
       {
-        sMarkerMetadata = lsSortedNames[i]
+        sMarkerMetadata = strColumnName
         break
       }
     } else {
       if(is.factor(sCurData) || is.ordered(sCurData) || is.logical(sCurData) || is.character(sCurData))
       {
-        sMarkerMetadata = sCoef
+        sMarkerMetadata = strColumnName
         break
       }
     }
   }
-
   # Return NA if nothing is found
   return(sMarkerMetadata)
 }
 
 # Get the most influencial variables or individuals in the MFA output
-funcGetMarkerValues = function(MFAOut,dfOriginal,strMFAColorCovariate=NULL,strMFAShapeCovariate=NULL)
+funcGetMarkerValues = function(MFAOut,dfOriginal,lsMetadata=NULL,strMFAColorCovariate=NULL,strMFAShapeCovariate=NULL)
 {
   # Default marker values
   viMarkers = as.integer(c(18:15,0:14,"#","@"))
@@ -153,12 +145,16 @@ funcGetMarkerValues = function(MFAOut,dfOriginal,strMFAColorCovariate=NULL,strMF
 
   if(is.null(sFeatureContinuous) || is.null(sFeature))
   {
-    # Get all contributors in the first and second dim of the contributions in sorted order of contribution
-    lsSortedMetadataDim1 = funcGetHighestContribution(MFAOut,dfOriginal=frmeData,iOnlyInDimension=1)
-    lsSortedMetadataDim2 = funcGetHighestContribution(MFAOut,dfOriginal=frmeData,iOnlyInDimension=2)
+    # Get all contributors in the first and second dim of the contributions in sorted order of contribution (as dataframe column names)
+    lsSortedMetadataDim1 = funcGetHighestContribution(MFAOut,dfOriginal=dfOriginal,iOnlyInDimension=1,lsNames=lsMetadata)
+    lsSortedMetadataDim2 = funcGetHighestContribution(MFAOut,dfOriginal=dfOriginal,iOnlyInDimension=2,lsNames=lsMetadata)
+
+    # Get the column name from the mfa value which can be the column name or the value or a combination of both
+    strColumnName = funcMFAValue2Col(lsSortedMetadataDim1[1], dfOriginal)
 
     # See if the first variable is continous or factor
-    adMostInfluential = dfOriginal[[funcValue2Col(lsSortedMetadataDim1[1], dfOriginal)]]
+    adMostInfluential = dfOriginal[[strColumnName]]
+
     if(is.logical(adMostInfluential) || is.factor(adMostInfluential) || is.character(adMostInfluential))
     {
       if(is.null(sFeature))
@@ -178,13 +174,13 @@ funcGetMarkerValues = function(MFAOut,dfOriginal,strMFAColorCovariate=NULL,strMF
   if(is.null(sFeature))
   {
     sFeature = funcGetFirstOfDataMode(lsSortedNames=lsSortedMetadataDim2,dfData=dfOriginal,fContinuous=FALSE)
-    if(is.null(sFeature)){liMarkerShapes = rep(20,dim(dfOriginal)[2]);sFeature=NULL}
+    if(is.null(sFeature)){liMarkerShapes = rep(20,dim(dfOriginal)[2])}
     lLegendInfo[["sShapeMetadata"]] = sFeature
   }
   if(is.null(sFeatureContinuous))
   {
     sFeatureContinuous = funcGetFirstOfDataMode(lsSortedNames =lsSortedMetadataDim2,dfData=dfOriginal,fContinuous=TRUE)
-    if(is.null(sFeatureContinuous)){lsMarkerColors = funcGetRandomColors(dim(dfOriginal)[2]); sFeatureContinuous=NULL}
+    if(is.null(sFeatureContinuous)){lsMarkerColors = funcGetRandomColors(dim(dfOriginal)[2])}
     lLegendInfo[["sColorMetatadata"]] = sFeatureContinuous
   }
 
@@ -227,7 +223,7 @@ funcGetMarkerValues = function(MFAOut,dfOriginal,strMFAColorCovariate=NULL,strMF
     for(iMarkerIndex in 1:length(asLevels))
     {
       # Update legend information
-      lLegendInfo[["lsText"]] = c(lLegendInfo$lsText,paste(asLevels[iMarkerIndex]))
+      lLegendInfo[["lsText"]] = c(lLegendInfo$lsText,paste(asLevels[iMarkerIndex]," (", sFeature,")",sep=""))
       lLegendInfo[["lsColor"]] = c(lLegendInfo$lsColor, "#333333")
       lLegendInfo[["lsMarker"]] = c(lLegendInfo$lsMarker,viMarkers[iMarkerIndex])
     } 
@@ -239,6 +235,7 @@ funcGetMarkerValues = function(MFAOut,dfOriginal,strMFAColorCovariate=NULL,strMF
       liMarkerShapes[xData==sLevels[i]]=viMarkers[i]
     }
   }
+
   return(list(shapes=liMarkerShapes, colors=lsMarkerColors, lLegendInfo=lLegendInfo))
 }
 
@@ -249,7 +246,7 @@ frmeData,
 dMinSamp,
 ## Minimum samples
 aiMetadata,
-### Indicies or metadata to use
+### Indicies of metadata to use
 aiBugs,
 ### Indicies of features
 aiGenes = c()
@@ -399,17 +396,20 @@ funcPlotMFA <- function(
 lsMFA,
 ### MFA output object
 frmeData,
+lsMetadata,
+lsFeatures,
 ### Analysis data
 iMaxFeatures = 10,
 ### Make number of bugs and max number of metadata seperately shown
 strMFAColorCovariate=NULL,
 strMFAShapeCovariate=NULL,
+dMFAMetadataScale=NULL,
+dMFADataScale=NULL,
+lsPlotFeatures=NULL,
 fInvert = FALSE,
 ### Invert figure to make background black
 tempSaveFileName="MFA",
 ### File to save as a pdf (.pdf extension will be added
-lsMetadata,
-lsFeatures,
 funcPlotColors = NULL,
 ### Function to control plotting colors, read from custom *.R script input file
 funcPlotPoints = NULL,
@@ -435,7 +435,7 @@ tempPCH=20
 
   # Get markers shapes for plotting (find the highest contributing dim one discontinuous data)
   # Also get colors for plotting (find the highest contributing dim one continuous data)
-  llMarkerInfo = funcGetMarkerValues(MFAOut=lsMFA,dfOriginal=frmeData, strMFAColorCovariate=strMFAColorCovariate, strMFAShapeCovariate=strMFAShapeCovariate)
+  llMarkerInfo = funcGetMarkerValues(MFAOut=lsMFA,dfOriginal=frmeData,lsMetadata=lsMetadata,strMFAColorCovariate=strMFAColorCovariate, strMFAShapeCovariate=strMFAShapeCovariate)
 
   #Use default derived colors unless a function has been specified to make the colors. This is over-ridden by setting the covariate to base color on through commandline.
   astrCols = llMarkerInfo$colors
@@ -445,67 +445,44 @@ tempPCH=20
   aiPoints =  llMarkerInfo$shapes
   if(exists("funcPlotPoints",mode="function") && is.null(strMFAShapeCovariate)){aiPoints = funcPlotPoints( frmeData )}
 
-  #Get metadata names
-#  print("****************************")
-  lsMetadata = funcGetHighestContribution(MFAOut=lsMFA,dfOriginal=frmeData,fAllValues=TRUE,iCount=iMaxFeatures,lsNames=lsMetadata)
-  if(exists("funcPlotMetadata",mode="function")){lsMetadata = funcPlotMetadata()}
-  afMetadata <- rownames(lsPCA$var$coord) %in% lsMetadata
-#  print("lsMetadata")
-#  print(lsMetadata)
+  #Get metadata names (in MFA format, could be column names, values or names_values)
+  lsMetadataToPlot = funcColToMFAValue(funcGetHighestContribution(MFAOut=lsMFA,dfOriginal=frmeData,iCount=iMaxFeatures,lsNames=lsMetadata),frmeData)
+  if(exists("funcPlotMetadata",mode="function")){lsMetadataToPlot = funcPlotMetadata()}
+  if(!is.null(lsPlotFeatures))
+  {
+    lsMetadataToPlot = funcColToMFAValue(intersect(lsPlotFeatures,lsMetadata),frmeData)
+  }
+  afMetadata <- rownames(lsPCA$var$coord) %in% lsMetadataToPlot
 
-  #Get feature names
-  lsFeaturesToPlot = funcGetHighestContribution(MFAOut=lsMFA,dfOriginal=frmeData,iCount=iMaxFeatures,lsNames=lsFeatures)
+  #Get feature names (in MFA format, could be column names, values or names_values)
+  lsFeaturesToPlot = funcColToMFAValue(funcGetHighestContribution(MFAOut=lsMFA,dfOriginal=frmeData,iCount=iMaxFeatures,lsNames=lsFeatures),frmeData)
   if(exists("funcPlotFeatures",mode="function")){lsFeaturesToPlot = funcPlotFeatures()}
+  if(!is.null(lsPlotFeatures))
+  {
+    lsFeaturesToPlot = funcColToMFAValue(intersect(lsPlotFeatures, lsFeatures),frmeData)
+  }
   afFeatures = rownames(lsPCA$var$coord) %in% lsFeaturesToPlot
 
-#  print("************** lsFeaturesToPlot")
-#  print(lsFeaturesToPlot)
+  dScale = dMFAMetadataScale
+  if(exists("funcGetMetadataScale",mode="function") && is.null(dScale)){dScale = funcGetMetadataScale()}
+  if(is.null(dScale)){dScale = funcGetScale(lsMFA, lsMetadataToPlot)}
 
-  #Scale the metadate labels so they are viewable
-  # Max coordinates for samples (dim1,dim2)
-  sdDim1Max = max(abs(lsMFA$global.pca$ind$coord[,1]))
-  sdDim2Max = max(abs(lsMFA$global.pca$ind$coord[,2]))
-#  print("************** 1a")
-  # Max x and y coordinates for the select metadata
-#  print("lsMetadata")
-#  print(lsMetadata)
-#  print("lsMFA$global.pca$var$coord[,1]")
-#  print(lsMFA$global.pca$var$coord[1])
-#  print("lsMFA$global.pca$var$coord[,2]")
-#  print(lsMFA$global.pca$var$coord[2])
-  sdDim1MaxVar = max(abs(lsMFA$global.pca$var$coord[lsMetadata,1]))
-  sdDim2MaxVar = max(abs(lsMFA$global.pca$var$coord[lsMetadata,2]))
-#  print("************** 1b")
-  # Max and min x and y coordinates for the select data
-  sdDim1MaxInd = max(abs(lsMFA$global.pca$var$coord[lsFeaturesToPlot,1]))
-  sdDim2MaxInd = max(abs(lsMFA$global.pca$var$coord[lsFeaturesToPlot,2]))
-#  print("************** 1c")
-  # Get the scale for metadata
-  dScale = NA
-  if(sdDim1MaxVar > sdDim2MaxVar){dScale = sdDim1Max/sdDim1MaxVar*.9
-  } else{
-    dScale = sdDim2Max/sdDim2MaxVar*.9
-  }
-#  print("************** 2")
-  # Get the scale for data
-  dBugScale = NA
-  if(sdDim1MaxInd > sdDim2MaxInd){dBugScale = sdDim1Max/sdDim1MaxInd*.9
-  } else{
-    dBugScale = sdDim2Max/sdDim2MaxInd*.9
-  }
-#  print("************** 3")
+  dBugScale = dMFADataScale
+  if(exists("funcGetFeatureScale",mode="function") && is.null(dBugScale)){dBugScale = funcGetFeatureScale()}
+  if(length(lsFeaturesToPlot) && is.null(dBugScale)){dBugScale = funcGetScale(lsMFA, lsFeaturesToPlot)}
+
   #Set X and Y coordinates and plot points
   strX <- sprintf( "Dimension 1 (%.2f%%)", lsPCA$eig$`percentage of variance`[1] )
   strY <- sprintf( "Dimension 2 (%.2f%%)", lsPCA$eig$`percentage of variance`[2] )
-#  print("************** 4")
+
   #Do plots
   #Plot just points 
   funcPlotMFAPage(coordinatesPlot=lsPCA$ind$coord, coordinatesText=NA, strX=strX, strY=strY, aiPoints=aiPoints, astrCols=astrCols)
-#  print("************** 5t")
+
   if( sum( afMetadata ) )
   {
     funcPlotMFAPage(coordinatesPlot=lsPCA$ind$coord, coordinatesText=lsPCA$var$coord, strX=strX, strY=strY, aiPoints=aiPoints,
-      astrCols=astrCols, afMetadata=afMetadata, dScale=dScale, lsMetadataLabels= lsMetadata, lLegendLoc=llMarkerInfo$lLegendInfo)
+      astrCols=astrCols, afMetadata=afMetadata, dScale=dScale, lsMetadataLabels=rownames( lsPCA$var$coord )[afMetadata], lLegendLoc=llMarkerInfo$lLegendInfo)
   }
 
   #Plot features
@@ -518,11 +495,10 @@ tempPCH=20
     if( sum( afMetadata ) )
     {
       funcPlotMFAPage(coordinatesPlot=lsPCA$ind$coord, coordinatesText=lsPCA$var$coord, strX=strX, strY=strY, aiPoints=aiPoints,
-        astrCols=astrCols, afMetadata=afMetadata, dScale=dScale, lsMetadataLabels= lsMetadata, afFeatures=afFeatures,
+        astrCols=astrCols, afMetadata=afMetadata, dScale=dScale, lsMetadataLabels=rownames( lsPCA$var$coord )[afMetadata], afFeatures=afFeatures,
         dBugScale=dBugScale, lsFeatureLabels=funcRename( rownames( lsPCA$var$coord )[afFeatures] ), lLegendLoc=llMarkerInfo$lLegendInfo)
     }
   }
-#  print("Func Plot MFA 15")
   dev.off( )
 }
 
@@ -558,11 +534,15 @@ lLegendLoc=NULL
   plot( coordinatesPlot, pch = aiPoints, col = astrCols, xlab = strX, ylab = strY, cex.axis=1.5, cex.lab=1.5, cex=1.5)
   if( !is.null(afMetadata) && !is.null(dScale) && !is.null(lsMetadataLabels) )
   {
-    text( coordinatesText[afMetadata,] * dScale, labels=lsMetadataLabels, cex=1.8, font = 2 )
+    vCoordinates = coordinatesText[afMetadata,c(1,2)]
+    if((length(vCoordinates)==2) && is.null(rownames(vCoordinates))){vCoordinates = data.frame(Dim.1=vCoordinates[1],Dim.2=vCoordinates[2])}
+    text( vCoordinates * dScale, labels=lsMetadataLabels, cex=1.8, font = 2 )
   }
   if( !is.null( afFeatures ) && !is.null(dBugScale) && !is.null(lsFeatureLabels) )
   {
-    text( coordinatesText[afFeatures,] * dBugScale, labels=lsFeatureLabels, cex=1.6, font = 3 )
+    vCoordinates = coordinatesText[afFeatures,c(1,2)]
+    if((length(vCoordinates)==2) && is.null(rownames(vCoordinates))){vCoordinates = data.frame(Dim.1=vCoordinates[1],Dim.2=vCoordinates[2])}
+    text( vCoordinates * dBugScale, labels=lsFeatureLabels, cex=1.6, font = 3 )
   }
   if(exists("funcPlotLegend",mode="function"))
   {
@@ -570,4 +550,35 @@ lLegendLoc=NULL
   } else if(!is.null(lLegendLoc)){
     legend(lLegendLoc$sLocation, legend=lLegendLoc$lsText, col=lLegendLoc$lsColor, pch=lLegendLoc$lsMarker, cex=1.5, pt.cex=1.5)
   }
+}
+
+funcGetScale <- function(
+lsMFA,
+lsToPlot
+){
+  #Scale the metadate labels so they are viewable
+  # Max coordinates for samples (dim1,dim2)
+  sdDim1Max = max(lsMFA$global.pca$ind$coord[,1])
+  sdDim1Min = min(lsMFA$global.pca$ind$coord[,1])
+  sdDim2Max = max(lsMFA$global.pca$ind$coord[,2])
+  sdDim2Min = min(lsMFA$global.pca$ind$coord[,2])
+
+  # Max x and y coordinates for the select metadata
+  # Guard against division by zero
+  dMetadataMaxDim1 = max(lsMFA$global.pca$var$coord[lsToPlot,1])
+  if(dMetadataMaxDim1==0){dMetadataMaxDim1=0.00000001}
+  dMetadataMinDim1 = min(lsMFA$global.pca$var$coord[lsToPlot,1])
+  if(dMetadataMinDim1==0){dMetadataMinDim1=0.00000001}
+  dMetadataMaxDim2 = max(lsMFA$global.pca$var$coord[lsToPlot,2])
+  if(dMetadataMaxDim2==0){dMetadataMaxDim2=0.00000001}
+  dMetadataMinDim2 = min(lsMFA$global.pca$var$coord[lsToPlot,2])
+  if(dMetadataMinDim2==0){dMetadataMinDim2=0.00000001}
+
+  # Get the scale for metadata
+  # See if there are entries less both positive and negative in an axis,
+  # You have to use either the pos or neg valuses to determine the scaling depending on
+  # The maginitude of their difference from the lowest or highest axis value
+  # This is because the MFA plots are not square.
+  ldScales = c(sdDim1Max/dMetadataMaxDim1,sdDim2Max/dMetadataMaxDim2,sdDim1Min/dMetadataMinDim1,sdDim2Min/dMetadataMinDim2)
+  return(min(abs(ldScales)))
 }

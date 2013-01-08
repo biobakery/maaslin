@@ -301,7 +301,7 @@ receivedReturn = funcBugs(frmeData=frmeData, lsData=lsData, aiMetadata=aiMetadat
 print("START START")
 print(expectedReturn)
 print("RECEIVED")
-print(receviedReturn)
+print(receivedReturn)
 print("STOP STOP")
 
 test_that("funcBugs works with the lm option with multiple covariates.",{expect_equal(receivedReturn,expectedReturn)})

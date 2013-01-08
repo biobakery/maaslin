@@ -106,6 +106,26 @@ test_that("Test that a coefficients are found or not given if they exist",{
   expect_equal(funcCoef2Col(strCoef=paste("B","222",sep=c_sFactorNameSep),frmeData=dfTestWithFactors,astrCols=c("B")),"B")
 })
 
+context("Test funcMFAValue2Col")
+dfTestWithFactors = data.frame(A=c(1,3,3,4,5,6,7,8),B=c(1.0,2.0, 5.8,4.6,4.7,8.9,9.0,2.0),C=c("one","two","one","two","one","two","one","two"))
+dfTestWithFactors["three"]=as.factor(dfTestWithFactors[["three"]])
+test_that("Test that a column names is found or not given if they exist",{
+  expect_equal(funcMFAValue2Col(xValue=5.8,dfData=dfTestWithFactors, aiColumnIndicesToSearch=NULL),"B")
+  expect_equal(funcMFAValue2Col(xValue=6,dfData=dfTestWithFactors, aiColumnIndicesToSearch=NULL),"A")
+  expect_equal(funcMFAValue2Col(xValue="one",dfData=dfTestWithFactors, aiColumnIndicesToSearch=NULL),"C")
+  expect_equal(funcMFAValue2Col(xValue="two",dfData=dfTestWithFactors, aiColumnIndicesToSearch=NULL),"C")
+  expect_equal(funcMFAValue2Col(xValue=paste("C","one",sep=c_sMFANameSep),dfData=dfTestWithFactors, aiColumnIndicesToSearch=NULL),"C")
+  expect_equal(funcMFAValue2Col(xValue=paste("C","two",sep=c_sMFANameSep),dfData=dfTestWithFactors, aiColumnIndicesToSearch=NULL),"C")
+  expect_equal(funcMFAValue2Col(xValue=2.0,dfData=dfTestWithFactors, aiColumnIndicesToSearch=c(1,3)),NULL)
+  expect_equal(funcMFAValue2Col(xValue=6,dfData=dfTestWithFactors, aiColumnIndicesToSearch=c(2,3)),NULL)
+  expect_equal(funcMFAValue2Col(xValue="one",dfData=dfTestWithFactors, aiColumnIndicesToSearch=c(1,2)),NULL)
+  expect_equal(funcMFAValue2Col(xValue="two",dfData=dfTestWithFactors, aiColumnIndicesToSearch=c(1,2)),NULL)
+  expect_equal(funcMFAValue2Col(xValue=2.0,dfData=dfTestWithFactors, aiColumnIndicesToSearch=c(2)),"B")
+  expect_equal(funcMFAValue2Col(xValue=6,dfData=dfTestWithFactors, aiColumnIndicesToSearch=c(1)),"A")
+  expect_equal(funcMFAValue2Col(xValue="one",dfData=dfTestWithFactors, aiColumnIndicesToSearch=c(3)),"C")
+  expect_equal(funcMFAValue2Col(xValue=paste("C","two",sep=c_sMFANameSep),dfData=dfTestWithFactors, aiColumnIndicesToSearch=c(3)),"C")
+})
+
 context("Test funcFormulaStrToList")
 test_that("List of covariates are given, from lm or mixed model formulas",{
   expect_equal(funcFormulaStrToList("adCur ~ `1Covariate`"),c("1Covariate"))

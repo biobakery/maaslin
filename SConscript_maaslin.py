@@ -17,7 +17,7 @@ def MaAsLin( filePCL, strModel=None, strAnalysis=None, strLink=None, strForcedCo
 	def funcMaaslin( target, source, env, fileR = fileR, fileRC = fileRC, strRandomCovariates=strRandomCovariates ):
 		strT, astrSs = sfle.ts( target, source )
 		strProg, strTSV = astrSs[:2]
-		return sfle.ex( [strProg] + 
+		return sfle.ex( [strProg] +
                                 ( ["-i", fileRC] if fileRC else [] ) +
 			        ( ["-I", fileR] if fileR else [] ) + 
                                 ( ["-s", strModel] if strModel else []) + 

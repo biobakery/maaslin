@@ -102,6 +102,9 @@ c_strDefaultReadCols = "-"
 #Separator used when collapsing factor names
 c_sFactorNameSep = ""
 
+#Separator used by the mfa
+c_sMFANameSep = "_"
+
 #Analysis Module list positioning
 c_iSelection = 1
 c_iTransform = 2
