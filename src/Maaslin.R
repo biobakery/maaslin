@@ -140,12 +140,14 @@ pArgs <- add_option( pArgs, c("-O","--omitLogFile"), type="logical", action="sto
 pArgs <- add_option( pArgs, c("-t", "--invert"), type="logical", action="store_true", dest="fInvert", default=FALSE, metavar="invert", help="When given, flag indicates to invert the background of figures to black.")
 ### Selection Frequency
 pArgs <- add_option( pArgs, c("-f","--selectionFrequency"), type="double", action="store", dest="dSelectionFrequency", default=NA, metavar="selectionFrequency", help="Selection Frequency for boosting (max 100 will remove almost everything). Interpreted as requiring boosting to select metadata 100% percent of the time (or less if given a number that is less).")
-pArgs <- add_option( pArgs, c("-c","--MFAFeatureCount"), type="integer", action="store", dest="iMFAMaxFeatures", default=5, metavar="maxMFAFeature", help="Number of Features or number of bugs to plot (default=3; 3 metadata and 3 data).")
+
+### Misc MFA plot arguments
+pArgs <- add_option( pArgs, c("-c","--MFAFeatureCount"), type="integer", action="store", dest="iMFAMaxFeatures", default=3, metavar="maxMFAFeature", help="Number of Features or number of bugs to plot (default=3; 3 metadata and 3 data).")
 pArgs <- add_option( pArgs, c("-M","--MFAMetadataScale"), type="double", action="store", dest="dMFAMetadataScale", default=NULL, metavar="scaleForMetadata", help="A real number used to scale the metadata labels on the MFA plot (otherwise a default will be selected from the data).")
 pArgs <- add_option( pArgs, c("-D","--MFADataScale"), type="double", action="store", dest="dMFADataScale", default=NULL, metavar="scaleForMetadata", help="A real number used to scale the metadata labels on the MFA plot (otherwise a default will be selected from the data).")
 pArgs <- add_option( pArgs, c("-C", "--MFAColor"), type="character", action="store", dest="strMFAColor", default=NULL, metavar="MFAColorCovariate", help="A continuous metadata that will be used to color samples in the MFA ordination plot (otherwise a default will be selected from the data).")
 pArgs <- add_option( pArgs, c("-S", "--MFAShape"), type="character", action="store", dest="strMFAShape", default=NULL, metavar="MFAShapeCovariate", help="A discontinuous metadata that will be used to indicate shapes of samples in the MFA ordination plot (otherwise a default will be selected from the data).")
-pArgs <- add_option( pArgs, c("-P", "--MFAPlotFeatures"), type="character", action="store", dest="strMFAPlotFeatures", default=NULL, metavar="MFAFeaturesToPlot", help="Metadata and data features to plot (otherwise a default will be selected from the data).")
+pArgs <- add_option( pArgs, c("-P", "--MFAPlotFeatures"), type="character", action="store", dest="strMFAPlotFeatures", default=NULL, metavar="MFAFeaturesToPlot", help="Metadata and data features to plot (otherwise a default will be selected from the data). Comma Delimited.")
 
 main <- function(
 ### The main function manages the following:
