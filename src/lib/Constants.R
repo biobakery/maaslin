@@ -103,7 +103,8 @@ c_strDefaultReadCols = "-"
 c_sFactorNameSep = ""
 
 #Separator used by the mfa
-c_sMFANameSep = "_"
+c_sMFANameSep1 = "_"
+c_sMFANameSep2 = "."
 
 #Analysis Module list positioning
 c_iSelection = 1

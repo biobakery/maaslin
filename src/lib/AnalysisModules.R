@@ -485,7 +485,7 @@ strRandomFormula = NULL
       ret = wilcox.test(as.formula(paste("adCur",x,sep=" ~ ")), data=dfData, na.action=c_strNA_Action)
       #Returning NA for the coef in a named vector
       vdCoef = c()
-      vdCoef[[x]]=NA
+      vdCoef[[x]]=ret$estimate
       retList[[1]]=list(p.value=ret$p.value,SD=sd(dfData[[x]]),name=x,coef=vdCoef)
       return(retList)
     }, lsQCCounts))

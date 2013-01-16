@@ -71,7 +71,7 @@ funcGetHighestContribution = function(MFAOut,dfOriginal,fReturnValues=FALSE,iCou
   {
     #Change the value to a data column
     sCurrentColumnName = funcMFAValue2Col(lsTargetGroupNames[iTargetNameIndex],dfOriginal)
-    
+
     #If the column name is in the covariates to keep then either keep the value or all values associated with the covariate.
     if(sCurrentColumnName %in% lsNames)
     {

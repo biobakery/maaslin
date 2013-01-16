@@ -139,9 +139,9 @@ dfData
     if(is.factor(axCur))
     {
       lsLevels = levels(axCur)
-      if((length(lsLevels)==2) && (lsLevels[1]=="0") && (lsLevels[2]=="1"))
+      if(length(lsLevels)==2)# && (lsLevels[1]=="0") && (lsLevels[2]=="1"))
       {
-        lsMFAValues = c(lsMFAValues,paste(sColName,"0",sep=c_sMFANameSep),paste(sColName,"1",sep=c_sMFANameSep))
+        lsMFAValues = c(lsMFAValues,paste(sColName,lsLevels[1],sep="_"),paste(sColName,lsLevels[2],sep="_"))
       }else{
         for(sLevel in levels(axCur))
         {
@@ -180,8 +180,9 @@ aiColumnIndicesToSearch = NULL
     {
       for(strValue in levels(adCur))
       {
-        strCur <- paste( lsColumnNames[iColIndex], strValue, sep = c_sMFANameSep )
-        if(xValue == strCur){return(lsColumnNames[iColIndex])}
+        strCurVersion1 <- paste( lsColumnNames[iColIndex], strValue, sep = c_sMFANameSep1 )
+        strCurVersion2 <- paste( lsColumnNames[iColIndex], strValue, sep = c_sMFANameSep2 )
+        if((xValue == strCurVersion1) || (xValue == strCurVersion2)){return(lsColumnNames[iColIndex])}
       }
     }
   }
