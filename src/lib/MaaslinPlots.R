@@ -45,6 +45,8 @@ strBaseOut,
 ### Project directory to place pdf in
 strName,
 ### Name of taxon
+funcUnTransform=NULL,
+### If a transform is used the opporite of that transfor must be used on the residuals in the partial residual plots
 fDoResidualPlot = TRUE,
 ### Plot the residual plots
 fInvert = FALSE
@@ -157,7 +159,7 @@ fInvert = FALSE
   }
 
   ### Plot the residual plot
-  if(fDoResidualPlot){funcResidualPlot(lsCur=lsCur, frmeTmp=frmeTmp, adColorMin=adColorMin, adColorMax=adColorMax, adColorMed=adColorMed, adMar)}
+  if(fDoResidualPlot){funcResidualPlot(lsCur=lsCur, frmeTmp=frmeTmp, adColorMin=adColorMin, adColorMax=adColorMax, adColorMed=adColorMed, adMar, funcUnTransform=funcUnTransform)}
 
   return(strFilePDF)
   ### File to which the pdf was written
@@ -221,8 +223,9 @@ adColorMax,
 ### Max color in color range for markers
 adColorMed,
 ### Medium color in color range for markers
-adMar
+adMar,
 ### Standardized margins
+funcUnTransform = NULL
 ){
   # Get model matrix (raw data)
   adCur = frmTmp[[sResponseFeature]]
@@ -266,8 +269,10 @@ adMar
       vY = vY + dfdCoefs[sCurrentCovariate] * aiLevelIndices
     }
   }
-  vY = vY+residuals(lmod)
   #TODO based on transform   vY = vY+sin(residuals(lmod))^2
+  if(!is.null(funcUnTransform))
+  { vY = vY + funcUnTransform(residuals(lmod))
+  } else { vY = vY + residuals(lmod) }
 
   # Plot x, raw data
   ## y label 
@@ -317,8 +322,10 @@ adColorMax,
 ### Max color in color range for markers
 adColorMed,
 ### Medium color in color range for markers
-adMar
+adMar,
 ### Standardized margins
+funcUnTransform
+### If a transform is used the opporite of that transfor must be used on the residuals in the partial residual plots
 ){
   #Now plot residual hat plot
   #Get coefficient names
@@ -337,5 +344,5 @@ adMar
 #  if(!length(lsOtherCoefs)){return()}
 
   # Plot residuals
-  funcResidualPlotHelper(frmTmp=frmeTmp,sResponseFeature=lsCur$taxon,lsFullModelCovariateNames=asAllColNames,lsCovariateToControlForNames=lsCur$orig,sCovariateOfInterest=lsCur$name,adColorMin, adColorMax,adColorMed, adMar)
+  funcResidualPlotHelper(frmTmp=frmeTmp,sResponseFeature=lsCur$taxon,lsFullModelCovariateNames=asAllColNames,lsCovariateToControlForNames=lsCur$orig,sCovariateOfInterest=lsCur$name,adColorMin, adColorMax,adColorMed, adMar, funcUnTransform)
 }

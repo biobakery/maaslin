@@ -111,6 +111,7 @@ c_iSelection = 1
 c_iTransform = 2
 c_iAnalysis = 3
 c_iResults = 4
+c_iUnTransform = 5
 
 # Na action in anaylsis, placed here to standardize
 c_strNA_Action = "na.omit"

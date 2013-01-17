@@ -280,6 +280,8 @@ astrScreen = c(),
 ### 
 funcReg=NULL,
 ### Function for regularization
+funcUnTransform=NULL,
+### If a transform is used the opporite of that transfor must be used on the residuals in the partial residual plots
 lsNonPenalizedPredictors=NULL,
 ### These predictors will not be penalized in the feature (model) selection step
 funcAnalysis=NULL,
@@ -416,7 +418,7 @@ fOmitLogFile = FALSE
       ## Write PDF file output
       if( adQ[j] > dSig ) { next }
       # Do not make residuals plots if univariate is selected
-      strFilePDF = funcPDF( frmeTmp=frmeData, lsCur=lsCur, curPValue=adP[j], curQValue=adQ[j], strFilePDF=strFilePDF, strBaseOut=strBaseOut, strName=strName, fDoResidualPlot=fDoRPlot, fInvert=fInvert )
+      strFilePDF = funcPDF( frmeTmp=frmeData, lsCur=lsCur, curPValue=adP[j], curQValue=adQ[j], strFilePDF=strFilePDF, strBaseOut=strBaseOut, strName=strName, funcUnTransform= funcUnTransform, fDoResidualPlot=fDoRPlot, fInvert=fInvert )
     }
 
     if( dev.cur( ) != 1 ) { dev.off( ) }
@@ -475,6 +477,7 @@ lsRandomCovariates=NULL,
 funcGetResult=NULL
 ### Function to unpack results from analysis
 ){
+
 #dTime00 <- proc.time()[3]
   #Get metadata column names
   astrMetadata = intersect( lsData$astrMetadata, colnames( frmeData )[aiMetadata] )
@@ -525,6 +528,8 @@ funcGetResult=NULL
   lmod <- NA
 
   #Build formula for simple mixed effects models
+  #Removes random covariates from regularization
+  astrMetadata  = setdiff(astrMetadata, lsRandomCovariates)
   strFormula <- paste( "adCur ~", paste( sprintf( "`%s`", astrMetadata ), collapse = " + " ), sep = " " )
 
   # Document the model
@@ -553,6 +558,7 @@ funcGetResult=NULL
   #Run association analysis if predictors exist and an analysis function is specified
   #Reset model for the glm
   lmod <- NA
+
   if(!is.na(funcAnalysis) )
   {
     if( length( astrTerms ) )
@@ -564,12 +570,15 @@ funcGetResult=NULL
       #Make the lm formula
       #Build formula for simple mixed effects models or standard lms
       strRandomCovariatesFormula = NULL
-      if(length(intersect(lsRandomCovariates, astrTerms))>0)
+#This will remove the random covariate if the covariate is boosted out, below will act as if the covariate is forced      if(length(intersect(lsRandomCovariates, astrTerms))>0)
+      if(length(lsRandomCovariates)>0)
       {
         #Format for lmer
         #strRandomCovariatesFormula <- paste( "adCur ~ ", paste( sprintf( "(1|`%s)`)", intersect(lsRandomCovariates, astrTerms)), collapse = " + " ))
         #Format for glmmpql
-        strRandomCovariatesFormula <- paste( "adCur ~ ", paste( sprintf( "1|`%s`", intersect(lsRandomCovariates, astrTerms)), collapse = " + " ))
+        #strRandomCovariatesFormula <- paste( "adCur ~ ", paste( sprintf( "1|`%s`", intersect(lsRandomCovariates, astrTerms)), collapse = " + " ))
+        #Needed for changes to not allowing random covariates through the boosting process
+        strRandomCovariatesFormula <- paste( "adCur ~ ", paste( sprintf( "1|`%s`", lsRandomCovariates), collapse = " + " ))
       }
 
       # Can not run a model with no fixed covariate, restriction of lmm

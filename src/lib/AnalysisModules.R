@@ -485,7 +485,7 @@ strRandomFormula = NULL
       ret = wilcox.test(as.formula(paste("adCur",x,sep=" ~ ")), data=dfData, na.action=c_strNA_Action)
       #Returning NA for the coef in a named vector
       vdCoef = c()
-      vdCoef[[x]]=ret$estimate
+      vdCoef[[x]]=ret$statistic
       retList[[1]]=list(p.value=ret$p.value,SD=sd(dfData[[x]]),name=x,coef=vdCoef)
       return(retList)
     }, lsQCCounts))
@@ -699,6 +699,16 @@ aData
 ### The data on which to perform the transformation
 ){
   return(asin(sqrt(aData)))
+  ### Transformed data
+}
+
+funcSquareSin <- function(
+# Transform data with square sin transformation
+# Opposite of the funcArcsinSqrt
+aData
+### The data on which to perform the transformation
+){
+  return(sin(aData)^2)
   ### Transformed data
 }
 

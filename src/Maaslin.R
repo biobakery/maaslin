@@ -56,6 +56,11 @@ sMethodKey
     asinsqrt = funcArcsinSqrt,
     none = funcNoTransform)
 
+  #Insert untransform
+  lRetMethods[[c_iUnTransform]] = switch(sTransformKey,
+    asinsqrt = funcNoTransform,
+    none = funcNoTransform)
+
   #Insert analysis
   lRetMethods[[c_iAnalysis]] = switch(sMethodKey,
     neg_binomial = funcBinomialMult,
@@ -367,7 +372,7 @@ if(lsArgs$options$strMethod %in% c("univariate")){ fDoRPlot=FALSE }
 #Run analysis
 alsRetBugs = funcBugs( lsRet$frmeData, lsRet, lsRet$aiMetadata, lsRet$aiData, strBase,
 	lsArgs$options$dSelectionFrequency, lsArgs$options$dSignificanceLevel, lsArgs$options$dMinSamp, lsArgs$options$fInvert,
-        outputDirectory, astrScreen = c(), funcReg=afuncVariableAnalysis[[c_iSelection]], lsForcedParameters,
+        outputDirectory, astrScreen = c(), funcReg=afuncVariableAnalysis[[c_iSelection]], funcUnTransform=afuncVariableAnalysis[[c_iUnTransform]], lsForcedParameters,
         funcAnalysis=afuncVariableAnalysis[[c_iAnalysis]], lsRandomCovariates, funcGetResults=afuncVariableAnalysis[[c_iResults]], fDoRPlot=fDoRPlot, fOmitLogFile=lsArgs$options$fOmitLogFile )
 aiBugs = alsRetBugs$aiReturnBugs
 

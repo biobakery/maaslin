@@ -306,12 +306,16 @@ lsSig[[1]]$taxon = "adCur"
 lsSig[[1]]$data = adCur
 lsSig[[1]]$factors = "Covariate1"
 lsSig[[1]]$metadata = x
-vdCoef = c(Covariate1 =NA)
+vdCoef = c(Covariate1=13)
 lsSig[[1]]$value = vdCoef
 lsSig[[1]]$std = sd(x)
 lsSig[[1]]$allCoefs = vdCoef
 lsQCCounts = list()
 ret1 = funcWilcoxon(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=NULL)
+print("ret1")
+print(ret1)
+print("list(adP=round(c(0.55555556),5),lsSig=lsSig,lsQCCounts=list())")
+print(list(adP=round(c(0.55555556),5),lsSig=lsSig,lsQCCounts=list()))
 ret1$adP = round(ret1$adP,5)
 test_that("Test that the wilcoxon test has the correct results for 1 covariate.",{
   expect_equal(ret1,list(adP=round(c(0.55555556),5),lsSig=lsSig,lsQCCounts=list()))
@@ -412,7 +416,7 @@ lsSig[[1]]$taxon = "adCur"
 lsSig[[1]]$data = adCur
 lsSig[[1]]$factors = "Covariate4"
 lsSig[[1]]$metadata = frmeTmp[["Covariate4"]]
-vdCoef = c(Covariate4=NA)
+vdCoef = c(Covariate4=5)
 lsSig[[1]]$value = vdCoef
 lsSig[[1]]$std = sd(frmeTmp[["Covariate4"]])
 lsSig[[1]]$allCoefs = vdCoef
@@ -431,7 +435,7 @@ lsSig[[2]]$taxon = "adCur"
 lsSig[[2]]$data = adCur
 lsSig[[2]]$factors = "Covariate5"
 lsSig[[2]]$metadata = frmeTmp[["Covariate5"]]
-vdCoef = c(Covariate5=NA)
+vdCoef = c(Covariate5=8)
 lsSig[[2]]$value = vdCoef
 lsSig[[2]]$std = sd(frmeTmp[["Covariate5"]])
 lsSig[[2]]$allCoefs = vdCoef
@@ -454,7 +458,7 @@ lsSig[[1]]$taxon = "adCur"
 lsSig[[1]]$data = adCur
 lsSig[[1]]$factors = "Covariate4"
 lsSig[[1]]$metadata = frmeTmp[["Covariate4"]]
-vdCoef = c(Covariate4=NA)
+vdCoef = c(Covariate4=5)
 lsSig[[1]]$value = vdCoef
 lsSig[[1]]$std = sd(frmeTmp[["Covariate4"]])
 lsSig[[1]]$allCoefs = vdCoef
@@ -544,7 +548,7 @@ lsSig[[1]]$taxon = "adCur"
 lsSig[[1]]$data = adCur
 lsSig[[1]]$factors = "Covariate4"
 lsSig[[1]]$metadata = frmeTmp[["Covariate4"]]
-vdCoef = c(Covariate4=NA)
+vdCoef = c(Covariate4=5)
 lsSig[[1]]$value = vdCoef
 lsSig[[1]]$std = sd(frmeTmp[["Covariate4"]])
 lsSig[[1]]$allCoefs = vdCoef
@@ -578,7 +582,7 @@ lsSig[[1]]$taxon = "adCur"
 lsSig[[1]]$data = adCur
 lsSig[[1]]$factors = "Covariate4"
 lsSig[[1]]$metadata = frmeTmp[["Covariate4"]]
-vdCoef = c(Covariate4=NA)
+vdCoef = c(Covariate4=5)
 lsSig[[1]]$value = vdCoef
 lsSig[[1]]$std = sd(frmeTmp[["Covariate4"]])
 lsSig[[1]]$allCoefs = vdCoef
