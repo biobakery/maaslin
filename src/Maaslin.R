@@ -391,18 +391,20 @@ if(!is.null(lsFeaturesToPlot) || !is.null(lsArgs$options$strMFAColor) || !is.nul
   aiBugs = unique(c(aiBugs,which( colnames( lsRet$frmeData ) %in% intersect(lsCombinedFeaturesToPlot, lsOriginalFeatureNames))))
 }
 
-if( length( aiBugs ) )
-{
-  logdebug("MFA:in", c_logrMaaslin)
-  lsMFA <- funcMFA( lsRet$frmeData, lsArgs$options$dMinSamp, aiUMD, aiBugs)
-  logdebug("MFA:out", c_logrMaaslin)
-  if( class( lsMFA ) != "try-error" )
+try(
+  if( length( aiBugs ) )
   {
-    logdebug("PlotMFA:in", c_logrMaaslin)
-    funcPlotMFA( lsMFA=lsMFA, frmeData=lsRet$frmeData, lsMetadata=lsOriginalMetadataNames, lsFeatures=lsOriginalFeatureNames, iMaxFeatures=lsArgs$options$iMFAMaxFeatures, strMFAColorCovariate=lsArgs$options$strMFAColor, strMFAShapeCovariate=lsArgs$options$strMFAShape, dMFAMetadataScale=lsArgs$options$dMFAMetadataScale, dMFADataScale=lsArgs$options$dMFADataScale, lsPlotFeatures=lsFeaturesToPlot, fInvert=lsArgs$options$fInvert, tempSaveFileName=file.path(outputDirectory,strBase), funcPlotColors=lsRet$funcPlotColors, funcPlotPoints=lsRet$funcPlotPoints, funcPlotLegend=lsRet$funcPlotLegend )
-    logdebug("PlotMFA:out", c_logrMaaslin)
+    logdebug("MFA:in", c_logrMaaslin)
+    lsMFA <- funcMFA( lsRet$frmeData, lsArgs$options$dMinSamp, aiUMD, aiBugs)
+    logdebug("MFA:out", c_logrMaaslin)
+    if( class( lsMFA ) != "try-error" )
+    {
+      logdebug("PlotMFA:in", c_logrMaaslin)
+      funcPlotMFA( lsMFA=lsMFA, frmeData=lsRet$frmeData, lsMetadata=lsOriginalMetadataNames, lsFeatures=lsOriginalFeatureNames, iMaxFeatures=lsArgs$options$iMFAMaxFeatures, strMFAColorCovariate=lsArgs$options$strMFAColor, strMFAShapeCovariate=lsArgs$options$strMFAShape, dMFAMetadataScale=lsArgs$options$dMFAMetadataScale, dMFADataScale=lsArgs$options$dMFADataScale, lsPlotFeatures=lsFeaturesToPlot, fInvert=lsArgs$options$fInvert, tempSaveFileName=file.path(outputDirectory,strBase), funcPlotColors=lsRet$funcPlotColors, funcPlotPoints=lsRet$funcPlotPoints, funcPlotLegend=lsRet$funcPlotLegend )
+      logdebug("PlotMFA:out", c_logrMaaslin)
+    }
   }
-}
+)
 
 #Summarize output files based on a keyword and a significance threshold
 #Look for less than or equal to the threshold (approapriate for p-value and q-value type measurements)

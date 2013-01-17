@@ -267,6 +267,7 @@ adMar
     }
   }
   vY = vY+residuals(lmod)
+  #TODO based on transform   vY = vY+sin(residuals(lmod))^2
 
   # Plot x, raw data
   ## y label 

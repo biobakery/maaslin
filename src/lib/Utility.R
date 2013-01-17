@@ -139,7 +139,7 @@ dfData
     if(is.factor(axCur))
     {
       lsLevels = levels(axCur)
-      if(length(lsLevels)==2)# && (lsLevels[1]=="0") && (lsLevels[2]=="1"))
+      if((length(lsLevels)==2) && ((lsLevels[1]=="0") || (lsLevels[1]=="1")))
       {
         lsMFAValues = c(lsMFAValues,paste(sColName,lsLevels[1],sep="_"),paste(sColName,lsLevels[2],sep="_"))
       }else{
