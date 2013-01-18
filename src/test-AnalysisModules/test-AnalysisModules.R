@@ -652,27 +652,27 @@ lmRet = lm(as.formula(strFormula), data=frmeTmp, na.action = c_strNA_Action)
 test_that("Test that the lm has the correct results for 2 covariates.",{
   expect_equal(funcLM(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
 })
-#Test for correct call with 1 random and one fixed covariate
-strFormula = "adCur ~ Covariate1"
-strRandomFormula = "~1|FCovariate3"
-lmRet = glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=gaussian(link="identity"), data=frmeTmp)
-test_that("Test that the lm has the correct results for 1 random and one fixed covariate.",{
-  expect_equal(funcLM(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
-})
-#Test for correct call with 1 random and 2 fixed covariates
-strFormula = "adCur ~ Covariate1 + Covariate2"
-strRandomFormula = "~1|FCovariate3"
-lmRet = glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=gaussian(link="identity"), data=frmeTmp)
-test_that("Test that the lm has the correct results for 1 random and 2 fixed covariates.",{
-  expect_equal(funcLM(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
-})
-#Test for correct call with 2 random and 1 fixed covariates
-strFormula = "adCur ~ Covariate1"
-strRandomFormula = "~1|FCovariate4+1|FCovariate3"
-lmRet = glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=gaussian(link="identity"), data=frmeTmp)
-test_that("Test that the lm has the correct results for 2 random and 1 fixed covariates.",{
-  expect_equal(funcLM(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
-})
+##Test for correct call with 1 random and one fixed covariate
+#strFormula = "adCur ~ Covariate1"
+#strRandomFormula = "~1|FCovariate3"
+#lmRet = glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=gaussian(link="identity"), data=frmeTmp)
+#test_that("Test that the lm has the correct results for 1 random and one fixed covariate.",{
+#  expect_equal(funcLM(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
+#})
+##Test for correct call with 1 random and 2 fixed covariates
+#strFormula = "adCur ~ Covariate1 + Covariate2"
+#strRandomFormula = "~1|FCovariate3"
+#lmRet = glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=gaussian(link="identity"), data=frmeTmp)
+#test_that("Test that the lm has the correct results for 1 random and 2 fixed covariates.",{
+#  expect_equal(funcLM(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
+#})
+##Test for correct call with 2 random and 1 fixed covariates
+#strFormula = "adCur ~ Covariate1"
+#strRandomFormula = "~1|FCovariate4+1|FCovariate3"
+#lmRet = glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=gaussian(link="identity"), data=frmeTmp)
+#test_that("Test that the lm has the correct results for 2 random and 1 fixed covariates.",{
+#  expect_equal(funcLM(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
+#})
 
 
 context("Test funcBinomialMult")
