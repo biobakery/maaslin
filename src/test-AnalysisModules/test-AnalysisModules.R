@@ -695,27 +695,27 @@ lmRet = glm(as.formula(strFormula), family=binomial(link=logit), data=frmeTmp, n
 test_that("Test that the neg binomial regression has the correct results for 2 covariates.",{
   expect_equal(funcBinomialMult(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
 })
-#Test for correct call with 1 random and one fixed covariate
-strFormula = "adCur ~ Covariate1"
-strRandomFormula = "~1|FCovariate3"
-lmRet = glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=binomial(link=logit), data=frmeTmp)
-test_that("Test that the lm has the correct results for 1 random and one fixed covariate.",{
-  expect_equal(funcBinomialMult(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
-})
-#Test for correct call with 1 random and 2 fixed covariates
-strFormula = "adCur ~ Covariate1 + Covariate2"
-strRandomFormula = "~1|FCovariate3"
-lmRet = glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=binomial(link=logit), data=frmeTmp)
-test_that("Test that the lm has the correct results for 1 random and 2 fixed covariates.",{
-  expect_equal(funcBinomialMult(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
-})
-#Test for correct call with 2 random and 1 fixed covariates
-strFormula = "adCur ~ Covariate1"
-strRandomFormula = "~1|FCovariate4+1|FCovariate3"
-lmRet = glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=binomial(link=logit), data=frmeTmp)
-test_that("Test that the lm has the correct results for 2 random and 1 fixed covariates.",{
-  expect_equal(funcBinomialMult(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
-})
+##Test for correct call with 1 random and one fixed covariate
+#strFormula = "adCur ~ Covariate1"
+#strRandomFormula = "~1|FCovariate3"
+#lmRet = glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=binomial(link=logit), data=frmeTmp)
+#test_that("Test that the lm has the correct results for 1 random and one fixed covariate.",{
+#  expect_equal(funcBinomialMult(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
+#})
+##Test for correct call with 1 random and 2 fixed covariates
+#strFormula = "adCur ~ Covariate1 + Covariate2"
+#strRandomFormula = "~1|FCovariate3"
+#lmRet = glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=binomial(link=logit), data=frmeTmp)
+#test_that("Test that the lm has the correct results for 1 random and 2 fixed covariates.",{
+#  expect_equal(funcBinomialMult(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
+#})
+##Test for correct call with 2 random and 1 fixed covariates
+#strFormula = "adCur ~ Covariate1"
+#strRandomFormula = "~1|FCovariate4+1|FCovariate3"
+#lmRet = glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=binomial(link=logit), data=frmeTmp)
+#test_that("Test that the lm has the correct results for 2 random and 1 fixed covariates.",{
+#  expect_equal(funcBinomialMult(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
+#})
 
 
 context("Test funcQuasiMult")
@@ -738,27 +738,27 @@ lmRet = glm(as.formula(strFormula), family=quasipoisson, data=frmeTmp, na.action
 test_that("Test that the quasi poisson has the correct results for 2 covariates.",{
   expect_equal(funcQuasiMult(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
 })
-#Test for correct call with 1 random and one fixed covariate
-strFormula = "adCur ~ Covariate1"
-strRandomFormula = "~1|FCovariate3"
-lmRet = glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=quasipoisson, data=frmeTmp)
-test_that("Test that the lm has the correct results for 1 random and one fixed covariate.",{
-  expect_equal(funcQuasiMult(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
-})
-#Test for correct call with 1 random and 2 fixed covariates
-strFormula = "adCur ~ Covariate1 + Covariate2"
-strRandomFormula = "~1|FCovariate3"
-lmRet = glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=quasipoisson, data=frmeTmp)
-test_that("Test that the lm has the correct results for 1 random and 2 fixed covariates.",{
-  expect_equal(funcQuasiMult(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
-})
-#Test for correct call with 2 random and 1 fixed covariates
-strFormula = "adCur ~ Covariate1"
-strRandomFormula = "~1|FCovariate4+1|FCovariate3"
-lmRet = glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=quasipoisson, data=frmeTmp)
-test_that("Test that the lm has the correct results for 2 random and 1 fixed covariates.",{
-  expect_equal(funcQuasiMult(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
-})
+##Test for correct call with 1 random and one fixed covariate
+#strFormula = "adCur ~ Covariate1"
+#strRandomFormula = "~1|FCovariate3"
+#lmRet = glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=quasipoisson, data=frmeTmp)
+#test_that("Test that the lm has the correct results for 1 random and one fixed covariate.",{
+#  expect_equal(funcQuasiMult(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
+#})
+##Test for correct call with 1 random and 2 fixed covariates
+#strFormula = "adCur ~ Covariate1 + Covariate2"
+#strRandomFormula = "~1|FCovariate3"
+#lmRet = glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=quasipoisson, data=frmeTmp)
+#test_that("Test that the lm has the correct results for 1 random and 2 fixed covariates.",{
+#  expect_equal(funcQuasiMult(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
+#})
+##Test for correct call with 2 random and 1 fixed covariates
+#strFormula = "adCur ~ Covariate1"
+#strRandomFormula = "~1|FCovariate4+1|FCovariate3"
+#lmRet = glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=quasipoisson, data=frmeTmp)
+#test_that("Test that the lm has the correct results for 2 random and 1 fixed covariates.",{
+#  expect_equal(funcQuasiMult(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
+#})
 
 
 #Test transforms
