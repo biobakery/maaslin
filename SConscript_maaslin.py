@@ -19,71 +19,43 @@ c_strSufRC		= ".read.config"
 
 c_fileDirSrc		= Dir( sfle.d( os.path.dirname( sfle.current_file( ) ), sfle.c_strDirSrc ) )
 c_fileProgMaaslin	= File( sfle.d( c_fileDirSrc, "Maaslin.R" ) )
+sArgsExt = ".args"
+#Commandline to ignore
+lsIgnore = ["-i","-I","--input_config","--input_process"]
 
-def MaAsLin( filePCL, dSignificanceThreshold=None,
-                      dMinRelativeAbundance=None,
-                      dMinPrevalence=None,
-                      dOutlierFence=None,
-                      strRandomCovariates=None,
-                      strModel=None,
-                      strAnalysis=None,
-                      strLink=None,
-                      strForcedCovariates=None,
-                      strNoImpute=None,
-                      strVerbosity=None,
-                      fOmitLogFile=False,
-                      fInvert=False,
-                      dSelectionFrequency=None,
-                      iMFAFeatureCount=None,
-                      dMFAMetadataScale=None,
-                      dMFADataScale=None,
-                      strMFAColorBy=None,
-                      strMFAShapeBy=None,
-                      lsMFAPlotFeatures=None,
-                      fileDirOut=fileDirOutput,
-                      fileDirIn=fileDirTmp):
-	strBase = str(filePCL).replace( sfle.c_strSufPCL, "" )
-	strR, strRC = (( strBase + s ) for s in (sfle.c_strSufR, c_strSufRC))
-	fileR, fileRC = (( File( s ) if os.path.isfile( s ) else "" ) for s in (strR, strRC))
+def MaAsLin( filePCL ):
+	#Build input file name if they exist or give ""
+	strBase = filePCL.get_abspath().replace( sfle.c_strSufPCL, "" )
+	strR, strRC, strArgs = (( strBase + s ) for s in (sfle.c_strSufR, c_strSufRC, sArgsExt))
+	fileR, fileRC, fileArgs = (( File( s ) if os.path.exists( s ) else "" ) for s in (strR, strRC, strArgs))
 
-	# Ugly - make this use sfle.op or similar instead
-	def funcMaaslin( target, source, env, fileR = fileR, fileRC = fileRC, strRandomCovariates=strRandomCovariates ):
-		strT, astrSs = sfle.ts( target, source )
-		strProg, strTSV = astrSs[:2]
-		return sfle.ex( [strProg] +
-                                ( ["-i", fileRC] if fileRC else [] ) +
-			        ( ["-I", fileR] if fileR else [] ) + 
-			        ( ["-d", dSignificanceThreshold] if dSignificanceThreshold else [] ) + 
-			        ( ["-r", dMinRelativeAbundance] if dMinRelativeAbundance else [] ) + 
-			        ( ["-p", dMinPrevalence] if dMinPrevalence else [] ) + 
-			        ( ["-o", dOutlierFence] if dOutlierFence else [] ) + 
-                                ( ["-R", strRandomCovariates] if strRandomCovariates else []) + 
-                                ( ["-s", strModel] if strModel else []) + 
-                                ( ["-m", strAnalysis] if strAnalysis else []) + 
-                                ( ["-l", strLink] if strLink else []) +
-                                ( ["-F", strForcedCovariates] if strForcedCovariates else []) + 
-                                ( ["-n", strNoImpute] if strAnalysis else []) + 
-                                ( ["-v", strVerbosity] if strVerbosity else []) + 
-                                ( ["-O", fOmitLogFile] if fOmitLogFile else []) + 
-                                ( ["-t", fInvert] if fInvert else []) + 
-                                ( ["-f", dSelectionFrequency] if dSelectionFrequency else []) + 
-                                ( ["-c", iMFAFeatureCount] if iMFAFeatureCount else []) + 
-                                ( ["-M", dMFAMetadataScale] if dMFAMetadataScale else []) + 
-                                ( ["-D", dMFADataScale] if dMFADataScale else []) + 
-                                ( ["-C", strMFAColorBy] if strMFAColorBy else []) + 
-                                ( ["-S", strMFAShapeBy] if strMFAShapeBy else []) + 
-                                ( ["-P", lsMFAPlotFeatures] if lsMFAPlotFeatures else []) +  
-                                  [strT, strTSV])
-	
+	## Read in an args file if it exists
+	lsArgs = []
+	if fileArgs:
+		fReader = csv.reader(open(fileArgs.get_abspath(),'r'), delimiter = " ")
+		lsArgsTmp = []
+		[lsArgsTmp.extend(lsLine) for lsLine in fReader]
+		fSkip = False
+		for s in lsArgsTmp:
+			if s in lsIgnore:
+				fSkip=True
+				continue
+			if fSkip:
+				fSkip = not fSkip
+				continue
+			lsArgs.append(s)
+
+	lsInputArgs = ["-I",[fileR]] if fileR else []
+	lsInputArgs.extend(["-i",[fileRC]] if fileRC else [])
+	lsArgs.extend(lsInputArgs)
+
 	strBase = os.path.basename( strBase )
-	strDir = sfle.d( fileDirOut, strBase )
-	fileTXT = File( sfle.d( strDir, strBase + sfle.c_strSufTXT ) )
+	fileTSVFile = File(sfle.d(fileDirTmp,sfle.rebase(filePCL,sfle.c_strSufPCL,sfle.c_strSufTSV)))
+	strT = File( sfle.d( os.path.join(fileDirOutput.get_abspath(), strBase, strBase + sfle.c_strSufTXT) ) )
 
-	fileDirIn = fileDirIn or strDir
-	pProc = sfle.CProcessor( None,
-		sfle.CTarget( sfle.c_strSufPCL ),
-		sfle.CCommand( c_fileProgTranspose ),
-		sfle.CTarget( sfle.c_strSufTSV, fileDirIn ) )
-	fileTSV = sfle.CProcessor.pipeline( DefaultEnvironment( ), pProc, filePCL )[0]
-	return ( Command( fileTXT, [c_fileProgMaaslin, fileTSV] +
-		( [fileRC] if fileRC else [] ) + ( [fileR] if fileR else [] ), funcMaaslin ) + [fileTSV] )
+	#Transpose PCL
+	sfle.spipe(pE, filePCL, c_fileProgTranspose, fileTSVFile)
+	#Run MaAsLin
+	sfle.op(pE, c_fileProgMaaslin, lsArgs+[[True,strT],[False, fileTSVFile]])
+	if fileArgs: Depends(c_fileProgMaaslin, fileArgs)
+	Default(strT)
