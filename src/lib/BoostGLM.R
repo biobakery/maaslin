@@ -78,6 +78,29 @@ funcTransform
     lsQCCounts$lsQCCustom = pTmp$lsQCCounts
   }
 
+  # Remove missing data, remove any sample has less than dMinSamp * the number of data
+  aiRemove = c()
+  for( iCol in aiData )
+  {
+    adCol = frmeData[,iCol]
+    adCol[!is.finite( adCol )] <- NA
+    if( ( sum( !is.na( adCol ) ) < ( dMinSamp * length( adCol ) ) ) ||
+      ( length( unique( na.omit( adCol ) ) ) < 2 ) )
+    {
+        aiRemove = c(aiRemove, iCol)
+    }
+  }
+
+  # Remove and document
+  aiData = setdiff( aiData, aiRemove )
+  lsQCCounts$iMissingData = aiRemove
+  if(length(aiRemove))
+  {
+    c_logrMaaslin$info( "Removing the following for missing data.")
+    c_logrMaaslin$info( format( colnames( frmeData )[aiRemove] ))
+  }
+
+  #Transform data
   for(aiDatum in aiData)
   {
     frmeData[,aiDatum] = funcTransform(frmeData[,aiDatum])
@@ -187,28 +210,6 @@ funcTransform
     }
   }
   lsQCCounts$aiSumOutlierPerDatum = aiSumOutlierPerDatum
-
-  # Remove missing data, remove any sample has less than dMinSamp * the number of data
-  aiRemove = c()
-  for( iCol in aiData )
-  {
-    adCol = frmeData[,iCol]
-    adCol[!is.finite( adCol )] <- NA
-    if( ( sum( !is.na( adCol ) ) < ( dMinSamp * length( adCol ) ) ) ||
-      ( length( unique( na.omit( adCol ) ) ) < 2 ) )
-    {
-        aiRemove = c(aiRemove, iCol)
-    }
-  }
-
-  # Remove and document
-  aiData = setdiff( aiData, aiRemove )
-  lsQCCounts$iMissingData = aiRemove
-  if(length(aiRemove))
-  {
-    c_logrMaaslin$info( "Removing the following for missing data.")
-    c_logrMaaslin$info( format( colnames( frmeData )[aiRemove] ))
-  }
 
   # Keep track of factor levels in a list for later use
   lslsFactors <- list()
@@ -588,7 +589,7 @@ funcGetResult=NULL
       strAnalysisFormula <- paste( "adCur ~ ", paste( sprintf( "`%s`", strFixedCovariates ), collapse = " + " ))
 
       #Run the association
-      lmod <- funcAnalysis(strFormula= strAnalysisFormula, frmeTmp=frmeTmp, iTaxon=iTaxon, lsQCCounts=lsData$lsQCCounts, strRandomFormula=strRandomCovariatesFormula)
+      lmod <- funcAnalysis(strFormula=strAnalysisFormula, frmeTmp=frmeTmp, iTaxon=iTaxon, lsQCCounts=lsData$lsQCCounts, strRandomFormula=strRandomCovariatesFormula)
     } else {
       lsData$lsQCCounts$iNoTerms = lsData$lsQCCounts$iNoTerms + 1
     }
