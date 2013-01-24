@@ -293,8 +293,10 @@ funcGetResults=NULL,
 ### Function to unpack results from analysis
 fDoRPlot=TRUE,
 ### Plot residuals
-fOmitLogFile = FALSE
+fOmitLogFile = FALSE,
 ### Stops the creation of the log file
+fAllvAll=FALSE
+### Flag to turn on all against all comparisons
 ){
   c_logrMaaslin$debug("Start funcBugs")
   if( is.na( strDirOut )||is.null(strDirOut))
@@ -331,7 +333,7 @@ fOmitLogFile = FALSE
     }
     #Call analysis method
 
-    lsOne <- funcBugHybrid( iTaxon, frmeData, lsData, aiMetadata, dFreq, dSig, dMinSamp, adP, lsSig, strLog, funcReg, lsNonPenalizedPredictors, funcAnalysis, lsRandomCovariates, funcGetResults )
+    lsOne <- funcBugHybrid( iTaxon, frmeData, lsData, aiMetadata, dFreq, dSig, dMinSamp, adP, lsSig, strLog, funcReg, lsNonPenalizedPredictors, funcAnalysis, lsRandomCovariates, funcGetResults, fAllvAll )
 
     #TODO Check#If you get a NA (happens when the lmm gets all random covariates) move on
     if(is.na(lsOne)){next}
@@ -475,8 +477,10 @@ funcAnalysis=NULL,
 ### Function to perform association analysis
 lsRandomCovariates=NULL,
 ### List of string names of metadata which will be treated as random covariates
-funcGetResult=NULL
+funcGetResult=NULL,
 ### Function to unpack results from analysis
+fAllvAll=FALSE
+### Flag to turn on all against all comparisons
 ){
 
 #dTime00 <- proc.time()[3]
@@ -525,11 +529,13 @@ funcGetResult=NULL
   # Get the full data for the bug feature
   adCur = frmeTmp[,iTaxon]
 
-  #Create a linear additive model including all metadata or genetics which were not filtered
-  lmod <- NA
+  # This can run multiple models so some of the results are held in lists and some are not
+  llmod = list()
+  liTaxon = list()
+  lastrTerms = list()
 
   #Build formula for simple mixed effects models
-  #Removes random covariates from regularization
+  #Removes random covariates from variable selection
   astrMetadata  = setdiff(astrMetadata, lsRandomCovariates)
   strFormula <- paste( "adCur ~", paste( sprintf( "`%s`", astrMetadata ), collapse = " + " ), sep = " " )
 
@@ -542,7 +548,6 @@ funcGetResult=NULL
   astrTerms <- c()
 
   # Attempt feature (model) selection
-  lmod <- NA
   if(!is.na(funcReg))
   {
     #Count model selection method attempts
@@ -557,21 +562,25 @@ funcGetResult=NULL
   if(is.null( astrTerms )){lsData$lsQCCounts$iBoostErrors = lsData$lsQCCounts$iBoostErrors + 1}
 
   #Run association analysis if predictors exist and an analysis function is specified
-  #Reset model for the glm
-  lmod <- NA
-
+  # Run analysis
   if(!is.na(funcAnalysis) )
   {
+    #If there are selected and forced fixed covariates
     if( length( astrTerms ) )
     {
       #Count the association attempt
       lsData$lsQCCounts$iLms = lsData$lsQCCounts$iLms + 1
+
       #These are the fixed covariates (or all covariates if this is not a mixed effects model)
-      strFixedCovariates = setdiff(astrTerms, lsRandomCovariates)
+#      strFixedCovariates = setdiff(astrTerms, lsRandomCovariates)
+
+###      # Can not run a model with no fixed covariate, restriction of lmm
+#      if(is.null(strFixedCovariates) || length(strFixedCovariates)==0){return(NA)}
+
       #Make the lm formula
-      #Build formula for simple mixed effects models or standard lms
+      #Build formula for simple mixed effects models using random covariates
       strRandomCovariatesFormula = NULL
-#This will remove the random covariate if the covariate is boosted out, below will act as if the covariate is forced      if(length(intersect(lsRandomCovariates, astrTerms))>0)
+      #This will remove the random covariate if the covariate is boosted out, below will act as if the covariate is forced      if(length(intersect(lsRandomCovariates, astrTerms))>0)
       if(length(lsRandomCovariates)>0)
       {
         #Format for lmer
@@ -582,35 +591,63 @@ funcGetResult=NULL
         strRandomCovariatesFormula <- paste( "adCur ~ ", paste( sprintf( "1|`%s`", lsRandomCovariates), collapse = " + " ))
       }
 
-      # Can not run a model with no fixed covariate, restriction of lmm
-      if(is.null(strFixedCovariates) || length(strFixedCovariates)==0){return(NA)}
+      #Set up a list of formula containing selected fixed variables changing and the forced fixed covariates constant
+      vstrFormula = c()
+      #Enable all against all comparisons
+      if(fAllvAll)
+      {
+        lsVaryingCovariates = setdiff(astrTerms,lsNonPenalizedPredictors)
+        lsConstantCovariates = setdiff(lsNonPenalizedPredictors,lsRandomCovariates)
+        strConstantFormula = paste( sprintf( "`%s`", lsConstantCovariates ), collapse = " + " )
 
-      #This is either the formula for all covariates in an lm or fixed covariates in the lmm
-      strAnalysisFormula <- paste( "adCur ~ ", paste( sprintf( "`%s`", strFixedCovariates ), collapse = " + " ))
+        if(length(lsVaryingCovariates)==0L)
+        {
+          vstrFormula <- c( paste( "adCur ~ ", paste( sprintf( "`%s`", lsConstantCovariates ), collapse = " + " )) )
+        } else {
+          for( sVarCov in lsVaryingCovariates )
+          {
+            strTempFormula = paste( "adCur ~ `", sVarCov,"`",sep="")
+            if(length(lsConstantCovariates)>0){ strTempFormula = paste(strTempFormula,strConstantFormula,sep=" + ") }
+            vstrFormula <- c( vstrFormula, strTempFormula )
+          }
+        }
+      } else {
+        #This is either the multivariate case formula for all covariates in an lm or fixed covariates in the lmm
+        vstrFormula <- c( paste( "adCur ~ ", paste( sprintf( "`%s`", astrTerms ), collapse = " + " )) )
+      }
 
       #Run the association
-      lmod <- funcAnalysis(strFormula=strAnalysisFormula, frmeTmp=frmeTmp, iTaxon=iTaxon, lsQCCounts=lsData$lsQCCounts, strRandomFormula=strRandomCovariatesFormula)
+      for( strAnalysisFormula in vstrFormula )
+      {
+        i = length(llmod)+1
+        llmod[[i]] = funcAnalysis(strFormula=strAnalysisFormula, frmeTmp=frmeTmp, iTaxon=iTaxon, lsQCCounts=lsData$lsQCCounts, strRandomFormula=strRandomCovariatesFormula)
+        liTaxon[[i]] = iTaxon
+        # TODO, ignoring Random covariates here (they are not additional tests are they?)
+        lastrTerms[[i]] = funcFormulaStrToList(strAnalysisFormula)
+      }
     } else {
+      #If there are no selected or forced fixed covariates
       lsData$lsQCCounts$iNoTerms = lsData$lsQCCounts$iNoTerms + 1
+      return(list(adP=list(), lsSig=list(), lsQCCounts=lsData$lsQCCounts))
     }
   }
 
   #Call funcBugResults and return it's return
   if(is.na(funcGetResult))
   {
-    if(is.na(lmod))
+    if(length(llmod)==0)
     {
       return(list(adP=list(), lsSig=list(), lsQCCounts=lsData$lsQCCounts))
     } else {
       #This is performed because it is assumed that the lmod object was actually given not a lm result
       # In the previous analysis but a result that is already formatted and therefore this get result step
-      # Is not needed, this is how the univariates work. If this is not the case, the switchs in Maaslin.R
+      # Is not needed, this is how the univariates work. If this is not the case, the switch in Maaslin.R
       # Should be updated with the function that will translate the analysis results to the return value of
       # this function. For an example, see how the lm results are handled in the switch and in the AnalysisModules.R
       return(lmod)
     }
   }
   #Format the results to a consistent expected result.
- return( funcGetResult( lmod=lmod, frmeData=frmeData, iTaxon=iTaxon, dSig=dSig, adP=adP, lsSig=lsSig, strLog=strLog, lsQCCounts=lsData$lsQCCounts, astrCols=astrTerms ) )
+  return( funcGetResult( llmod=llmod, frmeData=frmeData, liTaxon=liTaxon, dSig=dSig, adP=adP, lsSig=lsSig, strLog=strLog, lsQCCounts=lsData$lsQCCounts, lastrCols=lastrTerms ) )
   ### List containing a list of pvalues, a list of significant data per association, and a list of QC data
 }

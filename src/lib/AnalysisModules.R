@@ -145,153 +145,162 @@ strLog
 # OK
 funcGetLMResults <- function
 ### Reduce the lm object return to just the data needed for further analysis
-( lmod=lmod,
+( llmod,
 ### The result from a linear model
-frmeData=frmeData,
+frmeData,
 ### Data analysis is performed on
-iTaxon=iTaxon,
+liTaxon,
 ### The response id
-dSig=dSig,
+dSig,
 ### Significance level for q-values
-adP=adP,
+adP,
 ### List of pvalues from all associations performed
-lsSig=lsSig,
-
-strLog=strLog,
+lsSig,
+### List of information from the lm containing, metadata name, metadatda name (as a factor level if existing as such), Taxon feature name, Taxon data / response, All levels, Metadata values, Current coeficient value, Standard deviation, Model coefficients
+strLog,
 ### File to which to document logging
-lsQCCounts=lsData$lsQCCounts,
+lsQCCounts,
 ### Records of counts associated with quality control
-astrCols=astrTerms
+lastrCols
 ### Predictors used in the association
 ){
   #TODO are we updating the QCCounts?
-
   #TODO add in to summary or somewhere
+
   # Evaluate Collinearity
   #vif(fit) # variance inflation factors 
   #sqrt(vif(fit)) > 2 # problem?
 
-  #Exclude none and errors
-  if( !is.na( lmod ) && ( class( lmod ) != "try-error" ) )
+  ilmodIndex = 0
+  for(lmod in llmod)
   {
-    #holds the location of the pvlaues if an lm, if lmm is detected this will be changed
-    iPValuePosition = 4
+    ilmodIndex = ilmodIndex + 1
+    lmod = llmod[[ilmodIndex]]
+    iTaxon = liTaxon[[ilmodIndex]]
+    astrCols = lastrCols[[ilmodIndex]]
 
-    #Get the column name of the iTaxon index
-    #frmeTmp needs to be what?
-    strTaxon = colnames( frmeData )[iTaxon]
-    #Get summary information from the linear model
-    lsSum = try( summary( lmod ) )
-    #The following can actually happen when the stranger regressors return broken results
-    if( class( lsSum ) == "try-error" )
+    #Exclude none and errors
+    if( !is.na( lmod ) && ( class( lmod ) != "try-error" ) )
     {
-      return( list(adP=adP, lsSig=lsSig, lsQCCounts=lsQCCounts) )
-    }
+      #holds the location of the pvlaues if an lm, if lmm is detected this will be changed
+      iPValuePosition = 4
 
-    #Write summary information to log file
-    funcWrite( "#model", strLog )
-    funcWrite( lmod, strLog )
-    funcWrite( "#summary", strLog )
-    #Unbelievably, some of the more unusual regression methods crash out when _printing_ their results 
-    try( funcWrite( lsSum, strLog ) )
-
-    #Get the coefficients
-    #This should work for linear models
-    frmeCoefs <- try( coefficients( lsSum ) )
-
-    if( ( class( frmeCoefs ) == "try-error" ) || is.null( frmeCoefs ) )
-    {
-      adCoefs = try(coefficients( lmod ))
-      if(class( adCoefs ) == "try-error")
+      #Get the column name of the iTaxon index
+      #frmeTmp needs to be what?
+      strTaxon = colnames( frmeData )[iTaxon]
+      #Get summary information from the linear model
+      lsSum = try( summary( lmod ) )
+      #The following can actually happen when the stranger regressors return broken results
+      if( class( lsSum ) == "try-error" )
       {
-        adCoefs = coef(lmod)
-      }
-      frmeCoefs <- NA
-    } else {
-      if( class( frmeCoefs ) == "list" )
-      {
-        frmeCoefs <- frmeCoefs$count
-      }
-      adCoefs = frmeCoefs[,1]
-    }
-
-    #Go through each coefficient
-    astrRows <- names( adCoefs )
-
-    ##lmm
-    if(is.null(astrRows))
-    {
-      astrRows = rownames(lsSum$tTable)
-      frmeCoefs = lsSum$tTable
-      iPValuePosition = 5
-      adCoefs = frmeCoefs[,1]
-    }
-
-    for( iMetadata in 1:length( astrRows ) )
-    {
-      #Current coef which is being evaluated 
-      strOrig = astrRows[iMetadata]
-      #Skip y interscept
-      if( strOrig %in% c("(Intercept)", "Intercept", "Log(theta)") ) { next }
-
-      #Extract pvalue and std in standard model
-      dP = frmeCoefs[strOrig, iPValuePosition]
-      dStd = frmeCoefs[strOrig,2]
-
-      #Attempt to extract the pvalue and std in mixed effects summary 
-      #Could not get the pvalue so skip result
-      if(is.nan(dP) || is.na(dP) || is.null(dP)) { next }
-
-      dCoef = adCoefs[iMetadata]
-
-      #Setting adMetadata
-      #Metadata values
-      strMetadata = funcCoef2Col( strOrig, frmeData, astrCols )
-      if( is.na( strMetadata ) )
-      {
-        if( substring( strOrig, nchar( strOrig ) - 1 ) == "NA" ) { next }
-        c_logrMaaslin$error( "Unknown coefficient: %s", strOrig )
-      }
-      if( substring( strOrig, nchar( strMetadata ) + 1 ) == "NA" ) { next }
-      adMetadata <- frmeData[,strMetadata]
-
-      #Bonferonni correct the factor p-values based on the factor levels-1 comparisons
-      if( class( adMetadata ) == "factor" )
-      {
-        dP <- dP * ( nlevels( adMetadata ) - 1 )
+        next
+#        return( list(adP=adP, lsSig=lsSig, lsQCCounts=lsQCCounts) )
       }
 
-      #Store (factor level modified) p-value
-      #Store general results for each coef
-      adP <- c(adP, dP)
-      lsSig[[length( lsSig ) + 1]] <- list(
-        #Current metadata name
-        name		= strMetadata,
-        #Current metadatda name (as a factor level if existing as such)
-        orig		= strOrig,#
-        #Taxon feature name
-        taxon		= strTaxon,
-        #Taxon data / response
-        data		= frmeData[,iTaxon],
-        #All levels
-        factors		= c(strMetadata),
+      #Write summary information to log file
+      funcWrite( "#model", strLog )
+      funcWrite( lmod, strLog )
+      funcWrite( "#summary", strLog )
+      #Unbelievably, some of the more unusual regression methods crash out when _printing_ their results 
+      try( funcWrite( lsSum, strLog ) )
+
+      #Get the coefficients
+      #This should work for linear models
+      frmeCoefs <- try( coefficients( lsSum ) )
+
+      if( ( class( frmeCoefs ) == "try-error" ) || is.null( frmeCoefs ) )
+      {
+        adCoefs = try(coefficients( lmod ))
+        if(class( adCoefs ) == "try-error")
+        {
+          adCoefs = coef(lmod)
+        }
+        frmeCoefs <- NA
+      } else {
+        if( class( frmeCoefs ) == "list" )
+        {
+          frmeCoefs <- frmeCoefs$count
+        }
+        adCoefs = frmeCoefs[,1]
+      }
+
+      #Go through each coefficient
+      astrRows <- names( adCoefs )
+
+      ##lmm
+      if(is.null(astrRows))
+      {
+        astrRows = rownames(lsSum$tTable)
+        frmeCoefs = lsSum$tTable
+        iPValuePosition = 5
+        adCoefs = frmeCoefs[,1]
+      }
+
+      for( iMetadata in 1:length( astrRows ) )
+      {
+        #Current coef which is being evaluated 
+        strOrig = astrRows[iMetadata]
+        #Skip y interscept
+        if( strOrig %in% c("(Intercept)", "Intercept", "Log(theta)") ) { next }
+
+        #Extract pvalue and std in standard model
+        dP = frmeCoefs[strOrig, iPValuePosition]
+        dStd = frmeCoefs[strOrig,2]
+
+        #Attempt to extract the pvalue and std in mixed effects summary 
+        #Could not get the pvalue so skip result
+        if(is.nan(dP) || is.na(dP) || is.null(dP)) { next }
+
+        dCoef = adCoefs[iMetadata]
+
+        #Setting adMetadata
         #Metadata values
-        metadata	= adMetadata,
-        #Current coeficient value
-        value		= dCoef,
-        #Standard deviation
-        std		= dStd,
-        #Model coefficients
-        allCoefs	= adCoefs)
+        strMetadata = funcCoef2Col( strOrig, frmeData, astrCols )
+        if( is.na( strMetadata ) )
+        {
+          if( substring( strOrig, nchar( strOrig ) - 1 ) == "NA" ) { next }
+          c_logrMaaslin$error( "Unknown coefficient: %s", strOrig )
+        }
+        if( substring( strOrig, nchar( strMetadata ) + 1 ) == "NA" ) { next }
+        adMetadata <- frmeData[,strMetadata]
+
+        #Bonferonni correct the factor p-values based on the factor levels-1 comparisons
+        if( class( adMetadata ) == "factor" )
+        {
+          dP <- dP * ( nlevels( adMetadata ) - 1 )
+        }
+
+        #Store (factor level modified) p-value
+        #Store general results for each coef
+        adP <- c(adP, dP)
+        lsSig[[length( lsSig ) + 1]] <- list(
+          #Current metadata name
+          name		= strMetadata,
+          #Current metadatda name (as a factor level if existing as such)
+          orig		= strOrig,#
+          #Taxon feature name
+          taxon		= strTaxon,
+          #Taxon data / response
+          data		= frmeData[,iTaxon],
+          #All levels
+          factors	= c(strMetadata),
+          #Metadata values
+          metadata	= adMetadata,
+          #Current coeficient value
+          value		= dCoef,
+          #Standard deviation
+          std		= dStd,
+          #Model coefficients
+          allCoefs	= adCoefs)
+      }
     }
   }
   return(list(adP=adP, lsSig=lsSig, lsQCCounts=lsQCCounts))
   ### List containing a list of pvalues, a list of significant data per association, and a list of QC data
 }
 
-### Options for regularization 
+### Options for variable selection 
 
-#TODO# Add in forced into regularization
 #TODO# make sure the qvuale are made of the right number, univariate case has more comparisons
 # I now dummy the variable levels and have a pvalue for each. Should be ok.
 
@@ -376,7 +385,7 @@ strLog
   strNullFormula = "adCur ~ 1"
   if(!is.null(lsForcedParameters))
   {
-    strNullFormula = paste( "adCur ~", paste( sprintf( "`%s`", lsForcedParameter ), collapse = " + " ))
+    strNullFormula = paste( "adCur ~", paste( sprintf( "`%s`", lsForcedParameters ), collapse = " + " ))
   }
   lmodNull <- try( lm(as.formula( strNullFormula ), data=frmeTmp))
   lmodFull <- try( lm(as.formula( strFormula ), data=frmeTmp ))
@@ -411,7 +420,7 @@ strLog
   strNullFormula = "adCur ~ 1"
   if(!is.null(lsForcedParameters))
   {
-    strNullFormula = paste( "adCur ~", paste( sprintf( "`%s`", lsForcedParameter ), collapse = " + " ))
+    strNullFormula = paste( "adCur ~", paste( sprintf( "`%s`", lsForcedParameters ), collapse = " + " ))
   }
 
   lmodNull <- try( lm(as.formula( strNullFormula ), data=frmeTmp))
