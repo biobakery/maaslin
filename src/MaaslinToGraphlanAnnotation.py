@@ -69,6 +69,7 @@ argp = argparse.ArgumentParser( prog = "MaaslinToGraphlanAnnotation.py",
 
 #Arguments
 argp.add_argument("strInputSummary", metavar = "SummaryFile", type = argparse.FileType("r"), help ="Input summary file produced by maaslin")
+argp.add_argument("strInputCore", metavar = "CoreFile", type = argparse.FileType("r"), help ="Core file produced by Graphlan from the maaslin pcl")
 argp.add_argument("strInputHeader", metavar = "HeaderFile", type = argparse.FileType("r"), help ="Input header file to append to the generated annotation file.")
 argp.add_argument("strOutputAnnotation", metavar = "AnnotationFile", type = argparse.FileType("w"), help ="Output annotation file for graphlan")
 
@@ -89,11 +90,23 @@ lsAssociations = sorted(lsAssociations, key=itemgetter(1))
 lsAssociations = [[sBug[0]]+[re.sub("^[A-Za-z]__","",sBug[1])]+sBug[2:] for sBug in lsAssociations]
 lsAssociations = [[sBug[0]]+[re.sub("\|*[A-Za-z]__|\|",".",sBug[1])]+sBug[2:] for sBug in lsAssociations]
 
+#If this is an OTU, append the number and the genus level together for a more descriptive termal name
+lsAssociationsModForOTU = []
+for sBug in lsAssociations:
+  lsBug = sBug[1].split(".")
+  if(len(lsBug))> 1:
+    if(lsBug[-1].isdigit()):
+      lsBug[-2]=lsBug[-2]+"_"+lsBug[-1]
+      lsBug = lsBug[0:-1]
+    lsAssociationsModForOTU.append([sBug[0]]+[".".join(lsBug)]+sBug[2:])
+  else:
+    lsAssociationsModForOTU.append([sBug[0]]+lsBug[0]+sBug[2:])
+
 #Extract just class info
 #lsClassData = [[sLine[2],sClass,sLine[1]] for sLine in fSum]
 
 #Setup rings
-dictRings = dict([[enumData[1],enumData[0]] for enumData in enumerate(set([lsData[0] for lsData in lsAssociations]))])
+dictRings = dict([[enumData[1],enumData[0]] for enumData in enumerate(set([lsData[0] for lsData in lsAssociationsModForOTU]))])
 
 #Ring graphlan setting: rings represent a metadata that associates with a feature
 #Rings have a line to help differetiate them
@@ -103,17 +116,16 @@ lsRingLineThick = [[sRingLineThicknessWord,lsPair[1],sRingLineThickness] for lsP
 lsRingLineLabelSize = [[sRingLabelSizeWord,lsPair[1], sRingLabelSize] for lsPair in dictRings.items()]
 
 #Create coloring for rings color represents the directionality of the relationship
-dMaxCoef = max([abs(float(sAssociation[2])) for sAssociation in lsAssociations])
-lsRingColors = [[lsAssociation[1], sRingColor, dictRings[lsAssociation[0]], funcGetColor(float(lsAssociation[2]), dMaxCoef)] for lsAssociation in lsAssociations]
+dMaxCoef = max([abs(float(sAssociation[2])) for sAssociation in lsAssociationsModForOTU])
+lsRingColors = [[lsAssociation[1], sRingColor, dictRings[lsAssociation[0]], funcGetColor(float(lsAssociation[2]), dMaxCoef)] for lsAssociation in lsAssociationsModForOTU]
 
 #Create height for rings representing the log tranformed q-value?
-dMaxQValue = max([-1*math.log(float(sAssociation[3])) for sAssociation in lsAssociations])
-lsRingHeights = [[lsAssociation[1], sRingHeight, dictRings[lsAssociation[0]], ((-1*math.log(float(lsAssociation[3])))/dMaxQValue)+sRingHeightMin] for lsAssociation in lsAssociations]
+dMaxQValue = max([-1*math.log(float(sAssociation[3])) for sAssociation in lsAssociationsModForOTU])
+lsRingHeights = [[lsAssociation[1], sRingHeight, dictRings[lsAssociation[0]], ((-1*math.log(float(lsAssociation[3])))/dMaxQValue)+sRingHeightMin] for lsAssociation in lsAssociationsModForOTU]
 
 #Highlight the associated clades
-lsUniqueAssociatedTaxa = sorted(list(set([lsAssociation[1] for lsAssociation in lsAssociations])))
-print("lsUniqueAssociatedTaxa")
-print(lsUniqueAssociatedTaxa)
+lsUniqueAssociatedTaxa = sorted(list(set([lsAssociation[1] for lsAssociation in lsAssociationsModForOTU])))
+
 lsHighlights = []
 sABCPrefix = ""
 sListABC = string.ascii_lowercase
@@ -126,8 +138,13 @@ for lsHighlight in lsUniqueAssociatedTaxa:
   if iListABCIndex > 25:
     iListABCIndex = 0
     sABCPrefix = sABCPrefix + sListABC[len(sABCPrefix)]
+
+#Read in the core file
+csvCore = open(args.strInputCore,'r') if isinstance(args.strInputCore, str) else args.strInputCore
+fSum = csv.reader(csvCore, delimiter="\t")
+
 #Add in all phylum just incase they were not already included here
-lsAddSecondLevel = list(set([sUnique.split(".")[1] for sUnique in lsUniqueAssociatedTaxa if len(sUnique.split(".")) > 1]))
+lsAddSecondLevel = list(set([sUnique[0].split(".")[1] for sUnique in fSum if len(sUnique[0].split(".")) > 1]))
 lsHighlights.extend([[sSecondLevel, sAnnotation, sSecondLevel] for sSecondLevel in lsAddSecondLevel])
 lsHighlightColor = [[lsHighlight[0], sAnnotationColor,"b"] for lsHighlight in lsHighlights]
 

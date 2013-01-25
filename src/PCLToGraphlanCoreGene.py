@@ -137,8 +137,20 @@ lsFeatureNames = sorted(lsFeatureNames)
 lsFeatureNames = [re.sub("^[A-Za-z]__","",sBug) for sBug in lsFeatureNames]
 lsFeatureNames = [[re.sub("\|*[A-Za-z]__|\|",".",sBug)] for sBug in lsFeatureNames]
 
+#If this is an OTU, append the number and the genus level together for a more descriptive termal name
+lsFeatureNamesModForOTU = []
+for sBug in lsFeatureNames:
+  lsBug = sBug[0].split(".")
+  if(len(lsBug))> 1:
+    if(lsBug[-1].isdigit()):
+      lsBug[-2]=lsBug[-2]+"_"+lsBug[-1]
+      lsBug = lsBug[0:-1]
+    lsFeatureNamesModForOTU.append([".".join(lsBug)])
+  else:
+    lsFeatureNamesModForOTU.append([lsBug[0]])
+
 #Output core gene file
 csvCG = open(args.strOutputCoreGene,'w') if isinstance(args.strOutputCoreGene, str) else args.strOutputCoreGene
 fCG = csv.writer(csvCG)
-fCG.writerows(lsFeatureNames)
+fCG.writerows(lsFeatureNamesModForOTU)
 csvCG.close()
