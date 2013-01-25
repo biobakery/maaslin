@@ -571,12 +571,6 @@ fAllvAll=FALSE
       #Count the association attempt
       lsData$lsQCCounts$iLms = lsData$lsQCCounts$iLms + 1
 
-      #These are the fixed covariates (or all covariates if this is not a mixed effects model)
-#      strFixedCovariates = setdiff(astrTerms, lsRandomCovariates)
-
-###      # Can not run a model with no fixed covariate, restriction of lmm
-#      if(is.null(strFixedCovariates) || length(strFixedCovariates)==0){return(NA)}
-
       #Make the lm formula
       #Build formula for simple mixed effects models using random covariates
       strRandomCovariatesFormula = NULL
@@ -622,7 +616,7 @@ fAllvAll=FALSE
         i = length(llmod)+1
         llmod[[i]] = funcAnalysis(strFormula=strAnalysisFormula, frmeTmp=frmeTmp, iTaxon=iTaxon, lsQCCounts=lsData$lsQCCounts, strRandomFormula=strRandomCovariatesFormula)
         liTaxon[[i]] = iTaxon
-        # TODO, ignoring Random covariates here (they are not additional tests are they?)
+        # TODO, ignoring Random covariates here (they are not additional tests are they?) check fdr
         lastrTerms[[i]] = funcFormulaStrToList(strAnalysisFormula)
       }
     } else {

@@ -146,7 +146,7 @@ pArgs <- add_option( pArgs, c("-t", "--invert"), type="logical", action="store_t
 ### Selection Frequency
 pArgs <- add_option( pArgs, c("-f","--selectionFrequency"), type="double", action="store", dest="dSelectionFrequency", default=NA, metavar="selectionFrequency", help="Selection Frequency for boosting (max 100 will remove almost everything). Interpreted as requiring boosting to select metadata 100% percent of the time (or less if given a number that is less).")
 ### All v All
-pArgs <- add_option( pArgs, c("-a","--allvall"), type="logical", action="store", dest="fAllvAll", default=FALSE, metavar="compare_all", help="When given, flag indicates that each fixed covariate that is not indicated as Forced is conpared once at a time per data feature (bug). Made to be used with the -F option to specify one part of the model while allowing the other to cycle through a group of covariates. Does not affect Random covariates, which are always included when specified.")
+pArgs <- add_option( pArgs, c("-a","--allvall"), type="logical", action="store_true", dest="fAllvAll", default=FALSE, metavar="compare_all", help="When given, flag indicates that each fixed covariate that is not indicated as Forced is conpared once at a time per data feature (bug). Made to be used with the -F option to specify one part of the model while allowing the other to cycle through a group of covariates. Does not affect Random covariates, which are always included when specified.")
 
 ### Misc MFA plot arguments
 pArgs <- add_option( pArgs, c("-c","--MFAFeatureCount"), type="integer", action="store", dest="iMFAMaxFeatures", default=3, metavar="maxMFAFeature", help="Number of Features or number of bugs to plot (default=3; 3 metadata and 3 data).")
@@ -155,6 +155,7 @@ pArgs <- add_option( pArgs, c("-D","--MFADataScale"), type="double", action="sto
 pArgs <- add_option( pArgs, c("-C", "--MFAColor"), type="character", action="store", dest="strMFAColor", default=NULL, metavar="MFAColorCovariate", help="A continuous metadata that will be used to color samples in the MFA ordination plot (otherwise a default will be selected from the data).")
 pArgs <- add_option( pArgs, c("-S", "--MFAShape"), type="character", action="store", dest="strMFAShape", default=NULL, metavar="MFAShapeCovariate", help="A discontinuous metadata that will be used to indicate shapes of samples in the MFA ordination plot (otherwise a default will be selected from the data).")
 pArgs <- add_option( pArgs, c("-P", "--MFAPlotFeatures"), type="character", action="store", dest="strMFAPlotFeatures", default=NULL, metavar="MFAFeaturesToPlot", help="Metadata and data features to plot (otherwise a default will be selected from the data). Comma Delimited.")
+pArgs <- add_option( pArgs, c("-N","--MFAPlotNA"), type="logical", action="store_true", default=FALSE, dest="fPlotNA", metavar="plotNAInMFA",help="Plot markers that are NA for the shape of the data, by default they are not plotted.")
 
 main <- function(
 ### The main function manages the following:
@@ -407,7 +408,7 @@ try(
     if( class( lsMFA ) != "try-error" )
     {
       logdebug("PlotMFA:in", c_logrMaaslin)
-      funcPlotMFA( lsMFA=lsMFA, frmeData=lsRet$frmeData, lsMetadata=lsOriginalMetadataNames, lsFeatures=lsOriginalFeatureNames, iMaxFeatures=lsArgs$options$iMFAMaxFeatures, strMFAColorCovariate=lsArgs$options$strMFAColor, strMFAShapeCovariate=lsArgs$options$strMFAShape, dMFAMetadataScale=lsArgs$options$dMFAMetadataScale, dMFADataScale=lsArgs$options$dMFADataScale, lsPlotFeatures=lsFeaturesToPlot, fInvert=lsArgs$options$fInvert, tempSaveFileName=file.path(outputDirectory,strBase), funcPlotColors=lsRet$funcPlotColors, funcPlotPoints=lsRet$funcPlotPoints, funcPlotLegend=lsRet$funcPlotLegend )
+      funcPlotMFA( lsMFA=lsMFA, frmeData=lsRet$frmeData, lsMetadata=lsOriginalMetadataNames, lsFeatures=lsOriginalFeatureNames, iMaxFeatures=lsArgs$options$iMFAMaxFeatures, strMFAColorCovariate=lsArgs$options$strMFAColor, strMFAShapeCovariate=lsArgs$options$strMFAShape, dMFAMetadataScale=lsArgs$options$dMFAMetadataScale, dMFADataScale=lsArgs$options$dMFADataScale, lsPlotFeatures=lsFeaturesToPlot, fPlotNA=lsArgs$options$fPlotNA, fInvert=lsArgs$options$fInvert, tempSaveFileName=file.path(outputDirectory,strBase), funcPlotColors=lsRet$funcPlotColors, funcPlotPoints=lsRet$funcPlotPoints, funcPlotLegend=lsRet$funcPlotLegend )
       logdebug("PlotMFA:out", c_logrMaaslin)
     }
   }

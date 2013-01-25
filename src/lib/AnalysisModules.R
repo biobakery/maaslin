@@ -615,6 +615,8 @@ strRandomFormula = NULL
     return(NA)
   } else {
     #May need to change this, currently can not find the coef p-values (coefficients/coef does work however just no p-value)
+    
+#    glmnet(x=,y=,family="gaussian")
     return(try(penalized(response=adCur, penalized=as.formula(strFormula), lambda1=1, data=frmeTmp, standardize=TRUE)))
   }
   ### lmod result object from lasso lm (lambda 1 = L1 = lasso (covariates weighted to 0), lambda 2 = L2 = ridge (covariates not weighted to 0), both = elastic net)

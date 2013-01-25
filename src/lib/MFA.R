@@ -127,7 +127,7 @@ funcGetFirstOfDataMode = function(lsSortedNames,dfData,fContinuous=TRUE)
 }
 
 # Get the most influencial variables or individuals in the MFA output
-funcGetMarkerValues = function(MFAOut,dfOriginal,lsMetadata=NULL,strMFAColorCovariate=NULL,strMFAShapeCovariate=NULL)
+funcGetMarkerValues = function(MFAOut,dfOriginal,lsMetadata=NULL,strMFAColorCovariate=NULL,strMFAShapeCovariate=NULL,fPlotNA=FALSE)
 {
   # Default marker values
   viMarkers = as.integer(c(18:15,0:14,"#","@"))
@@ -136,7 +136,7 @@ funcGetMarkerValues = function(MFAOut,dfOriginal,lsMetadata=NULL,strMFAColorCova
   liMarkerShapes = NULL
   lsMarkerColors = NULL
 
-  # Features to bease color and shape on
+  # Features to base color and shape on
   sFeatureContinuous = strMFAColorCovariate
   sFeature = strMFAShapeCovariate
 
@@ -222,6 +222,7 @@ funcGetMarkerValues = function(MFAOut,dfOriginal,lsMetadata=NULL,strMFAColorCova
 
     for(iMarkerIndex in 1:length(asLevels))
     {
+      if(!fPlotNA && (is.na(asLevels[iMarkerIndex]) || (tolower(as.character(asLevels[iMarkerIndex]))=="na"))){ next }
       # Update legend information
       lLegendInfo[["lsText"]] = c(lLegendInfo$lsText,paste(asLevels[iMarkerIndex]," (", sFeature,")",sep=""))
       lLegendInfo[["lsColor"]] = c(lLegendInfo$lsColor, "#333333")
@@ -406,6 +407,7 @@ strMFAShapeCovariate=NULL,
 dMFAMetadataScale=NULL,
 dMFADataScale=NULL,
 lsPlotFeatures=NULL,
+fPlotNA=FALSE,
 fInvert = FALSE,
 ### Invert figure to make background black
 tempSaveFileName="MFA",
@@ -435,7 +437,7 @@ tempPCH=20
 
   # Get markers shapes for plotting (find the highest contributing dim one discontinuous data)
   # Also get colors for plotting (find the highest contributing dim one continuous data)
-  llMarkerInfo = funcGetMarkerValues(MFAOut=lsMFA,dfOriginal=frmeData,lsMetadata=lsMetadata,strMFAColorCovariate=strMFAColorCovariate, strMFAShapeCovariate=strMFAShapeCovariate)
+  llMarkerInfo = funcGetMarkerValues(MFAOut=lsMFA,dfOriginal=frmeData,lsMetadata=lsMetadata,strMFAColorCovariate=strMFAColorCovariate, strMFAShapeCovariate=strMFAShapeCovariate,fPlotNA=fPlotNA)
 
   #Use default derived colors unless a function has been specified to make the colors. This is over-ridden by setting the covariate to base color on through commandline.
   astrCols = llMarkerInfo$colors
@@ -475,26 +477,38 @@ tempPCH=20
   strX <- sprintf( "Dimension 1 (%.2f%%)", lsPCA$eig$`percentage of variance`[1] )
   strY <- sprintf( "Dimension 2 (%.2f%%)", lsPCA$eig$`percentage of variance`[2] )
 
+  #Get coordinates
+  lsPointCoordinates = lsPCA$ind$coord
+
+  #Reduce coordinates, markers and color lists to no NA unless specified to plot
+  if(!fPlotNA)
+  {
+    aiNotNA = intersect(which(!is.na(frmeData[[llMarkerInfo$lLegendInfo$sShapeMetadata]])),which(!tolower(frmeData[[llMarkerInfo$lLegendInfo$sShapeMetadata]])=="na"))
+    lsPointCoordinates = lsPointCoordinates[aiNotNA,]
+    aiPoints = aiPoints[aiNotNA]
+    astrCols = astrCols[aiNotNA]
+  }
+
   #Do plots
   #Plot just points 
-  funcPlotMFAPage(coordinatesPlot=lsPCA$ind$coord, coordinatesText=NA, strX=strX, strY=strY, aiPoints=aiPoints, astrCols=astrCols)
+  funcPlotMFAPage(coordinatesPlot=lsPointCoordinates, coordinatesText=NA, strX=strX, strY=strY, aiPoints=aiPoints, astrCols=astrCols)
 
   if( sum( afMetadata ) )
   {
-    funcPlotMFAPage(coordinatesPlot=lsPCA$ind$coord, coordinatesText=lsPCA$var$coord, strX=strX, strY=strY, aiPoints=aiPoints,
+    funcPlotMFAPage(coordinatesPlot=lsPointCoordinates, coordinatesText=lsPCA$var$coord, strX=strX, strY=strY, aiPoints=aiPoints,
       astrCols=astrCols, afMetadata=afMetadata, dScale=dScale, lsMetadataLabels=rownames( lsPCA$var$coord )[afMetadata], lLegendLoc=llMarkerInfo$lLegendInfo)
   }
 
   #Plot features
   if( sum( afFeatures ) )
   {
-    funcPlotMFAPage(coordinatesPlot=lsPCA$ind$coord, coordinatesText=lsPCA$var$coord, strX=strX, strY=strY, aiPoints=aiPoints,
+    funcPlotMFAPage(coordinatesPlot=lsPointCoordinates, coordinatesText=lsPCA$var$coord, strX=strX, strY=strY, aiPoints=aiPoints,
       astrCols=astrCols, afFeatures=afFeatures, dBugScale=dBugScale, lsFeatureLabels=funcRename( rownames( lsPCA$var$coord )[afFeatures] ), lLegendLoc=llMarkerInfo$lLegendInfo)
 
     #Plot metadata and features
     if( sum( afMetadata ) )
     {
-      funcPlotMFAPage(coordinatesPlot=lsPCA$ind$coord, coordinatesText=lsPCA$var$coord, strX=strX, strY=strY, aiPoints=aiPoints,
+      funcPlotMFAPage(coordinatesPlot=lsPointCoordinates, coordinatesText=lsPCA$var$coord, strX=strX, strY=strY, aiPoints=aiPoints,
         astrCols=astrCols, afMetadata=afMetadata, dScale=dScale, lsMetadataLabels=rownames( lsPCA$var$coord )[afMetadata], afFeatures=afFeatures,
         dBugScale=dBugScale, lsFeatureLabels=funcRename( rownames( lsPCA$var$coord )[afFeatures] ), lLegendLoc=llMarkerInfo$lLegendInfo)
     }
