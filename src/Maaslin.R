@@ -405,6 +405,7 @@ try(
     logdebug("MFA:in", c_logrMaaslin)
     lsMFA <- funcMFA( lsRet$frmeData, lsArgs$options$dMinSamp, aiUMD, aiBugs)
     logdebug("MFA:out", c_logrMaaslin)
+
     if( class( lsMFA ) != "try-error" )
     {
       logdebug("PlotMFA:in", c_logrMaaslin)

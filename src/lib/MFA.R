@@ -473,6 +473,7 @@ tempPCH=20
   dBugScale = dMFADataScale
   if(exists("funcGetFeatureScale",mode="function") && is.null(dBugScale)){dBugScale = funcGetFeatureScale()}
   if(length(lsFeaturesToPlot) && is.null(dBugScale)){dBugScale = funcGetScale(lsMFA, lsFeaturesToPlot)}
+  if(is.null(dBugScale)){dBugScale = c_dDefaultScale }
 
   #Set X and Y coordinates and plot points
   strX <- sprintf( "Dimension 1 (%.2f%%)", lsPCA$eig$`percentage of variance`[1] )
@@ -484,10 +485,13 @@ tempPCH=20
   #Reduce coordinates, markers and color lists to no NA unless specified to plot
   if(!fPlotNA)
   {
-    aiNotNA = intersect(which(!is.na(frmeData[[llMarkerInfo$lLegendInfo$sShapeMetadata]])),which(!tolower(frmeData[[llMarkerInfo$lLegendInfo$sShapeMetadata]])=="na"))
-    lsPointCoordinates = lsPointCoordinates[aiNotNA,]
-    aiPoints = aiPoints[aiNotNA]
-    astrCols = astrCols[aiNotNA]
+    if(!is.null(llMarkerInfo$lLegendInfo$sShapeMetadata))
+    {
+      aiNotNA = intersect(which(!is.na(frmeData[[llMarkerInfo$lLegendInfo$sShapeMetadata]])),which(!tolower(frmeData[[llMarkerInfo$lLegendInfo$sShapeMetadata]])=="na"))
+      lsPointCoordinates = lsPointCoordinates[aiNotNA,]
+      aiPoints = aiPoints[aiNotNA]
+      astrCols = astrCols[aiNotNA]
+    }
   }
 
   #Do plots

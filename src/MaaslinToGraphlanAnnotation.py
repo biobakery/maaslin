@@ -138,7 +138,7 @@ else:
         lsBug = lsBug[0:-1]
       lsAssociationsModForOTU.append([sBug[0]]+[".".join(lsBug)]+sBug[2:])
     else:
-      lsAssociationsModForOTU.append([sBug[0]]+lsBug[0]+sBug[2:])
+      lsAssociationsModForOTU.append([sBug[0]]+[lsBug[0]]+sBug[2:])
 
   #Extract just class info
   #lsClassData = [[sLine[2],sClass,sLine[1]] for sLine in fSum]
