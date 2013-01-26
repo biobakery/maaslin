@@ -58,6 +58,7 @@ c_strMatrixMetadata <- "Metadata"
 # Settings for MFA visualization/ordination
 c_iMFA <- 30
 c_dHeight <- 9
+c_dDefaultScale = 0.5
 # The column that is used to determine if information meets a certain significance threshold (dSignificanceLevel) to include in the Summary text file)
 c_strKeywordEvaluatedForInclusion <- "Q.value"
 #The name of the custom process function

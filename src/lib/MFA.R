@@ -467,7 +467,8 @@ tempPCH=20
 
   dScale = dMFAMetadataScale
   if(exists("funcGetMetadataScale",mode="function") && is.null(dScale)){dScale = funcGetMetadataScale()}
-  if(is.null(dScale)){dScale = funcGetScale(lsMFA, lsMetadataToPlot)}
+  tryCatch(if(is.null(dScale)){dScale = funcGetScale(lsMFA, lsMetadataToPlot)})
+  if(is.null(dScale)){dScale = c_dDefaultScale }
 
   dBugScale = dMFADataScale
   if(exists("funcGetFeatureScale",mode="function") && is.null(dBugScale)){dBugScale = funcGetFeatureScale()}
