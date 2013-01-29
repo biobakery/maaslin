@@ -233,21 +233,32 @@ funcTransform
 
   #Use na.gam.replace to manage NA metadata
   aiTmp <- setdiff( aiMetadata, which( colnames( frmeData ) %in% astrNoImpute ) )
+  # Keep tack of NAs so the may not be plotted later.
+  liNaIndices = list()
+  lsNames = names(frmeData)
+  for( i in aiTmp)
+  {
+    liNaIndices[[lsNames[i]]] = which(is.na(frmeData[,i]))
+  }
   frmeData[,aiTmp] <- na.gam.replace( frmeData[,aiTmp] )
 
-  #If NA is a value in  factor data, set the NA as a level.
+  #If NA is a value in factor data, set the NA as a level.
   for( lsFactor in lslsFactors )
   {
     iCol <- lsFactor[[1]]
     aCol <- frmeData[,iCol]
     if( "NA" %in% levels( aCol ) )
     {
+      if(! lsNames[iCol] %in% astrNoImpute)
+      {
+        liNaIndices[[lsNames[iCol]]] = union(which(is.na(frmeData[,iCol])),which(frmeData[,iCol]=="NA"))
+      }
       frmeData[,iCol] <- factor( aCol, levels = c(lsFactor[[2]], "NA") )
     }
   }
 
   c_logrMaaslin$debug("End FuncClean")
-  return( list(frmeData = frmeData, aiMetadata = aiMetadata, aiData = aiData, lsQCCounts = lsQCCounts) )
+  return( list(frmeData = frmeData, aiMetadata = aiMetadata, aiData = aiData, lsQCCounts = lsQCCounts, liNaIndices=liNaIndices) )
   ### Return list of
   ### frmeData: The Data after cleaning
   ### aiMetadata: The indices of the metadata still being used after filtering
@@ -295,8 +306,10 @@ fDoRPlot=TRUE,
 ### Plot residuals
 fOmitLogFile = FALSE,
 ### Stops the creation of the log file
-fAllvAll=FALSE
+fAllvAll=FALSE,
 ### Flag to turn on all against all comparisons
+liNaIndices = list()
+### Indicies of imputed NA data
 ){
   c_logrMaaslin$debug("Start funcBugs")
   if( is.na( strDirOut )||is.null(strDirOut))
@@ -421,7 +434,7 @@ fAllvAll=FALSE
       ## Write PDF file output
       if( adQ[j] > dSig ) { next }
       # Do not make residuals plots if univariate is selected
-      strFilePDF = funcPDF( frmeTmp=frmeData, lsCur=lsCur, curPValue=adP[j], curQValue=adQ[j], strFilePDF=strFilePDF, strBaseOut=strBaseOut, strName=strName, funcUnTransform= funcUnTransform, fDoResidualPlot=fDoRPlot, fInvert=fInvert )
+      strFilePDF = funcPDF( frmeTmp=frmeData, lsCur=lsCur, curPValue=adP[j], curQValue=adQ[j], strFilePDF=strFilePDF, strBaseOut=strBaseOut, strName=strName, funcUnTransform= funcUnTransform, fDoResidualPlot=fDoRPlot, fInvert=fInvert, liNaIndices=liNaIndices )
     }
 
     if( dev.cur( ) != 1 ) { dev.off( ) }
@@ -486,7 +499,6 @@ fAllvAll=FALSE
 #dTime00 <- proc.time()[3]
   #Get metadata column names
   astrMetadata = intersect( lsData$astrMetadata, colnames( frmeData )[aiMetadata] )
-
   #Get data measurements that are not NA
   aiRows <- which( !is.na( frmeData[,iTaxon] ) )
 

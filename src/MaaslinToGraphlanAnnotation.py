@@ -81,6 +81,7 @@ sRingLineThicknessWord = "ring_internal_separator_thickness"
 sCladeMarkerColor = "clade_marker_color"
 sCladeMarkerSize = "clade_marker_size"
 sHighlightedMarkerSize = "10"
+c_dMinDoubleValue = 0.00000000001
 
 #Set up arguments reader
 argp = argparse.ArgumentParser( prog = "MaaslinToGraphlanAnnotation.py",
@@ -160,8 +161,8 @@ else:
   lsRingAlpha = [[lsAssociation[1], sRingAlpha, dictRings[lsAssociation[0]], funcGetAlpha(float(lsAssociation[2]), dMaxCoef)] for lsAssociation in lsAssociationsModForOTU]
 
   #Create height for rings representing the log tranformed q-value?
-  dMaxQValue = max([-1*math.log(float(sAssociation[3])) for sAssociation in lsAssociationsModForOTU])
-  #lsRingHeights = [[lsAssociation[1], sRingHeight, dictRings[lsAssociation[0]], ((-1*math.log(float(lsAssociation[3])))/dMaxQValue)+sRingHeightMin] for lsAssociation in lsAssociationsModForOTU]
+  dMaxQValue = max([-1*math.log(max(float(sAssociation[3]), c_dMinDoubleValue)) for sAssociation in lsAssociationsModForOTU])
+  #lsRingHeights = [[lsAssociation[1], sRingHeight, dictRings[lsAssociation[0]], ((-1*math.log(max(float(lsAssociation[3]), c_dMinDoubleValue)))/dMaxQValue)+sRingHeightMin] for lsAssociation in lsAssociationsModForOTU]
   lsRingHeights = [[lsAssociation[1], sRingHeight, dictRings[lsAssociation[0]], sStandardizedRingHeight] for lsAssociation in lsAssociationsModForOTU]
 
   #### Marker

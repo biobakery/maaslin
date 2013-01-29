@@ -115,25 +115,25 @@ pArgs <- add_option( pArgs, c("-d", "--fdr"), type="double", action="store", des
 ## Minimum feature relative abundance filtering
 pArgs <- add_option( pArgs, c("-r", "--minRelativeAbundance"), type="double", action="store", dest="dMinAbd", default=0.0001, metavar="minRelativeAbundance", help="The minimum relative abundance allowed in the data. Values below this are removed and imputed as the median of the sample data.")
 ## Minimum feature prevalence filtering
-pArgs <- add_option( pArgs, c("-p", "--minPrevalence"), type="double", action="store", dest="dMinSamp", default=0.1, metavar="minPrevalence", help="The minimum percentage of samples a feature can have abudance in before being removed.")
+pArgs <- add_option( pArgs, c("-p", "--minPrevalence"), type="double", action="store", dest="dMinSamp", default=0.1, metavar="minPrevalence", help="The minimum percentage of samples a feature can have abundance in before being removed.")
 ## Fence for outlier, if not set Grubbs test is used
 pArgs <- add_option( pArgs, c("-o", "--outlierFence"), type="double", action="store", dest="dOutlierFence", default=3.0, metavar="outlierFence", help="Outliers are defined as this number times the interquartile range added/subtracted from the 3rd/1st quartiles respectively. If set to 0, outliers are defined by the Grubbs test.")
 ## Fixed (not random) covariates
-pArgs <- add_option( pArgs, c("-R","--random"), type="character", action="store", dest="strRandomCovariates", default=NULL, metavar="fixed", help="These metadata will be treated as random covariates. Comma delimited data feature names. These features must be listed in the read.config file and will be required to pass any model selection before being used. Example 'RandomMetadata1,RandomMetadata2'")
+pArgs <- add_option( pArgs, c("-R","--random"), type="character", action="store", dest="strRandomCovariates", default=NULL, metavar="fixed", help="These metadata will be treated as random covariates. Comma delimited data feature names. These features must be listed in the read.config file. Example '-R RandomMetadata1,RandomMetadata2'")
 
 # Arguments used in validation of MaAsLin
-## Model selection (enumerate) c("none","boost","forward","backward")
-pArgs <- add_option( pArgs, c("-s", "--selection"), type="character", action="store", dest="strModelSelection", default="boost", metavar="model_selection", help="Indicates which of the model selection techniques to use.")
-## Argument indicating which method should be ran (enumerate) c("univariate","lm","lasso","neg_binomial","quasi")
-pArgs <- add_option( pArgs, c("-m", "--method"), type="character", action="store", dest="strMethod", default="lm", metavar="analysis_method", help="Indicates which of the statistical analysis methods to run.")
+## Model selection (enumerate) c("none","boost","lasso","forward","backward")
+pArgs <- add_option( pArgs, c("-s", "--selection"), type="character", action="store", dest="strModelSelection", default="boost", metavar="model_selection", help="Indicates which of the variable selection techniques to use.")
+## Argument indicating which method should be ran (enumerate) c("univariate","lm","neg_binomial","quasi")
+pArgs <- add_option( pArgs, c("-m", "--method"), type="character", action="store", dest="strMethod", default="lm", metavar="analysis_method", help="Indicates which of the statistical inference methods to run.")
 ## Argument indicating which link function is used c("none","asinsqrt")
 pArgs <- add_option( pArgs, c("-l", "--link"), type="character", action="store", dest="strTransform", default="asinsqrt", metavar="transform_method", help="Indicates which link or transformation to use with a glm, if glm is not selected this argument will be set to none.")
 
 # Arguments to suppress MaAsLin actions on certain data
 ## Do not perform model selection on the following data
-pArgs <- add_option( pArgs, c("-F","--forced"), type="character", action="store", dest="strForcedPredictors", default=NULL, metavar="forced_predictors", help="Metadata features that will be forced into the model seperated by commas. These features must be listed in the read.config file. Example 'Metadata2,Metadata6,Metadata10'")
+pArgs <- add_option( pArgs, c("-F","--forced"), type="character", action="store", dest="strForcedPredictors", default=NULL, metavar="forced_predictors", help="Metadata features that will be forced into the model seperated by commas. These features must be listed in the read.config file. Example '-F Metadata2,Metadata6,Metadata10'")
 ## Do not impute the following
-pArgs <- add_option( pArgs, c("-n","--noImpute"), type="character", action="store", dest="strNoImpute", default=NULL, metavar="no_impute", help="These data will not be imputed. Comma delimited data feature names. Example 'Feature1,Feature4,Feature6'")
+pArgs <- add_option( pArgs, c("-n","--noImpute"), type="character", action="store", dest="strNoImpute", default=NULL, metavar="no_impute", help="These data will not be imputed. Comma delimited data feature names. Example '-n Feature1,Feature4,Feature6'")
 
 #Miscellaneouse arguments
 ### Argument to control logging (enumerate)
@@ -146,16 +146,16 @@ pArgs <- add_option( pArgs, c("-t", "--invert"), type="logical", action="store_t
 ### Selection Frequency
 pArgs <- add_option( pArgs, c("-f","--selectionFrequency"), type="double", action="store", dest="dSelectionFrequency", default=NA, metavar="selectionFrequency", help="Selection Frequency for boosting (max 100 will remove almost everything). Interpreted as requiring boosting to select metadata 100% percent of the time (or less if given a number that is less).")
 ### All v All
-pArgs <- add_option( pArgs, c("-a","--allvall"), type="logical", action="store_true", dest="fAllvAll", default=FALSE, metavar="compare_all", help="When given, flag indicates that each fixed covariate that is not indicated as Forced is conpared once at a time per data feature (bug). Made to be used with the -F option to specify one part of the model while allowing the other to cycle through a group of covariates. Does not affect Random covariates, which are always included when specified.")
+pArgs <- add_option( pArgs, c("-a","--allvall"), type="logical", action="store_true", dest="fAllvAll", default=FALSE, metavar="compare_all", help="When given, the flag indicates that each fixed covariate that is not indicated as Forced is compared once at a time per data feature (bug). Made to be used with the -F option to specify one part of the model while allowing the other to cycle through a group of covariates. Does not affect Random covariates, which are always included when specified.")
+pArgs <- add_option( pArgs, c("-N","--PlotNA"), type="logical", action="store_true", default=FALSE, dest="fPlotNA", metavar="plotNAs",help="Plot data that was originally NA, by default they are not plotted.")
 
 ### Misc MFA plot arguments
-pArgs <- add_option( pArgs, c("-c","--MFAFeatureCount"), type="integer", action="store", dest="iMFAMaxFeatures", default=3, metavar="maxMFAFeature", help="Number of Features or number of bugs to plot (default=3; 3 metadata and 3 data).")
+pArgs <- add_option( pArgs, c("-c","--MFAFeatureCount"), type="integer", action="store", dest="iMFAMaxFeatures", default=3, metavar="maxMFAFeature", help="Number of features or number of bugs to plot (default=3; 3 metadata and 3 data).")
 pArgs <- add_option( pArgs, c("-M","--MFAMetadataScale"), type="double", action="store", dest="dMFAMetadataScale", default=NULL, metavar="scaleForMetadata", help="A real number used to scale the metadata labels on the MFA plot (otherwise a default will be selected from the data).")
 pArgs <- add_option( pArgs, c("-D","--MFADataScale"), type="double", action="store", dest="dMFADataScale", default=NULL, metavar="scaleForMetadata", help="A real number used to scale the metadata labels on the MFA plot (otherwise a default will be selected from the data).")
 pArgs <- add_option( pArgs, c("-C", "--MFAColor"), type="character", action="store", dest="strMFAColor", default=NULL, metavar="MFAColorCovariate", help="A continuous metadata that will be used to color samples in the MFA ordination plot (otherwise a default will be selected from the data).")
 pArgs <- add_option( pArgs, c("-S", "--MFAShape"), type="character", action="store", dest="strMFAShape", default=NULL, metavar="MFAShapeCovariate", help="A discontinuous metadata that will be used to indicate shapes of samples in the MFA ordination plot (otherwise a default will be selected from the data).")
 pArgs <- add_option( pArgs, c("-P", "--MFAPlotFeatures"), type="character", action="store", dest="strMFAPlotFeatures", default=NULL, metavar="MFAFeaturesToPlot", help="Metadata and data features to plot (otherwise a default will be selected from the data). Comma Delimited.")
-pArgs <- add_option( pArgs, c("-N","--MFAPlotNA"), type="logical", action="store_true", default=FALSE, dest="fPlotNA", metavar="plotNAInMFA",help="Plot markers that are NA for the shape of the data, by default they are not plotted.")
 
 main <- function(
 ### The main function manages the following:
@@ -356,6 +356,12 @@ lsRet$lsQCCounts$aiMetadataCleaned = lsRet$aiMetadata
 astrMetadata = colnames(lsRet$frmeData)[lsRet$aiMetadata]
 lsRet$astrMetadata = astrMetadata
 
+# If plotting NA data reset the NA metadata indices to empty so they will not be excluded
+if(lsArgs$options$fPlotNA)
+{
+  lsRet$liNaIndices = list()
+}
+
 #Write QC files only in certain modes of verbosity
 if( c_logrMaaslin$level <= loglevels["DEBUG"] ) {
 	#Record the data after cleaning
@@ -376,7 +382,7 @@ if(lsArgs$options$strMethod %in% c("univariate")){ fDoRPlot=FALSE }
 alsRetBugs = funcBugs( lsRet$frmeData, lsRet, lsRet$aiMetadata, lsRet$aiData, strBase,
 	lsArgs$options$dSelectionFrequency, lsArgs$options$dSignificanceLevel, lsArgs$options$dMinSamp, lsArgs$options$fInvert,
         outputDirectory, astrScreen = c(), funcReg=afuncVariableAnalysis[[c_iSelection]], funcUnTransform=afuncVariableAnalysis[[c_iUnTransform]], lsForcedParameters,
-        funcAnalysis=afuncVariableAnalysis[[c_iAnalysis]], lsRandomCovariates, funcGetResults=afuncVariableAnalysis[[c_iResults]], fDoRPlot=fDoRPlot, fOmitLogFile=lsArgs$options$fOmitLogFile, fAllvAll=lsArgs$options$fAllvAll )
+        funcAnalysis=afuncVariableAnalysis[[c_iAnalysis]], lsRandomCovariates, funcGetResults=afuncVariableAnalysis[[c_iResults]], fDoRPlot=fDoRPlot, fOmitLogFile=lsArgs$options$fOmitLogFile, fAllvAll=lsArgs$options$fAllvAll, liNaIndices=lsRet$liNaIndices )
 aiBugs = alsRetBugs$aiReturnBugs
 
 #Write QC files only in certain modes of verbosity

@@ -52,7 +52,9 @@ def funcIsInt(strInt):
 #If no range is given then the result is just one index of the given name
 def funcGetIndices(lsFeature, lsFunctionNames):
   if(len(lsFeature)) == 1:
-    return lsFeatureNames.index(lsFeature)
+      if(funcIsInt(lsFeature[0])):
+        return int(lsFeature[0])
+      return lsFeatureNames.index(lsFeature)
   if(len(lsFeature)) == 2:
     iIndices = []
     iPosition = 1
@@ -62,6 +64,8 @@ def funcGetIndices(lsFeature, lsFunctionNames):
           iIndices.append(2)
         elif(iPosition==2):
           iIndices.append(len(lsFunctionNames)-1)
+      elif(funcIsInt(sFeature)):
+        iIndices.append(int(sFeature))
       else:
         iIndices.append(lsFeatureNames.index(sFeature))
       iPosition = iPosition + 1
@@ -111,7 +115,7 @@ lsFeatureNames = [sLine[0] for sLine in fPCL]
 csvPCL.close()
 
 #If the indices are names switch with numbers otherwise subtract 1 because they are ment for R
-liConvertedRangedIndices = [sIndex-1 if funcIsInt(sIndex) else funcGetIndices(sIndex,lsFeatureNames) for sIndex in llsIndices]
+liConvertedRangedIndices = [funcGetIndices(sIndex,lsFeatureNames) for sIndex in llsIndices]
 llsIndices = None
 
 #If there are any ranges, reduce to lists of indices

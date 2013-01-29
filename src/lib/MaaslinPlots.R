@@ -46,11 +46,13 @@ strBaseOut,
 strName,
 ### Name of taxon
 funcUnTransform=NULL,
-### If a transform is used the opporite of that transfor must be used on the residuals in the partial residual plots
+### If a transform is used the appropriate of that transfor must be used on the residuals in the partial residual plots
 fDoResidualPlot = TRUE,
 ### Plot the residual plots
-fInvert = FALSE
+fInvert = FALSE,
 ### Invert the figure so the background is black
+liNaIndices = c()
+### Indices of NA data that was imputed
 ){
   if( is.na( strFilePDF ) )
   {
@@ -89,25 +91,31 @@ fInvert = FALSE
   } else { dCEX = 1 }
 
   #Plot 1x2 graphs per page
-#  iNumberCoefficients = length(setdiff(names(lsCur$allCoefs),c("(Intercept)")))
-#  if(iNumberCoefficients>1){ par(mfrow=c(1,2)) }else{ par(mfrow=c(1,1)) }
   if(fDoResidualPlot){par(mfrow=c(1,2))}
 
   # Plot factor data as boxplot if is descrete data
   # Otherwise plot as a line
   adCur <- lsCur$metadata
-  adData <- lsCur$data
-  adY <- adData
+  adY <- lsCur$data
+
+  # Remove NAs from data visualization if set to do so (if liNaIndices is not empty)
+  if(lsCur$name %in% names(liNaIndices)&&(length(liNaIndices[[lsCur$name]])>0))
+  {
+    adCur = adCur[-1*liNaIndices[[lsCur$name]]]
+    adY <- adY[-1*liNaIndices[[lsCur$name]]]
+  }
+
+  # Set the factor levels to include NA if they still exist
+  # This is so if something is not imputed, then if there are NAs they will be plotted (to show no imputing)
   if( class( lsCur$metadata ) == "factor" )
   {
-    if( "NA" %in% levels( lsCur$metadata ) )
-    {
-      afNA <- adCur == "NA"
-      adY <- adY[!afNA]
-      adData <- adData[!afNA]
-      adCur <- adCur[!afNA]
-      adCur <- factor( adCur, levels = setdiff( levels( adCur ), "NA" ) )
-    }
+    adCur = (as.character(adCur))
+    adCur[is.na(adCur)]="NA"
+    adCur = factor(adCur)
+  }
+
+  if( class( lsCur$metadata ) == "factor" )
+  {
     astrNames <- c()
     astrColors <- c()
     dMed <- median( adY[adCur == levels( adCur )[1]], na.rm = TRUE )
@@ -159,7 +167,7 @@ fInvert = FALSE
   }
 
   ### Plot the residual plot
-  if(fDoResidualPlot){funcResidualPlot(lsCur=lsCur, frmeTmp=frmeTmp, adColorMin=adColorMin, adColorMax=adColorMax, adColorMed=adColorMed, adMar, funcUnTransform=funcUnTransform)}
+  if(fDoResidualPlot){funcResidualPlot(lsCur=lsCur, frmeTmp=frmeTmp, adColorMin=adColorMin, adColorMax=adColorMax, adColorMed=adColorMed, adMar, funcUnTransform=funcUnTransform, liNaIndices)}
 
   return(strFilePDF)
   ### File to which the pdf was written
@@ -174,9 +182,8 @@ fInvert = FALSE
 #residuals (y) PCL1 (1 bug + metadata)
 #Plot 3
 ### Can plot the residuals against all the variables in a grid/lattic
-funcGetFactorBoxColors = function(adCur,adData,adColorMin,adColorMax,adColorMed)
+funcGetFactorBoxColors = function(adCur,adY,adColorMin,adColorMax,adColorMed)
 {
-  adY = adData
   astrColors = c()
 
   if( class( adCur ) == "factor" )
@@ -185,7 +192,6 @@ funcGetFactorBoxColors = function(adCur,adData,adColorMin,adColorMax,adColorMed)
     {
       afNA = adCur == "NA"
       adY = adY[!afNA]
-      adData = adData[!afNA]
       adCur = adCur[!afNA]
       adCur = factor( adCur, levels = setdiff( levels( adCur ), "NA" ) )
     }
@@ -225,7 +231,10 @@ adColorMed,
 ### Medium color in color range for markers
 adMar,
 ### Standardized margins
-funcUnTransform = NULL
+funcUnTransform = NULL,
+### If a transform is used the opposite of that transfor must be used on the residuals in the partial residual plots
+liNaIndices = c()
+### Indices of NA data that was imputed
 ){
   # Get model matrix (raw data)
   adCur = frmTmp[[sResponseFeature]]
@@ -257,7 +266,7 @@ funcUnTransform = NULL
     #This is continuous data
     if(sCurrentCovariate == sCurCovariateColumnName)
     {
-      vY = vY + dfdCoefs[sCurrentCovariate]*frmTmp[sCurCovariateColumnName]
+      vY = vY + dfdCoefs[sCurrentCovariate]*frmTmp[[sCurCovariateColumnName]]
     } else {
       #Discontinuous data
       # Get level
@@ -279,28 +288,47 @@ funcUnTransform = NULL
   sYLabel = paste(paste("B",lsCovariateToControlForNames,sep="*",collapse="+"),"e",sep="+")
   sTitle = "Partial Residual Plot"
 
+  adCurXValues = frmTmp[[sCovariateOfInterest]]
+
+  # If not plotting metadata that was originally NA then remove the imputed values here
+  if(sCovariateOfInterest %in% names(liNaIndices)&&(length(liNaIndices[[sCovariateOfInterest]])>0))
+  {
+    adCurXValues = adCurXValues[-1*liNaIndices[[sCovariateOfInterest]]]
+    vY <- vY[-1*liNaIndices[[sCovariateOfInterest]]]
+  }
+
+  # Set the factor levels to include NA if they still exist
+  # This is so if something is not imputed, then if there are NAs they will be plotted (to show no imputing)
+  if( class( adCurXValues ) == "factor" )
+  {
+    adCurXValues = (as.character(adCurXValues))
+    adCurXValues[is.na(adCurXValues)]="NA"
+    adCurXValues = factor(adCurXValues)
+  }
+
   # If we are printing discontinuous data
   # Get the color of the box plots
   # Plot box plots
   # Plot data as strip charts
-  if(is.factor(frmTmp[[sCovariateOfInterest]]))
+  if(is.factor(adCurXValues))
   {
-    astrColors = funcGetFactorBoxColors(frmTmp[[sCovariateOfInterest]],vY,adColorMin,adColorMax,adColorMed)
+    adCurXValues = factor(adCurXValues)
+    astrColors = funcGetFactorBoxColors(adCurXValues,vY,adColorMin,adColorMax,adColorMed)
     asNames = c()
-    for(sLevel in levels(frmTmp[[sCovariateOfInterest]]))
+    for(sLevel in levels(adCurXValues))
     {
-      asNames =  c(asNames,sprintf( "%s (%d)", sLevel, sum( frmTmp[[sCovariateOfInterest]] == sLevel, na.rm = TRUE ) ))
+      asNames =  c(asNames,sprintf( "%s (%d)", sLevel, sum( adCurXValues == sLevel, na.rm = TRUE ) ))
     }
 
-    plot(frmTmp[[sCovariateOfInterest]], vY, xlab=sCovariateOfInterest, ylab=sYLabel, names=asNames, notch = TRUE,mar = adMar,col = astrColors, main=sTitle, outpch = 4, outcex = 0.5 )
-    stripchart( vY ~ frmTmp[[sCovariateOfInterest]], add = TRUE, col = astrColors, method = "jitter", vertical = TRUE, pch = 20 )
+    plot(adCurXValues, vY, xlab=sCovariateOfInterest, ylab=sYLabel, names=asNames, notch = TRUE,mar = adMar,col = astrColors, main=sTitle, outpch = 4, outcex = 0.5 )
+    stripchart( vY ~ adCurXValues, add = TRUE, col = astrColors, method = "jitter", vertical = TRUE, pch = 20 )
 
   } else {
-    plot( frmTmp[[sCovariateOfInterest]], vY[[sCovariateOfInterest]], mar = adMar, main = sTitle, xlab=sCovariateOfInterest, col = sprintf( "%s99", funcGetColor( ) ), pch = 20,ylab = sYLabel, xaxt = "s" )
+    plot( adCurXValues, vY, mar = adMar, main = sTitle, xlab=sCovariateOfInterest, col = sprintf( "%s99", funcGetColor( ) ), pch = 20,ylab = sYLabel, xaxt = "s" )
 
-    lmodLine = lm(vY[[sCovariateOfInterest]]~frmTmp[[sCovariateOfInterest]])
+    lmodLine = lm(vY~adCurXValues)
 
-    dColor <- lmodLine$coefficients[2] * mean( frmTmp[[sCovariateOfInterest]], na.rm = TRUE ) / mean( vY[[sCovariateOfInterest]], na.rm = TRUE )
+    dColor <- lmodLine$coefficients[2] * mean( adCurXValues, na.rm = TRUE ) / mean( vY, na.rm = TRUE )
     strColor <- sprintf( "%sDD", funcColor( dColor, adMax = adColorMin, adMin = adColorMax, adMed = adColorMed ) )
     abline( reg =lmodLine, col = strColor, lwd = 3 )
   }
@@ -324,8 +352,10 @@ adColorMed,
 ### Medium color in color range for markers
 adMar,
 ### Standardized margins
-funcUnTransform
+funcUnTransform,
 ### If a transform is used the opporite of that transfor must be used on the residuals in the partial residual plots
+liNaIndices = c()
+### Indices of NA data that was imputed
 ){
   #Now plot residual hat plot
   #Get coefficient names
@@ -344,5 +374,5 @@ funcUnTransform
 #  if(!length(lsOtherCoefs)){return()}
 
   # Plot residuals
-  funcResidualPlotHelper(frmTmp=frmeTmp,sResponseFeature=lsCur$taxon,lsFullModelCovariateNames=asAllColNames,lsCovariateToControlForNames=lsCur$orig,sCovariateOfInterest=lsCur$name,adColorMin, adColorMax,adColorMed, adMar, funcUnTransform)
+  funcResidualPlotHelper(frmTmp=frmeTmp,sResponseFeature=lsCur$taxon,lsFullModelCovariateNames=asAllColNames,lsCovariateToControlForNames=lsCur$orig,sCovariateOfInterest=lsCur$name, adColorMin=adColorMin, adColorMax=adColorMax, adColorMed=adColorMed, adMar=adMar, funcUnTransform=funcUnTransform, liNaIndices=liNaIndices)
 }
