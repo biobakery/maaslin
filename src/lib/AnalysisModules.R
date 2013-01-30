@@ -591,7 +591,7 @@ strRandomFormula = NULL
 
 ### Multivariate
 
-#TODO do I need to standardize?
+#TODO do I need to standardize, yes and center?
 funcLasso <- function(
 ### Perform lasso for L1 regularization and associations
 strFormula,

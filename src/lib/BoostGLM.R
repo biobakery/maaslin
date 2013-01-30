@@ -586,7 +586,7 @@ fAllvAll=FALSE
       #Make the lm formula
       #Build formula for simple mixed effects models using random covariates
       strRandomCovariatesFormula = NULL
-      #This will remove the random covariate if the covariate is boosted out, below will act as if the covariate is forced      if(length(intersect(lsRandomCovariates, astrTerms))>0)
+      #Random covariates are forced
       if(length(lsRandomCovariates)>0)
       {
         #Format for lmer
@@ -634,7 +634,7 @@ fAllvAll=FALSE
     } else {
       #If there are no selected or forced fixed covariates
       lsData$lsQCCounts$iNoTerms = lsData$lsQCCounts$iNoTerms + 1
-      return(list(adP=list(), lsSig=list(), lsQCCounts=lsData$lsQCCounts))
+      return(list(adP=adP, lsSig=lsSig, lsQCCounts=lsData$lsQCCounts))
     }
   }
 
@@ -643,7 +643,7 @@ fAllvAll=FALSE
   {
     if(length(llmod)==0)
     {
-      return(list(adP=list(), lsSig=list(), lsQCCounts=lsData$lsQCCounts))
+      return(list(adP=c(), lsSig=list(), lsQCCounts=lsData$lsQCCounts))
     } else {
       #This is performed because it is assumed that the lmod object was actually given not a lm result
       # In the previous analysis but a result that is already formatted and therefore this get result step
