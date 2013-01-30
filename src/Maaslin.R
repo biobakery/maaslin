@@ -47,6 +47,7 @@ sMethodKey
   #Insert selection methods here
   lRetMethods[[c_iSelection]] = switch(sModelSelectionKey,
     boost = funcBoostModel,
+    lasso = funcLassoModel,
     forward = funcForwardModel,
     backward = funcBackwardsModel,
     none = NA)
@@ -66,7 +67,6 @@ sMethodKey
     neg_binomial = funcBinomialMult,
     quasi = funcQuasiMult,
     univariate = funcDoUnivariate,
-    lasso = funcLasso,
     lm = funcLM,
     none = NA)
 
@@ -75,7 +75,6 @@ sMethodKey
     neg_binomial = funcGetLMResults,
     quasi = funcGetLMResults,
     univariate = NA,
-    lasso = funcGetLassoResults,
     lm = funcGetLMResults,
     none = NA)
 
@@ -228,13 +227,13 @@ strInputTSV <- lsArgs$args[2]
 # Get analysis method options
 # includes data transformations, model selection/regularization, regression models/links
 lsArgs$options$strModelSelection = tolower(lsArgs$options$strModelSelection)
-if(!lsArgs$options$strModelSelection %in% c("none","boost","forward","backward"))
+if(!lsArgs$options$strModelSelection %in% c("none","boost","lasso","forward","backward"))
 {
   logerror(paste("Received an invalid value for the selection argument, received '",lsArgs$options$strModelSelection,"'"), c_logrMaaslin)
   stop( print_help( pArgs ) )
 }
 lsArgs$options$strMethod = tolower(lsArgs$options$strMethod)
-if(!lsArgs$options$strMethod %in% c("univariate","lm","lasso","neg_binomial","quasi"))
+if(!lsArgs$options$strMethod %in% c("univariate","lm","neg_binomial","quasi"))
 {
   logerror(paste("Received an invalid value for the method argument, received '",lsArgs$options$strMethod,"'"), c_logrMaaslin)
   stop( print_help( pArgs ) )
@@ -244,12 +243,6 @@ if(!lsArgs$options$strTransform %in% c("none","asinsqrt"))
 {
   logerror(paste("Received an invalid value for the transform/link argument, received '",lsArgs$options$strTransform,"'"), c_logrMaaslin)
   stop( print_help( pArgs ) )
-}
-# If lasso is selected, do not use a regularization technique. This will happen in the lasso call
-if(lsArgs$options$strMethod == "lasso")
-{
-  logdebug(paste("Lasso was selected so no model selection will occure outside the lasso procedure."), c_logrMaaslin)
-  lsArgs$options$strModelSelection = "none"
 }
 
 # Get analysis modules

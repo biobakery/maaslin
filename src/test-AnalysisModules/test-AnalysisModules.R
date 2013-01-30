@@ -312,10 +312,6 @@ lsSig[[1]]$std = sd(x)
 lsSig[[1]]$allCoefs = vdCoef
 lsQCCounts = list()
 ret1 = funcWilcoxon(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=NULL)
-print("ret1")
-print(ret1)
-print("list(adP=round(c(0.55555556),5),lsSig=lsSig,lsQCCounts=list())")
-print(list(adP=round(c(0.55555556),5),lsSig=lsSig,lsQCCounts=list()))
 ret1$adP = round(ret1$adP,5)
 test_that("Test that the wilcoxon test has the correct results for 1 covariate.",{
   expect_equal(ret1,list(adP=round(c(0.55555556),5),lsSig=lsSig,lsQCCounts=list()))
@@ -381,10 +377,15 @@ vdCoef = c(Covariate1=0.6)
 lsSig[[1]]$value = vdCoef
 lsSig[[1]]$std = sd(frmeTmp[["Covariate1"]])
 lsSig[[1]]$allCoefs = vdCoef
-ret1 = funcDoUnivariate(strFormula="adCur ~ Covariate1",frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=list(),strRandomFormula=NULL)
-ret2 = funcDoUnivariate(strFormula=NULL,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=list(),strRandomFormula="adCur ~ 1|Covariate1")
+lsHistory = list(adP=c(), lsSig=c(),lsQCCounts=list())
+ret1 = funcDoUnivariate(strFormula="adCur ~ Covariate1",frmeTmp=frmeTmp,iTaxon=iTaxon, lsHistory=lsHistory, strRandomFormula=NULL)
+ret2 = funcDoUnivariate(strFormula=NULL,frmeTmp=frmeTmp,iTaxon=iTaxon, lsHistory=lsHistory, strRandomFormula="adCur ~ 1|Covariate1")
 ret1$adP = round(ret1$adP,5)
 ret2$adP = round(ret2$adP,5)
+print("ret1")
+print(ret1)
+print("list(adP=round(c(0.09679784),5),lsSig=lsSig,lsQCCounts=list())")
+print(list(adP=round(c(0.09679784),5),lsSig=lsSig,lsQCCounts=list()))
 test_that("2. Test that the funcMakeContrasts works on a continuous variable.",{
   expect_equal(ret1,list(adP=round(c(0.09679784),5),lsSig=lsSig,lsQCCounts=list()))
   expect_equal(ret2,list(adP=round(c(0.09679784),5),lsSig=lsSig,lsQCCounts=list()))
@@ -400,8 +401,8 @@ vdCoef = c(Covariate2=0.46666667)
 lsSig[[2]]$value = vdCoef
 lsSig[[2]]$std = sd(frmeTmp[["Covariate2"]])
 lsSig[[2]]$allCoefs = vdCoef
-ret1 = funcDoUnivariate(strFormula="adCur ~ Covariate1 + Covariate2",frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=list(),strRandomFormula=NULL)
-ret2 = funcDoUnivariate(strFormula=NULL,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=list(),strRandomFormula="adCur ~ 1|Covariate1 + 1|Covariate2")
+ret1 = funcDoUnivariate(strFormula="adCur ~ Covariate1 + Covariate2",frmeTmp=frmeTmp,iTaxon=iTaxon, lsHistory=lsHistory,strRandomFormula=NULL)
+ret2 = funcDoUnivariate(strFormula=NULL,frmeTmp=frmeTmp,iTaxon=iTaxon, lsHistory=lsHistory, strRandomFormula="adCur ~ 1|Covariate1 + 1|Covariate2")
 ret1$adP = round(ret1$adP,5)
 ret2$adP = round(ret2$adP,5)
 test_that("Test that the funcMakeContrasts works on 2 continuous variables.",{
@@ -420,8 +421,8 @@ vdCoef = c(Covariate4=5)
 lsSig[[1]]$value = vdCoef
 lsSig[[1]]$std = sd(frmeTmp[["Covariate4"]])
 lsSig[[1]]$allCoefs = vdCoef
-ret1 = funcDoUnivariate(strFormula="adCur ~ Covariate4",frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=list(),strRandomFormula=NULL)
-ret2 = funcDoUnivariate(strFormula=NULL,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=list(),strRandomFormula="adCur ~ 1|Covariate4")
+ret1 = funcDoUnivariate(strFormula="adCur ~ Covariate4",frmeTmp=frmeTmp,iTaxon=iTaxon, lsHistory=lsHistory,strRandomFormula=NULL)
+ret2 = funcDoUnivariate(strFormula=NULL,frmeTmp=frmeTmp,iTaxon=iTaxon, lsHistory=lsHistory, strRandomFormula="adCur ~ 1|Covariate4")
 ret1$adP = round(ret1$adP,5)
 ret2$adP = round(ret2$adP,5)
 test_that("Test that the funcMakeContrasts works on 1 factor covariate with 2 levels.",{
@@ -439,9 +440,9 @@ vdCoef = c(Covariate5=8)
 lsSig[[2]]$value = vdCoef
 lsSig[[2]]$std = sd(frmeTmp[["Covariate5"]])
 lsSig[[2]]$allCoefs = vdCoef
-ret1 = funcDoUnivariate(strFormula="adCur ~ Covariate4 + Covariate5",frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=list(),strRandomFormula=NULL)
-ret2 = funcDoUnivariate(strFormula=NULL,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=list(),strRandomFormula="adCur ~ 1|Covariate4 + 1|Covariate5")
-ret3 = funcDoUnivariate(strFormula="adCur ~ Covariate4",frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=list(),strRandomFormula="adCur ~ 1|Covariate5")
+ret1 = funcDoUnivariate(strFormula="adCur ~ Covariate4 + Covariate5",frmeTmp=frmeTmp,iTaxon=iTaxon, lsHistory=lsHistory, strRandomFormula=NULL)
+ret2 = funcDoUnivariate(strFormula=NULL,frmeTmp=frmeTmp,iTaxon=iTaxon, lsHistory=lsHistory, strRandomFormula="adCur ~ 1|Covariate4 + 1|Covariate5")
+ret3 = funcDoUnivariate(strFormula="adCur ~ Covariate4",frmeTmp=frmeTmp,iTaxon=iTaxon, lsHistory=lsHistory, strRandomFormula="adCur ~ 1|Covariate5")
 ret1$adP = round(ret1$adP,5)
 ret2$adP = round(ret2$adP,5)
 ret3$adP = round(ret3$adP,5)
@@ -473,9 +474,9 @@ vdCoef = c(Covariate1=0.6)
 lsSig[[2]]$value = vdCoef
 lsSig[[2]]$std = sd(frmeTmp[["Covariate1"]])
 lsSig[[2]]$allCoefs = vdCoef
-ret1 = funcDoUnivariate(strFormula="adCur ~ Covariate4 + Covariate1",frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=list(),strRandomFormula=NULL)
-ret2 = funcDoUnivariate(strFormula=NULL,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=list(),strRandomFormula="adCur ~ 1|Covariate4 + 1|Covariate1")
-ret3 = funcDoUnivariate(strFormula="adCur ~ Covariate4",frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=list(),strRandomFormula="adCur ~ 1|Covariate1")
+ret1 = funcDoUnivariate(strFormula="adCur ~ Covariate4 + Covariate1",frmeTmp=frmeTmp,iTaxon=iTaxon, lsHistory=lsHistory, strRandomFormula=NULL)
+ret2 = funcDoUnivariate(strFormula=NULL,frmeTmp=frmeTmp,iTaxon=iTaxon, lsHistory=lsHistory, strRandomFormula="adCur ~ 1|Covariate4 + 1|Covariate1")
+ret3 = funcDoUnivariate(strFormula="adCur ~ Covariate4",frmeTmp=frmeTmp,iTaxon=iTaxon, lsHistory=lsHistory, strRandomFormula="adCur ~ 1|Covariate1")
 ret1$adP = round(ret1$adP,5)
 ret2$adP = round(ret2$adP,5)
 ret3$adP = round(ret3$adP,5)
@@ -529,9 +530,9 @@ vdCoef = c(Covariate2=0.46666667)
 lsSig[[4]]$value = vdCoef
 lsSig[[4]]$std = sd(frmeTmp[["Covariate2"]])
 lsSig[[4]]$allCoefs = vdCoef
-ret1 = funcDoUnivariate(strFormula="adCur ~ Covariate3 + Covariate1 + Covariate2",frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=list(),strRandomFormula=NULL)
-ret2 = funcDoUnivariate(strFormula=NULL,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=list(),strRandomFormula="adCur ~ 1|Covariate3 + 1|Covariate1 + 1|Covariate2")
-ret3 = funcDoUnivariate(strFormula="adCur ~ Covariate3 + Covariate1",frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=list(),strRandomFormula="adCur ~ 1|Covariate2")
+ret1 = funcDoUnivariate(strFormula="adCur ~ Covariate3 + Covariate1 + Covariate2",frmeTmp=frmeTmp,iTaxon=iTaxon, lsHistory=lsHistory, strRandomFormula=NULL)
+ret2 = funcDoUnivariate(strFormula=NULL,frmeTmp=frmeTmp,iTaxon=iTaxon, lsHistory=lsHistory, strRandomFormula="adCur ~ 1|Covariate3 + 1|Covariate1 + 1|Covariate2")
+ret3 = funcDoUnivariate(strFormula="adCur ~ Covariate3 + Covariate1",frmeTmp=frmeTmp,iTaxon=iTaxon, lsHistory=lsHistory, strRandomFormula="adCur ~ 1|Covariate2")
 ret1$adP = round(ret1$adP,5)
 ret2$adP = round(ret2$adP,5)
 ret3$adP = round(ret3$adP,5)
@@ -563,9 +564,9 @@ vdCoef = c(Covariate2=0.46666667)
 lsSig[[2]]$value = vdCoef
 lsSig[[2]]$std = sd(frmeTmp[["Covariate2"]])
 lsSig[[2]]$allCoefs = vdCoef
-ret1 = funcDoUnivariate(strFormula="adCur ~ Covariate4 + Covariate2",frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=list(),strRandomFormula=NULL)
-ret2 = funcDoUnivariate(strFormula=NULL,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=list(),strRandomFormula="adCur ~ 1|Covariate4 + 1|Covariate2")
-ret3 = funcDoUnivariate(strFormula= "adCur ~ Covariate4",frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=list(),strRandomFormula="adCur ~ 1|Covariate2")
+ret1 = funcDoUnivariate(strFormula="adCur ~ Covariate4 + Covariate2",frmeTmp=frmeTmp,iTaxon=iTaxon, lsHistory=lsHistory, strRandomFormula=NULL)
+ret2 = funcDoUnivariate(strFormula=NULL,frmeTmp=frmeTmp,iTaxon=iTaxon, lsHistory=lsHistory, strRandomFormula="adCur ~ 1|Covariate4 + 1|Covariate2")
+ret3 = funcDoUnivariate(strFormula= "adCur ~ Covariate4",frmeTmp=frmeTmp,iTaxon=iTaxon, lsHistory=lsHistory, strRandomFormula="adCur ~ 1|Covariate2")
 ret1$adP = round(ret1$adP,5)
 ret2$adP = round(ret2$adP,5)
 ret3$adP = round(ret3$adP,5)
@@ -619,8 +620,8 @@ vdCoef = c(Covariate2=0.46666667)
 lsSig[[4]]$value = vdCoef
 lsSig[[4]]$std = sd(frmeTmp[["Covariate2"]])
 lsSig[[4]]$allCoefs = vdCoef
-ret1 = funcDoUnivariate(strFormula="adCur ~ Covariate4 + Covariate3 + Covariate2",frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=list(),strRandomFormula=NULL)
-ret2 = funcDoUnivariate(strFormula=NULL,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=list(),strRandomFormula="adCur ~ 1|Covariate4 +1|Covariate3 + 1|Covariate2") 
+ret1 = funcDoUnivariate(strFormula="adCur ~ Covariate4 + Covariate3 + Covariate2",frmeTmp=frmeTmp,iTaxon=iTaxon, lsHistory=lsHistory, strRandomFormula=NULL)
+ret2 = funcDoUnivariate(strFormula=NULL,frmeTmp=frmeTmp,iTaxon=iTaxon, lsHistory=lsHistory, strRandomFormula="adCur ~ 1|Covariate4 +1|Covariate3 + 1|Covariate2") 
 ret1$adP = round(ret1$adP,5)
 ret2$adP = round(ret2$adP,5)
 test_that("Test that the funcMakeContrasts works on 1 factor covariate with 2 levels , 1 factor with 3 levels, and a continuous variable.",{
@@ -644,34 +645,34 @@ frmeTmp = data.frame(Covariate1=x, Covariate2=x2, FCovariate3=xf1, FCovariate4=x
 iTaxon = 5
 lmRet = lm(as.formula(strFormula), data=frmeTmp, na.action = c_strNA_Action)
 test_that("Test that the lm has the correct results for 1 covariate.",{
-  expect_equal(funcLM(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
+  expect_equal(funcLM(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsHistory=lsHistory,strRandomFormula=strRandomFormula),lmRet)
 })
 #Test for correct call for 2 covariates
 strFormula = "adCur ~ Covariate1 + Covariate2"
 lmRet = lm(as.formula(strFormula), data=frmeTmp, na.action = c_strNA_Action)
 test_that("Test that the lm has the correct results for 2 covariates.",{
-  expect_equal(funcLM(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
+  expect_equal(funcLM(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsHistory=lsHistory,strRandomFormula=strRandomFormula),lmRet)
 })
 ##Test for correct call with 1 random and one fixed covariate
 #strFormula = "adCur ~ Covariate1"
 #strRandomFormula = "~1|FCovariate3"
 #lmRet = glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=gaussian(link="identity"), data=frmeTmp)
 #test_that("Test that the lm has the correct results for 1 random and one fixed covariate.",{
-#  expect_equal(funcLM(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
+#  expect_equal(funcLM(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsHistory=lsHistory,strRandomFormula=strRandomFormula),lmRet)
 #})
 ##Test for correct call with 1 random and 2 fixed covariates
 #strFormula = "adCur ~ Covariate1 + Covariate2"
 #strRandomFormula = "~1|FCovariate3"
 #lmRet = glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=gaussian(link="identity"), data=frmeTmp)
 #test_that("Test that the lm has the correct results for 1 random and 2 fixed covariates.",{
-#  expect_equal(funcLM(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
+#  expect_equal(funcLM(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsHistory=lsHistory,strRandomFormula=strRandomFormula),lmRet)
 #})
 ##Test for correct call with 2 random and 1 fixed covariates
 #strFormula = "adCur ~ Covariate1"
 #strRandomFormula = "~1|FCovariate4+1|FCovariate3"
 #lmRet = glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=gaussian(link="identity"), data=frmeTmp)
 #test_that("Test that the lm has the correct results for 2 random and 1 fixed covariates.",{
-#  expect_equal(funcLM(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
+#  expect_equal(funcLM(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsHistory=lsHistory,strRandomFormula=strRandomFormula),lmRet)
 #})
 
 
@@ -686,35 +687,35 @@ frmeTmp = data.frame(Covariate1=x, Covariate2=x2, FCovariate3=xf1, FCovariate4=x
 iTaxon = 5
 lmRet = glm(as.formula(strFormula), family=binomial(link=logit), data=frmeTmp, na.action=c_strNA_Action)
 test_that("Test that the neg binomial regression has the correct results for 1 covariate.",{
-  expect_equal(funcBinomialMult(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
+  expect_equal(funcBinomialMult(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsHistory=lsHistory,strRandomFormula=strRandomFormula),lmRet)
 })
 #Test for correct call for 2 covariates
 strFormula = "adCur ~ Covariate1 + Covariate2"
 iTaxon = 5
 lmRet = glm(as.formula(strFormula), family=binomial(link=logit), data=frmeTmp, na.action=c_strNA_Action)
 test_that("Test that the neg binomial regression has the correct results for 2 covariates.",{
-  expect_equal(funcBinomialMult(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
+  expect_equal(funcBinomialMult(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsHistory=lsHistory,strRandomFormula=strRandomFormula),lmRet)
 })
 ##Test for correct call with 1 random and one fixed covariate
 #strFormula = "adCur ~ Covariate1"
 #strRandomFormula = "~1|FCovariate3"
 #lmRet = glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=binomial(link=logit), data=frmeTmp)
 #test_that("Test that the lm has the correct results for 1 random and one fixed covariate.",{
-#  expect_equal(funcBinomialMult(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
+#  expect_equal(funcBinomialMult(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsHistory=lsHistory,strRandomFormula=strRandomFormula),lmRet)
 #})
 ##Test for correct call with 1 random and 2 fixed covariates
 #strFormula = "adCur ~ Covariate1 + Covariate2"
 #strRandomFormula = "~1|FCovariate3"
 #lmRet = glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=binomial(link=logit), data=frmeTmp)
 #test_that("Test that the lm has the correct results for 1 random and 2 fixed covariates.",{
-#  expect_equal(funcBinomialMult(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
+#  expect_equal(funcBinomialMult(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsHistory=lsHistory,strRandomFormula=strRandomFormula),lmRet)
 #})
 ##Test for correct call with 2 random and 1 fixed covariates
 #strFormula = "adCur ~ Covariate1"
 #strRandomFormula = "~1|FCovariate4+1|FCovariate3"
 #lmRet = glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=binomial(link=logit), data=frmeTmp)
 #test_that("Test that the lm has the correct results for 2 random and 1 fixed covariates.",{
-#  expect_equal(funcBinomialMult(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
+#  expect_equal(funcBinomialMult(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsHistory=lsHistory,strRandomFormula=strRandomFormula),lmRet)
 #})
 
 
@@ -729,35 +730,35 @@ frmeTmp = data.frame(Covariate1=x, Covariate2=x2, FCovariate3=xf1, FCovariate4=x
 iTaxon = 5
 lmRet = glm(as.formula(strFormula), family=quasipoisson, data=frmeTmp, na.action=c_strNA_Action)
 test_that("Test that the quasi poisson has the correct results for 1 covariate.",{
-  expect_equal(funcQuasiMult(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
+  expect_equal(funcQuasiMult(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsHistory=lsHistory,strRandomFormula=strRandomFormula),lmRet)
 })
 #Test for correct call for 2 covariates
 strFormula = "adCur ~ Covariate1 + Covariate2"
 iTaxon = 5
 lmRet = glm(as.formula(strFormula), family=quasipoisson, data=frmeTmp, na.action=c_strNA_Action)
 test_that("Test that the quasi poisson has the correct results for 2 covariates.",{
-  expect_equal(funcQuasiMult(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
+  expect_equal(funcQuasiMult(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsHistory=lsHistory,strRandomFormula=strRandomFormula),lmRet)
 })
 ##Test for correct call with 1 random and one fixed covariate
 #strFormula = "adCur ~ Covariate1"
 #strRandomFormula = "~1|FCovariate3"
 #lmRet = glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=quasipoisson, data=frmeTmp)
 #test_that("Test that the lm has the correct results for 1 random and one fixed covariate.",{
-#  expect_equal(funcQuasiMult(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
+#  expect_equal(funcQuasiMult(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsHistory=lsHistory,strRandomFormula=strRandomFormula),lmRet)
 #})
 ##Test for correct call with 1 random and 2 fixed covariates
 #strFormula = "adCur ~ Covariate1 + Covariate2"
 #strRandomFormula = "~1|FCovariate3"
 #lmRet = glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=quasipoisson, data=frmeTmp)
 #test_that("Test that the lm has the correct results for 1 random and 2 fixed covariates.",{
-#  expect_equal(funcQuasiMult(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
+#  expect_equal(funcQuasiMult(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsHistory=lsHistory,strRandomFormula=strRandomFormula),lmRet)
 #})
 ##Test for correct call with 2 random and 1 fixed covariates
 #strFormula = "adCur ~ Covariate1"
 #strRandomFormula = "~1|FCovariate4+1|FCovariate3"
 #lmRet = glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=quasipoisson, data=frmeTmp)
 #test_that("Test that the lm has the correct results for 2 random and 1 fixed covariates.",{
-#  expect_equal(funcQuasiMult(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsQCCounts=lsQCCounts,strRandomFormula=strRandomFormula),lmRet)
+#  expect_equal(funcQuasiMult(strFormula=strFormula,frmeTmp=frmeTmp,iTaxon=iTaxon,lsHistory=lsHistory,strRandomFormula=strRandomFormula),lmRet)
 #})
 
 

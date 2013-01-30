@@ -281,7 +281,7 @@ strData,
 dFreq,
 ### 
 dSig,
-### Signifcance threshold for the qvalue cut off
+### Significance threshold for the qvalue cut off
 dMinSamp,
 ### Minimum number of samples
 fInvert=FALSE,
@@ -626,7 +626,7 @@ fAllvAll=FALSE
       for( strAnalysisFormula in vstrFormula )
       {
         i = length(llmod)+1
-        llmod[[i]] = funcAnalysis(strFormula=strAnalysisFormula, frmeTmp=frmeTmp, iTaxon=iTaxon, lsQCCounts=lsData$lsQCCounts, strRandomFormula=strRandomCovariatesFormula)
+        llmod[[i]] = funcAnalysis(strFormula=strAnalysisFormula, frmeTmp=frmeTmp, iTaxon=iTaxon, lsHistory=list(adP=adP, lsSig=lsSig, lsQCCounts=lsData$lsQCCounts), strRandomFormula=strRandomCovariatesFormula)
         liTaxon[[i]] = iTaxon
         # TODO, ignoring Random covariates here (they are not additional tests are they?) check fdr
         lastrTerms[[i]] = funcFormulaStrToList(strAnalysisFormula)
@@ -643,14 +643,14 @@ fAllvAll=FALSE
   {
     if(length(llmod)==0)
     {
-      return(list(adP=c(), lsSig=list(), lsQCCounts=lsData$lsQCCounts))
+      return(list(adP=adP, lsSig=lsSig, lsQCCounts=lsData$lsQCCounts))
     } else {
-      #This is performed because it is assumed that the lmod object was actually given not a lm result
+      #This is performed because it is assumed that the lmod object was actually not given as a lm result
       # In the previous analysis but a result that is already formatted and therefore this get result step
       # Is not needed, this is how the univariates work. If this is not the case, the switch in Maaslin.R
       # Should be updated with the function that will translate the analysis results to the return value of
       # this function. For an example, see how the lm results are handled in the switch and in the AnalysisModules.R
-      return(lmod)
+      return(llmod)
     }
   }
   #Format the results to a consistent expected result.

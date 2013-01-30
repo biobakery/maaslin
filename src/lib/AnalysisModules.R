@@ -301,7 +301,7 @@ lastrCols
 
 ### Options for variable selection 
 
-#TODO# make sure the qvuale are made of the right number, univariate case has more comparisons
+#TODO# make sure the qvalue are made of the right number, univariate case has more comparisons
 # I now dummy the variable levels and have a pvalue for each. Should be ok.
 
 # OK
@@ -362,6 +362,26 @@ strLog
   } else { astrTerms = lsForcedParameters }
   return(unique(c(astrTerms,lsForcedParameters)))
   ### Return a vector of predictor names to use in a reduced model
+}
+
+#TODO do I need to standardize, yes and center?
+funcLassoModel <- function(
+### Perform lasso for L1 regularization for variable selection
+strFormula,
+### The formula of the full model before boosting
+frmeTmp,
+### The data on which to perform analysis
+adCur,
+### The response data
+lsParameters,
+### User controlled parameters needed specific to boosting
+lsForcedParameters = NULL,
+### Force these predictors to be in the model
+strLog
+### File to which to document logging
+){
+  print("LASSO NOT IMPLEMENTED")
+  return(c())
 }
 
 # OK
@@ -438,7 +458,7 @@ strLog
 ### Analysis methods
 ### Univariate options
 
-# GUnifrac
+# Sparse Dir. Model
 #TODO# Implemented in sfle
 
 # Tested
@@ -550,14 +570,11 @@ frmeTmp,
 ### Data on which to perform analysis
 iTaxon,
 ### Index of the response data
-lsQCCounts,
-### List recording anything important to QC
+lsHistory,
+### List recording p-values, association information, and QC counts
 strRandomFormula = NULL
 ### Has the formula for random covariates
 ){
-  # List of results
-  lsUnivariateResults = list(adP=c(), lsSig=list(), lsQCCounts=list())
-
   # Get covariates
   astrCovariates = unique(c(funcFormulaStrToList(strFormula),funcFormulaStrToList(strRandomFormula)))
   # For each covariate
@@ -573,54 +590,23 @@ strRandomFormula = NULL
       ## If 2 levels do wilcoxon test
       if(length(lsDataLevels) < 3)
       {
-        lsRet = funcWilcoxon(strFormula=paste("adCur",sCovariate,sep=" ~ "), frmeTmp=frmeTmp, iTaxon=iTaxon, lsQCCounts=lsQCCounts)
+        lsRet = funcWilcoxon(strFormula=paste("adCur",sCovariate,sep=" ~ "), frmeTmp=frmeTmp, iTaxon=iTaxon, lsQCCounts=lsHistory$lsQCCounts)
       } else {
       ## If 3 or more levels do kruskal wallis test
-        lsRet = funcKruskalWallis(strFormula=paste("adCur",sCovariate,sep=" ~ "), frmeTmp=frmeTmp, iTaxon=iTaxon, lsQCCounts=lsQCCounts)
+        lsRet = funcKruskalWallis(strFormula=paste("adCur",sCovariate,sep=" ~ "), frmeTmp=frmeTmp, iTaxon=iTaxon, lsQCCounts=lsHistory$lsQCCounts)
       }
     } else {
       ## If not discrete do spearman test (list(adP=adP, lsSig=lsSig, lsQCCounts=lsQCCounts))
-      lsRet = funcSpearman(strFormula=paste("adCur",sCovariate,sep=" ~ "), frmeTmp=frmeTmp, iTaxon=iTaxon, lsQCCounts=lsQCCounts)
+      lsRet = funcSpearman(strFormula=paste("adCur",sCovariate,sep=" ~ "), frmeTmp=frmeTmp, iTaxon=iTaxon, lsQCCounts=lsHistory$lsQCCounts)
     }
-    lsUnivariateResults[["adP"]] = c(lsUnivariateResults[["adP"]], lsRet[["adP"]])
-    lsUnivariateResults[["lsSig"]] = c(lsUnivariateResults[["lsSig"]], lsRet[["lsSig"]])
-    lsUnivariateResults[["lsQCCounts"]] = c(lsRet[["lsQCCounts"]])
+    lsHistory[["adP"]] = c(lsHistory[["adP"]], lsRet[["adP"]])
+    lsHistory[["lsSig"]] = c(lsHistory[["lsSig"]], lsRet[["lsSig"]])
+    lsHistory[["lsQCCounts"]] = c(lsHistory[["lsQCCounts"]],lsRet[["lsQCCounts"]])
   }
-  return(lsUnivariateResults)
+  return(lsHistory)
 }
 
 ### Multivariate
-
-#TODO do I need to standardize, yes and center?
-funcLasso <- function(
-### Perform lasso for L1 regularization and associations
-strFormula,
-### lm style string defining reponse and predictors, for mixed effects models this holds the fixed variables
-frmeTmp,
-### Data on which to perform analysis
-iTaxon,
-### Index of the response data
-lsQCCounts,
-### List recording anything important to QC
-strRandomFormula = NULL
-### Has the formula for random covariates
-){
-  adCur = frmeTmp[,iTaxon]
-  if(!is.null(strRandomFormula))
-  {
-    #TODO
-    #Maybe use the lasso mixed effects model in the glmmLasso package?Émake sure we can get p-values...
-    #glmmLasso(fix=formula, rnd=formula, data, lambda, family = NULL, control = list())
-    print("Currently the glmm Lasso is not implemented..TODO")
-    return(NA)
-  } else {
-    #May need to change this, currently can not find the coef p-values (coefficients/coef does work however just no p-value)
-    
-#    glmnet(x=,y=,family="gaussian")
-    return(try(penalized(response=adCur, penalized=as.formula(strFormula), lambda1=1, data=frmeTmp, standardize=TRUE)))
-  }
-  ### lmod result object from lasso lm (lambda 1 = L1 = lasso (covariates weighted to 0), lambda 2 = L2 = ridge (covariates not weighted to 0), both = elastic net)
-}
 
 # Tested
 funcLM <- function(
@@ -631,8 +617,8 @@ frmeTmp,
 ### Data on which to perform analysis
 iTaxon,
 ### Index of the response data
-lsQCCounts,
-### List recording anything important to QC
+lsHistory,
+### List recording p-values, association information, and QC counts
 strRandomFormula = NULL
 ### Has the formula for random covariates
 ){
@@ -657,8 +643,8 @@ frmeTmp,
 ### Data on which to perform analysis
 iTaxon,
 ### Index of the response data
-lsQCCounts,
-### List recording anything important to QC
+lsHistory,
+### List recording p-values, association information, and QC counts
 strRandomFormula = NULL
 ### Has the formula for random covariates
 ){
@@ -684,8 +670,8 @@ frmeTmp,
 ### Data on which to perform analysis
 iTaxon,
 ### Index of the response data
-lsQCCounts,
-### List recording anything important to QC
+lsHistory,
+### List recording p-values, association information, and QC counts
 strRandomFormula = NULL
 ### Has the formula for random covariates
 ){
