@@ -38,6 +38,8 @@ suppressMessages(library( MASS, warn.conflicts=FALSE, quietly=TRUE, verbose=FALS
 suppressMessages(library( gam, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
 # Needed for boosting
 suppressMessages(library( gbm, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
+# Needed for LASSO
+suppressMessages(library( glmnet, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
 # Needed for mixed models
 #suppressMessages(library( lme4, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
 suppressMessages(library( nlme, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
@@ -68,6 +70,7 @@ lsQCCounts
   ### The name of the taxon (data row) that is being associated (always assumed to be numeric)
   #Get test comparisons (predictor names from formula string)
   asComparisons  = unique(c(funcFormulaStrToList(strFormula),funcFormulaStrToList(strRandomFormula)))
+
   #Change metadata in formula to univariate comparisons
   for(sComparison in asComparisons)
   {
@@ -142,6 +145,39 @@ strLog
   ### Vector of string predictor names
 }
 
+funcGetUnivariateResults <- function
+### Reduce the list of list of results to the correct format
+( llmod,
+### The list of univariate models
+frmeData,
+### Data analysis is performed on
+liTaxon,
+### The response id
+dSig,
+### Significance level for q-values
+adP,
+### List of pvalues from all associations performed
+lsSig,
+### List of information from the lm containing, metadata name, metadatda name (as a factor level if existing as such), Taxon feature name, Taxon data / response, All levels, Metadata values, Current coeficient value, Standard deviation, Model coefficients
+strLog,
+### File to which to document logging
+lsQCCounts,
+### Records of counts associated with quality control
+lastrCols,
+### Predictors used in the association
+asSuppressCovariates=c()
+### Vector of covariates to suppress and not give results for
+){
+  adP = c()
+  lsSig = list()
+  for(lmod in llmod)
+  {
+    adP = c(adP,lmod$adP)
+    lsSig = c(lsSig,lmod$lsSig)
+  }
+  return(list(adP=adP, lsSig=lsSig, lsQCCounts=llmod[length(llmod)]$lsQCCounts))
+}
+
 # OK
 funcGetLMResults <- function
 ### Reduce the lm object return to just the data needed for further analysis
@@ -161,8 +197,10 @@ strLog,
 ### File to which to document logging
 lsQCCounts,
 ### Records of counts associated with quality control
-lastrCols
+lastrCols,
 ### Predictors used in the association
+asSuppressCovariates=c()
+### Vector of covariates to suppress and not give results for
 ){
   #TODO are we updating the QCCounts?
   #TODO add in to summary or somewhere
@@ -194,7 +232,6 @@ lastrCols
       if( class( lsSum ) == "try-error" )
       {
         next
-#        return( list(adP=adP, lsSig=lsSig, lsQCCounts=lsQCCounts) )
       }
 
       #Write summary information to log file
@@ -242,6 +279,8 @@ lastrCols
         strOrig = astrRows[iMetadata]
         #Skip y interscept
         if( strOrig %in% c("(Intercept)", "Intercept", "Log(theta)") ) { next }
+        #Skip suppressed covariates
+        if( funcCoef2Col(strOrig,frmeData) %in% asSuppressCovariates){next}
 
         #Extract pvalue and std in standard model
         dP = frmeCoefs[strOrig, iPValuePosition]
@@ -300,10 +339,6 @@ lastrCols
 }
 
 ### Options for variable selection 
-
-#TODO# make sure the qvalue are made of the right number, univariate case has more comparisons
-# I now dummy the variable levels and have a pvalue for each. Should be ok.
-
 # OK
 funcBoostModel <- function(
 ### Perform model selection / regularization with boosting
@@ -364,9 +399,11 @@ strLog
   ### Return a vector of predictor names to use in a reduced model
 }
 
-#TODO do I need to standardize, yes and center?
-funcLassoModel <- function(
-### Perform lasso for L1 regularization for variable selection
+#Glmnet default is to standardize the variables.
+#used as an example for implementation
+#http://r.789695.n4.nabble.com/estimating-survival-times-with-glmnet-and-coxph-td4614225.html
+funcPenalizedModel <- function(
+### Perform penalized regularization for variable selection
 strFormula,
 ### The formula of the full model before boosting
 frmeTmp,
@@ -380,8 +417,19 @@ lsForcedParameters = NULL,
 strLog
 ### File to which to document logging
 ){
-  print("LASSO NOT IMPLEMENTED")
-  return(c())
+  #Convert the data frame to a model matrix
+  mtrxDesign = model.matrix(as.formula(strFormula), data=frmeTmp)
+
+  #Cross validate the lambda
+  cvRet = cv.glmnet(x=mtrxDesign,y=adCur,alpha=lsParameters$dPAlpha)
+
+  #Perform lasso
+  glmnetMod = glmnet(x=mtrxDesign,y=adCur,family=lsParameters$family,alpha=lsParameters$dPAlpha,lambda=cvRet$lambda.min)
+
+  #Get non zero beta and return column names for covariate names.
+  ldBeta = glmnetMod$beta[,which.max(glmnetMod$dev.ratio)]
+  ldBeta = names(ldBeta[which(abs(ldBeta)>0)])
+  return(sapply(ldBeta,funcCoef2Col,frmeData=frmeTmp))
 }
 
 # OK
@@ -459,7 +507,7 @@ strLog
 ### Univariate options
 
 # Sparse Dir. Model
-#TODO# Implemented in sfle
+#TODO# Implement in sfle
 
 # Tested
 # Correlation
@@ -542,6 +590,7 @@ strRandomFormula = NULL
     {
       retList = list()
       lmodKW = kruskal(adCur,dfData[[x]],group=FALSE,p.adj="holm")
+
       asLevels = levels(dfData[[x]])
       # The names of the generated comparisons, sometimes the control is first sometimes it is not so
       # We will just check which is in the names and use that
@@ -552,8 +601,9 @@ strRandomFormula = NULL
         sComparison = intersect(c(paste(asLevels[1],sLevel,sep=" - "),paste(sLevel,asLevels[1],sep=" - ")),asComparisons)
         #Returning NA for the coef in a named vector
         vdCoef = c()
-        vdCoef[[paste(x,sLevel,sep="")]]=NA
-        retList[[length(retList)+1]]=list(p.value=lmodKW$comparisons[sComparison,"p.value"],SD=NA,name=paste(x,sLevel,sep=""),coef=vdCoef)
+        vdCoef[[paste(x,sLevel,sep="")]]=lmodKW$comparisons[sComparison,"Difference"]
+#        vdCoef[[paste(x,sLevel,sep="")]]=NA
+        retList[[length(retList)+1]]=list(p.value=lmodKW$comparisons[sComparison,"p.value"],SD=1.0,name=paste(x,sLevel,sep=""),coef=vdCoef)
       }
       return(retList)
     }, lsQCCounts))
@@ -577,6 +627,7 @@ strRandomFormula = NULL
 ){
   # Get covariates
   astrCovariates = unique(c(funcFormulaStrToList(strFormula),funcFormulaStrToList(strRandomFormula)))
+
   # For each covariate
   for(sCovariate in astrCovariates)
   {
@@ -601,7 +652,7 @@ strRandomFormula = NULL
     }
     lsHistory[["adP"]] = c(lsHistory[["adP"]], lsRet[["adP"]])
     lsHistory[["lsSig"]] = c(lsHistory[["lsSig"]], lsRet[["lsSig"]])
-    lsHistory[["lsQCCounts"]] = c(lsHistory[["lsQCCounts"]],lsRet[["lsQCCounts"]])
+    lsHistory[["lsQCCounts"]] = lsRet[["lsQCCounts"]]
   }
   return(lsHistory)
 }

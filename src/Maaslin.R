@@ -47,7 +47,7 @@ sMethodKey
   #Insert selection methods here
   lRetMethods[[c_iSelection]] = switch(sModelSelectionKey,
     boost = funcBoostModel,
-    lasso = funcLassoModel,
+    penalized = funcPenalizedModel,
     forward = funcForwardModel,
     backward = funcBackwardsModel,
     none = NA)
@@ -74,7 +74,7 @@ sMethodKey
   lRetMethods[[c_iResults]] = switch(sMethodKey,
     neg_binomial = funcGetLMResults,
     quasi = funcGetLMResults,
-    univariate = NA,
+    univariate = funcGetUnivariateResults,
     lm = funcGetLMResults,
     none = NA)
 
@@ -114,14 +114,16 @@ pArgs <- add_option( pArgs, c("-d", "--fdr"), type="double", action="store", des
 ## Minimum feature relative abundance filtering
 pArgs <- add_option( pArgs, c("-r", "--minRelativeAbundance"), type="double", action="store", dest="dMinAbd", default=0.0001, metavar="minRelativeAbundance", help="The minimum relative abundance allowed in the data. Values below this are removed and imputed as the median of the sample data.")
 ## Minimum feature prevalence filtering
-pArgs <- add_option( pArgs, c("-p", "--minPrevalence"), type="double", action="store", dest="dMinSamp", default=0.1, metavar="minPrevalence", help="The minimum percentage of samples a feature can have abundance in before being removed.")
+pArgs <- add_option( pArgs, c("-p", "--minPrevalence"), type="double", action="store", dest="dMinSamp", default=0.1, metavar="minPrevalence", help="The minimum percentage of samples a feature can have abundance in before being removed. Also is the minimum percentage of samples a metadata can have NAs before being removed.")
 ## Fence for outlier, if not set Grubbs test is used
 pArgs <- add_option( pArgs, c("-o", "--outlierFence"), type="double", action="store", dest="dOutlierFence", default=3.0, metavar="outlierFence", help="Outliers are defined as this number times the interquartile range added/subtracted from the 3rd/1st quartiles respectively. If set to 0, outliers are defined by the Grubbs test.")
 ## Fixed (not random) covariates
 pArgs <- add_option( pArgs, c("-R","--random"), type="character", action="store", dest="strRandomCovariates", default=NULL, metavar="fixed", help="These metadata will be treated as random covariates. Comma delimited data feature names. These features must be listed in the read.config file. Example '-R RandomMetadata1,RandomMetadata2'")
+## Change the type of correction fo rmultiple corrections
+pArgs <- add_option( pArgs, c("-T","--testingCorrect"), type="character", action="store", dest="strMultTestCorrection", default="BH", metavar="multipleTestingCorrection", help="This indicates which multiple hypothesis testing method will be used, available are holm, hochberg, hommel, bonferroni, BH, BY")
 
 # Arguments used in validation of MaAsLin
-## Model selection (enumerate) c("none","boost","lasso","forward","backward")
+## Model selection (enumerate) c("none","boost","penalized","forward","backward")
 pArgs <- add_option( pArgs, c("-s", "--selection"), type="character", action="store", dest="strModelSelection", default="boost", metavar="model_selection", help="Indicates which of the variable selection techniques to use.")
 ## Argument indicating which method should be ran (enumerate) c("univariate","lm","neg_binomial","quasi")
 pArgs <- add_option( pArgs, c("-m", "--method"), type="character", action="store", dest="strMethod", default="lm", metavar="analysis_method", help="Indicates which of the statistical inference methods to run.")
@@ -147,6 +149,8 @@ pArgs <- add_option( pArgs, c("-f","--selectionFrequency"), type="double", actio
 ### All v All
 pArgs <- add_option( pArgs, c("-a","--allvall"), type="logical", action="store_true", dest="fAllvAll", default=FALSE, metavar="compare_all", help="When given, the flag indicates that each fixed covariate that is not indicated as Forced is compared once at a time per data feature (bug). Made to be used with the -F option to specify one part of the model while allowing the other to cycle through a group of covariates. Does not affect Random covariates, which are always included when specified.")
 pArgs <- add_option( pArgs, c("-N","--PlotNA"), type="logical", action="store_true", default=FALSE, dest="fPlotNA", metavar="plotNAs",help="Plot data that was originally NA, by default they are not plotted.")
+### Alternaitve methodology settings
+pArgs <- add_option( pArgs, c("-A","--pAlpha"), type="double", action="store", dest="dPenalizedAlpha", default=0.95, metavar="PenalizedAlpha",help="The alpha for penalization (1.0=L1 regularization, LASSO; 0.0=L2 regularization, ridge regression")
 
 ### Misc MFA plot arguments
 pArgs <- add_option( pArgs, c("-c","--MFAFeatureCount"), type="integer", action="store", dest="iMFAMaxFeatures", default=3, metavar="maxMFAFeature", help="Number of features or number of bugs to plot (default=3; 3 metadata and 3 data).")
@@ -178,10 +182,6 @@ pArgs
 lsArgs <- parse_args( pArgs, positional_arguments = TRUE )
 #logdebug("lsArgs", c_logrMaaslin)
 #logdebug(paste(lsArgs,sep=" "), c_logrMaaslin)
-
-###Default configurations
-#c_astrConfigurationValues <- c("noImpute", "invertPlots", "significanceLevel", "selectionFrequency", "processFunction")
-#c_lsConfigurationDefaults <- list(NULL, lsArgs$options$fInvert, lsArgs$options$dSignificanceLevel, NA, NULL)
 
 # Parse Piped parameters
 lsForcedParameters = NULL
@@ -227,7 +227,7 @@ strInputTSV <- lsArgs$args[2]
 # Get analysis method options
 # includes data transformations, model selection/regularization, regression models/links
 lsArgs$options$strModelSelection = tolower(lsArgs$options$strModelSelection)
-if(!lsArgs$options$strModelSelection %in% c("none","boost","lasso","forward","backward"))
+if(!lsArgs$options$strModelSelection %in% c("none","boost","penalized","forward","backward"))
 {
   logerror(paste("Received an invalid value for the selection argument, received '",lsArgs$options$strModelSelection,"'"), c_logrMaaslin)
   stop( print_help( pArgs ) )
@@ -245,8 +245,20 @@ if(!lsArgs$options$strTransform %in% c("none","asinsqrt"))
   stop( print_help( pArgs ) )
 }
 
+if(!lsArgs$options$strMultTestCorrection %in% c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY"))
+{
+  logerror(paste("Received an invalid value for the multiple testing correction argument, received '",lsArgs$options$strMultTestCorrection,"'"), c_logrMaaslin)
+  stop( print_help( pArgs ) )
+}
+
 # Get analysis modules
 afuncVariableAnalysis = funcGetAnalysisMethods(lsArgs$options$strModelSelection,lsArgs$options$strTransform,lsArgs$options$strMethod)
+
+# Set up parameters for variable selection
+lxParameters = list(dFreq=lsArgs$options$dSelectionFrequency, dPAlpha=lsArgs$options$dPenalizedAlpha)
+if((lsArgs$options$strMethod == "lm")||(lsArgs$options$strMethod == "univariate")){ lxParameters$sFamily = "gaussian"
+} else if(lsArgs$options$strMethod == "neg_binomial"){ lxParameters$sFamily = "binomial"
+} else if(lsArgs$options$strMethod == "quasi"){ lxParameters$sFamily = "poisson"}
 
 #Indicate start
 logdebug("Start MaAsLin", c_logrMaaslin)
@@ -372,10 +384,9 @@ fDoRPlot=TRUE
 if(lsArgs$options$strMethod %in% c("univariate")){ fDoRPlot=FALSE }
 
 #Run analysis
-alsRetBugs = funcBugs( lsRet$frmeData, lsRet, lsRet$aiMetadata, lsRet$aiData, strBase,
-	lsArgs$options$dSelectionFrequency, lsArgs$options$dSignificanceLevel, lsArgs$options$dMinSamp, lsArgs$options$fInvert,
+alsRetBugs = funcBugs( lsRet$frmeData, lsRet, lsRet$aiMetadata, lsRet$aiData, strBase, lsArgs$options$dSignificanceLevel, lsArgs$options$dMinSamp, lsArgs$options$fInvert,
         outputDirectory, astrScreen = c(), funcReg=afuncVariableAnalysis[[c_iSelection]], funcUnTransform=afuncVariableAnalysis[[c_iUnTransform]], lsForcedParameters,
-        funcAnalysis=afuncVariableAnalysis[[c_iAnalysis]], lsRandomCovariates, funcGetResults=afuncVariableAnalysis[[c_iResults]], fDoRPlot=fDoRPlot, fOmitLogFile=lsArgs$options$fOmitLogFile, fAllvAll=lsArgs$options$fAllvAll, liNaIndices=lsRet$liNaIndices )
+        funcAnalysis=afuncVariableAnalysis[[c_iAnalysis]], lsRandomCovariates, funcGetResults=afuncVariableAnalysis[[c_iResults]], fDoRPlot=fDoRPlot, fOmitLogFile=lsArgs$options$fOmitLogFile, fAllvAll=lsArgs$options$fAllvAll, liNaIndices=lsRet$liNaIndices, lxParameters=lxParameters, strTestingCorrection=lsArgs$options$strMultTestCorrection )
 aiBugs = alsRetBugs$aiReturnBugs
 
 #Write QC files only in certain modes of verbosity
@@ -398,7 +409,7 @@ if(!is.null(lsFeaturesToPlot) || !is.null(lsArgs$options$strMFAColor) || !is.nul
   aiBugs = unique(c(aiBugs,which( colnames( lsRet$frmeData ) %in% intersect(lsCombinedFeaturesToPlot, lsOriginalFeatureNames))))
 }
 
-try(
+#try(
   if( length( aiBugs ) )
   {
     logdebug("MFA:in", c_logrMaaslin)
@@ -412,7 +423,7 @@ try(
       logdebug("PlotMFA:out", c_logrMaaslin)
     }
   }
-)
+#)
 
 #Summarize output files based on a keyword and a significance threshold
 #Look for less than or equal to the threshold (approapriate for p-value and q-value type measurements)

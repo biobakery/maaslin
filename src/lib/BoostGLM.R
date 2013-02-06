@@ -278,8 +278,6 @@ aiData,
 ### Indices of response data
 strData,
 ### Log file name
-dFreq,
-### 
 dSig,
 ### Significance threshold for the qvalue cut off
 dMinSamp,
@@ -308,8 +306,12 @@ fOmitLogFile = FALSE,
 ### Stops the creation of the log file
 fAllvAll=FALSE,
 ### Flag to turn on all against all comparisons
-liNaIndices = list()
+liNaIndices = list(),
 ### Indicies of imputed NA data
+lxParameters=list(),
+### List holds parameters for different variable selection techniques
+strTestingCorrection = "BH"
+### Correction for multiple testing
 ){
   c_logrMaaslin$debug("Start funcBugs")
   if( is.na( strDirOut )||is.null(strDirOut))
@@ -346,7 +348,7 @@ liNaIndices = list()
     }
     #Call analysis method
 
-    lsOne <- funcBugHybrid( iTaxon, frmeData, lsData, aiMetadata, dFreq, dSig, dMinSamp, adP, lsSig, strLog, funcReg, lsNonPenalizedPredictors, funcAnalysis, lsRandomCovariates, funcGetResults, fAllvAll )
+    lsOne <- funcBugHybrid( iTaxon, frmeData, lsData, aiMetadata, dSig, dMinSamp, adP, lsSig, strLog, funcReg, lsNonPenalizedPredictors, funcAnalysis, lsRandomCovariates, funcGetResults, fAllvAll, lxParameters )
 
     #TODO Check#If you get a NA (happens when the lmm gets all random covariates) move on
     if(is.na(lsOne)){next}
@@ -363,17 +365,13 @@ liNaIndices = list()
 
   #Presort for order for FDR calculation
   if( is.null( adP ) ) { return( NULL ) }
+
   #Get indices of sorted data
   aiSig <- sort.list( adP )
-  adQ <- adP
-  iTests <- length( intersect( lsData$astrMetadata, colnames( frmeData )[aiMetadata] ) ) * length( aiData )
+  iTests = funcCalculateTestCounts(iDataCount = length(aiData), asMetadata = intersect( lsData$astrMetadata, colnames( frmeData )[aiMetadata] ), asForced = lsNonPenalizedPredictors, asRandom = lsRandomCovariates, fAllvAll = fAllvAll)
 
   #Perform FDR BH
-  for( i in 1:length( aiSig ) )
-  {
-    iSig <- aiSig[i]
-    adQ[iSig] <- adP[iSig] * iTests / i
-  }
+  adQ  = p.adjust(adP,method=strTestingCorrection,n=max(length(adP),iTests))
 
   astrNames <- c()
   for( i in 1:length( lsSig ) )
@@ -455,7 +453,6 @@ liNaIndices = list()
 ### frmeData: Data frame The full data
 ### lsData: List of all associated data
 ### aiMetadata: Numeric vector of indices
-### dFreq: Used to select metadata from the boosting, selected refrequency must be larger than this
 ### dSig: Numeric significance threshold for q-value cut off
 ### adP: List of pvalues from associations
 ### lsSig: List which serves as a cache of data about significant associations
@@ -470,8 +467,6 @@ lsData,
 ### List of all associated data
 aiMetadata,
 ### Numeric vector of indices
-dFreq,
-### Used to select metadata from the boosting, selected refrequency must be larger than this
 dSig,
 ### Numeric significance threshold for q-value cut off
 dMinSamp,
@@ -492,10 +487,11 @@ lsRandomCovariates=NULL,
 ### List of string names of metadata which will be treated as random covariates
 funcGetResult=NULL,
 ### Function to unpack results from analysis
-fAllvAll=FALSE
+fAllvAll=FALSE,
 ### Flag to turn on all against all comparisons
+lxParameters=list()
+### List holds parameters for different variable selection techniques
 ){
-
 #dTime00 <- proc.time()[3]
   #Get metadata column names
   astrMetadata = intersect( lsData$astrMetadata, colnames( frmeData )[aiMetadata] )
@@ -510,6 +506,7 @@ fAllvAll=FALSE
   {
     aMetadatum <- frmeTmp[,strMetadatum]
 
+    #TODO remove?
     #Find the amount of NA and if over a certain ratio, remove that metadata from analysis
     iNA = sum( is.na( aMetadatum ) ) + sum( aMetadatum == "NA", na.rm = TRUE )
 	#Be kinder to genetics than other metadata
@@ -533,9 +530,9 @@ fAllvAll=FALSE
   #Reset metadata with removed metadata removed.
   astrMetadata <- setdiff( astrMetadata, astrRemove )
   #Set the min boosting selection frequency to a default if not given
-  if( is.na( dFreq ) )
+  if( is.na( lxParameters$dFreq ) )
   {
-    dFreq <- 0.5 / length( c(astrMetadata) )
+    lxParameters$dFreq <- 0.5 / length( c(astrMetadata) )
   }
 
   # Get the full data for the bug feature
@@ -556,7 +553,7 @@ fAllvAll=FALSE
   funcWrite( c("#metadata", astrMetadata), strLog )
   funcWrite( c("#samples", rownames( frmeTmp )), strLog )
 
-  # Regularisation terms
+  #Model terms
   astrTerms <- c()
 
   # Attempt feature (model) selection
@@ -565,7 +562,7 @@ fAllvAll=FALSE
     #Count model selection method attempts
     lsData$lsQCCounts$iBoosts = lsData$lsQCCounts$iBoosts + 1
     #Perform model selection
-    astrTerms <- funcReg(strFormula=strFormula, frmeTmp=frmeTmp, adCur=adCur, lsParameters=list(dFreq=dFreq), lsForcedParameters=lsNonPenalizedPredictors, strLog=strLog)
+    astrTerms <- funcReg(strFormula=strFormula, frmeTmp=frmeTmp, adCur=adCur, lsParameters=lxParameters, lsForcedParameters=lsNonPenalizedPredictors, strLog=strLog)
     #If the feature selection function is set to None, set all terms of the model to all the metadata
   } else { astrTerms = astrMetadata }
 
@@ -589,22 +586,22 @@ fAllvAll=FALSE
       #Random covariates are forced
       if(length(lsRandomCovariates)>0)
       {
-        #Format for lmer
-        #strRandomCovariatesFormula <- paste( "adCur ~ ", paste( sprintf( "(1|`%s)`)", intersect(lsRandomCovariates, astrTerms)), collapse = " + " ))
-        #Format for glmmpql
-        #strRandomCovariatesFormula <- paste( "adCur ~ ", paste( sprintf( "1|`%s`", intersect(lsRandomCovariates, astrTerms)), collapse = " + " ))
+        #Format for lme
         #Needed for changes to not allowing random covariates through the boosting process
         strRandomCovariatesFormula <- paste( "adCur ~ ", paste( sprintf( "1|`%s`", lsRandomCovariates), collapse = " + " ))
       }
 
       #Set up a list of formula containing selected fixed variables changing and the forced fixed covariates constant
       vstrFormula = c()
+      #Set up suppressing forced covariates in a all v all scenario only
+      asSuppress = c()
       #Enable all against all comparisons
       if(fAllvAll)
       {
         lsVaryingCovariates = setdiff(astrTerms,lsNonPenalizedPredictors)
         lsConstantCovariates = setdiff(lsNonPenalizedPredictors,lsRandomCovariates)
         strConstantFormula = paste( sprintf( "`%s`", lsConstantCovariates ), collapse = " + " )
+        asSuppress = lsConstantCovariates
 
         if(length(lsVaryingCovariates)==0L)
         {
@@ -626,9 +623,9 @@ fAllvAll=FALSE
       for( strAnalysisFormula in vstrFormula )
       {
         i = length(llmod)+1
+
         llmod[[i]] = funcAnalysis(strFormula=strAnalysisFormula, frmeTmp=frmeTmp, iTaxon=iTaxon, lsHistory=list(adP=adP, lsSig=lsSig, lsQCCounts=lsData$lsQCCounts), strRandomFormula=strRandomCovariatesFormula)
         liTaxon[[i]] = iTaxon
-        # TODO, ignoring Random covariates here (they are not additional tests are they?) check fdr
         lastrTerms[[i]] = funcFormulaStrToList(strAnalysisFormula)
       }
     } else {
@@ -639,21 +636,12 @@ fAllvAll=FALSE
   }
 
   #Call funcBugResults and return it's return
-  if(is.na(funcGetResult))
+  if(!is.na(funcGetResult))
   {
-    if(length(llmod)==0)
-    {
-      return(list(adP=adP, lsSig=lsSig, lsQCCounts=lsData$lsQCCounts))
-    } else {
-      #This is performed because it is assumed that the lmod object was actually not given as a lm result
-      # In the previous analysis but a result that is already formatted and therefore this get result step
-      # Is not needed, this is how the univariates work. If this is not the case, the switch in Maaslin.R
-      # Should be updated with the function that will translate the analysis results to the return value of
-      # this function. For an example, see how the lm results are handled in the switch and in the AnalysisModules.R
-      return(llmod)
-    }
+    #Format the results to a consistent expected result.
+    return( funcGetResult( llmod=llmod, frmeData=frmeData, liTaxon=liTaxon, dSig=dSig, adP=adP, lsSig=lsSig, strLog=strLog, lsQCCounts=lsData$lsQCCounts, lastrCols=lastrTerms, asSuppressCovariates=asSuppress ) )
+  } else {
+    return(list(adP=adP, lsSig=lsSig, lsQCCounts=lsData$lsQCCounts))
   }
-  #Format the results to a consistent expected result.
-  return( funcGetResult( llmod=llmod, frmeData=frmeData, liTaxon=liTaxon, dSig=dSig, adP=adP, lsSig=lsSig, strLog=strLog, lsQCCounts=lsData$lsQCCounts, lastrCols=lastrTerms ) )
   ### List containing a list of pvalues, a list of significant data per association, and a list of QC data
 }

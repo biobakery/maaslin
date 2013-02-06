@@ -54,6 +54,27 @@ astrNames
   ### List of modified names
 }
 
+funcCalculateTestCounts <- function(
+### Calculates the number of tests used in inference
+iDataCount,
+asMetadata,
+asForced,
+asRandom,
+fAllvAll
+){
+  iMetadata = length(asMetadata)
+  iForced = length(setdiff(intersect( asForced, asMetadata ), asRandom))
+  iRandom = length(intersect( asRandom, asMetadata ))
+  if(fAllvAll)
+  {
+    #AllvAll flow formula
+    return((iMetadata-iForced-iRandom) * iDataCount)
+  }
+
+  #Normal flow formula
+  return((iMetadata-iRandom) * iDataCount)
+}
+
 funcGetRandomColors=function(
 #Generates a given number of random colors
 tempNumberColors = 1
