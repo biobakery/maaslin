@@ -179,7 +179,7 @@ funcTransform
       # Document
       if( length( aiRemove ) )
       {
-        c_logrMaaslin$info( "Removing %d outliers from %s", length( aiRemove ), colnames(frmeData)[iData] )
+        c_logrMaaslin$info( "OutliersByFence::Removing %d outliers from %s", length( aiRemove ), colnames(frmeData)[iData] )
         c_logrMaaslin$info( format( rownames( frmeData )[aiRemove] ))
       }
       adData[aiRemove] <- NA
@@ -203,9 +203,10 @@ funcTransform
       # Document removal
       if( sum( is.na( adData ) ) )
       {
-        c_logrMaaslin$info( "Removing %d outliers from %s", sum( is.na( adData ) ), colnames(frmeData)[iData] )
+        c_logrMaaslin$info( "Grubbs Test::Removing %d outliers from %s", sum( is.na( adData ) ), colnames(frmeData)[iData] )
 			  c_logrMaaslin$info( format( rownames( frmeData )[is.na( adData )] ))
       }
+      aiSumOutlierPerDatum = c(aiSumOutlierPerDatum,length(is.na(adData)))
       frmeData[,iData] <- adData
     }
   }
@@ -223,12 +224,27 @@ funcTransform
   }
 
   # Replace missing data values by the mean of the data column.
+  # Remove samples that were all NA from the cleaning and so could not be imputed.
+  aiRemoveData = c()
   for( iCol in aiData )
   {
     adCol <- frmeData[,iCol]
     adCol[is.infinite( adCol )] <- NA
     adCol[is.na( adCol )] <- mean( adCol, na.rm = TRUE )
     frmeData[,iCol] <- adCol
+
+    if(length(which(is.na(frmeData[,iCol]))) == length(frmeData[,iCol]))
+    {
+      aiRemoveData = c(aiRemoveData,iCol)
+    }
+  }
+  # Remove and document
+  aiData = setdiff( aiData, aiRemoveData )
+  lsQCCounts$iMissingData = c(lsQCCounts$iMissingData,aiRemoveData)
+  if(length(aiRemoveData))
+  {
+    c_logrMaaslin$info( "Removing the following for having only NAs after cleaning (maybe due to only having NA after outlier testing).")
+    c_logrMaaslin$info( format( colnames( frmeData )[aiRemoveData] ))
   }
 
   #Use na.gam.replace to manage NA metadata
@@ -514,6 +530,7 @@ lxParameters=list()
 	#	dMult <- 8 }
 	#else {
 	dMult <- 2 # }
+
     if( ( iNA / length( aiRows ) ) > ( dMult * dMinSamp ) )
     {
       astrRemove <- c(astrRemove, strMetadatum)
@@ -625,6 +642,7 @@ lxParameters=list()
         i = length(llmod)+1
 
         llmod[[i]] = funcAnalysis(strFormula=strAnalysisFormula, frmeTmp=frmeTmp, iTaxon=iTaxon, lsHistory=list(adP=adP, lsSig=lsSig, lsQCCounts=lsData$lsQCCounts), strRandomFormula=strRandomCovariatesFormula)
+
         liTaxon[[i]] = iTaxon
         lastrTerms[[i]] = funcFormulaStrToList(strAnalysisFormula)
       }

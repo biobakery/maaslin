@@ -442,22 +442,13 @@ tempPCH=20
   # Also get colors for plotting (find the highest contributing dim one continuous data)
   llMarkerInfo = funcGetMarkerValues(MFAOut=lsMFA,dfOriginal=frmeData,lsMetadata=lsMetadata,strMFAColorCovariate=strMFAColorCovariate, strMFAShapeCovariate=strMFAShapeCovariate,fPlotNA=fPlotNA)
 
-  print("llMarkerInfo")
-  print(llMarkerInfo)
-
   #Use default derived colors unless a function has been specified to make the colors. This is over-ridden by setting the covariate to base color on through commandline.
   astrCols = llMarkerInfo$colors
   if(exists("funcPlotColors",mode="function") && is.null(strMFAColorCovariate)){astrCols = funcPlotColors( frmeData )}
 
-  print("astrCols")
-  print(astrCols)
-
   #Use default derived points unless a function has been specified to make the points. This is over-ridden by setting the covariate to base points on through commandline.
   aiPoints =  llMarkerInfo$shapes
   if(exists("funcPlotPoints",mode="function") && is.null(strMFAShapeCovariate)){aiPoints = funcPlotPoints( frmeData )}
-
-  print("aiPoints")
-  print(aiPoints)
 
   #Get metadata names (in MFA format, could be column names, values or names_values)
   lsMetadataToPlot = funcColToMFAValue(funcGetHighestContribution(MFAOut=lsMFA,dfOriginal=frmeData,iCount=iMaxFeatures,lsNames=lsMetadata),frmeData)
@@ -468,9 +459,6 @@ tempPCH=20
   }
   afMetadata <- rownames(lsPCA$var$coord) %in% lsMetadataToPlot
 
-  print("afMetadata")
-  print(afMetadata)
-
   #Get feature names (in MFA format, could be column names, values or names_values)
   lsFeaturesToPlot = funcColToMFAValue(funcGetHighestContribution(MFAOut=lsMFA,dfOriginal=frmeData,iCount=iMaxFeatures,lsNames=lsFeatures),frmeData)
   if(exists("funcPlotFeatures",mode="function")){lsFeaturesToPlot = funcPlotFeatures()}
@@ -480,24 +468,21 @@ tempPCH=20
   }
   afFeatures = rownames(lsPCA$var$coord) %in% lsFeaturesToPlot
 
-  print("afFeatures")
-  print(afFeatures)
-
   dScale = dMFAMetadataScale
   if(exists("funcGetMetadataScale",mode="function") && is.null(dScale)){dScale = funcGetMetadataScale()}
-  tryCatch(if(is.null(dScale)){dScale = funcGetScale(lsMFA, lsMetadataToPlot)})
-  if(is.null(dScale)){dScale = c_dDefaultScale }
-
-  print("dScale")
-  print(dScale)
+  if(is.null(dScale))
+  {
+    result = try(funcGetScale(lsMFA, lsMetadataToPlot))
+    if(class(result) == "try-error") 
+    {
+      dScale = c_dDefaultScale
+    }else{ dScale = result }
+  }
 
   dBugScale = dMFADataScale
   if(exists("funcGetFeatureScale",mode="function") && is.null(dBugScale)){dBugScale = funcGetFeatureScale()}
   if(length(lsFeaturesToPlot) && is.null(dBugScale)){dBugScale = funcGetScale(lsMFA, lsFeaturesToPlot)}
   if(is.null(dBugScale)){dBugScale = c_dDefaultScale }
-
-  print("dBugScale")
-  print(dBugScale)
 
   #Set X and Y coordinates and plot points
   strX <- sprintf( "Dimension 1 (%.2f%%)", lsPCA$eig$`percentage of variance`[1] )

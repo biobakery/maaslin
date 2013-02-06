@@ -109,9 +109,15 @@ liNaIndices = c()
   # This is so if something is not imputed, then if there are NAs they will be plotted (to show no imputing)
   if( class( lsCur$metadata ) == "factor" )
   {
+    sCurLevels = levels(adCur)
     adCur = (as.character(adCur))
-    adCur[is.na(adCur)]="NA"
-    adCur = factor(adCur)
+    aiCurNAs = which(is.na(adCur))
+    if(length(aiCurNAs) > 0)
+    {
+      adCur[aiCurNAs]="NA"
+      sCurLevels = c(sCurLevels,"NA")
+    }
+    adCur = factor(adCur, levels = sCurLevels)
   }
 
   if( class( lsCur$metadata ) == "factor" )
