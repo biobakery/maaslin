@@ -60,6 +60,8 @@ astrNoImpute = c(),
 ### An array of column names of frmeData not to impute.
 dMinSamp,
 ### Minimum number of samples
+dMinAbd,
+# Minimum sample abundance
 dFence,
 ### How many quartile ranges defines the fence to define outliers.
 funcTransform
@@ -80,6 +82,7 @@ funcTransform
 
   # Remove missing data, remove any sample has less than dMinSamp * the number of data
   aiRemove = c()
+  aiRemoveLowAbundance = c()
   for( iCol in aiData )
   {
     adCol = frmeData[,iCol]
@@ -89,15 +92,25 @@ funcTransform
     {
         aiRemove = c(aiRemove, iCol)
     }
+    if( sum(adCol > dMinAbd, na.rm=TRUE ) < (dMinSamp * length( adCol)))
+    {
+      aiRemoveLowAbundance = c(aiRemoveLowAbundance, iCol)
+    }
   }
-
   # Remove and document
   aiData = setdiff( aiData, aiRemove )
+  aiData = setdiff( aiData, aiRemoveLowAbundance )
   lsQCCounts$iMissingData = aiRemove
+  lsQCCounts$iLowAbundanceData = aiRemoveLowAbundance
   if(length(aiRemove))
   {
-    c_logrMaaslin$info( "Removing the following for missing data.")
+    c_logrMaaslin$info( "Removing the following for data lower bound.")
     c_logrMaaslin$info( format( colnames( frmeData )[aiRemove] ))
+  }
+  if(length(aiRemoveLowAbundance))
+  {
+    c_logrMaaslin$info( "Removing the following for too many low abundance bugs.")
+    c_logrMaaslin$info( format( colnames( frmeData )[aiRemoveLowAbundance] ))
   }
 
   #Transform data
@@ -105,6 +118,8 @@ funcTransform
   {
     frmeData[,aiDatum] = funcTransform(frmeData[,aiDatum])
   }
+  # Transform lowest abundance value threshold
+  dMinAbd = funcTransform(dMinAbd)
 	  
   # Set data indicies after custom QC process.
   lsQCCounts$aiAfterPreprocess = aiData
@@ -157,6 +172,7 @@ funcTransform
       # Establish fence
       adData <- frmeData[,iData]
       adQ <- quantile( adData, c(0.25, 0.5, 0.75), na.rm = TRUE )
+
       dIQR <- adQ[3] - adQ[1]
       if(!dIQR)
       {
@@ -191,7 +207,6 @@ funcTransform
     for( iData in aiData )
     {
       adData <- frmeData[,iData]
-
       while( TRUE )
       {
         lsTest <- try( grubbs.test( adData ), silent = TRUE )
@@ -271,6 +286,25 @@ funcTransform
       }
       frmeData[,iCol] <- factor( aCol, levels = c(lsFactor[[2]], "NA") )
     }
+  }
+
+  # Make sure there is a minimum number of non-0 measurements
+  aiRemove = c()
+  for( iCol in aiData )
+  {
+    adCol = frmeData[,iCol]
+    if(length( which(adCol!=0)) < ( dMinSamp * length( adCol ) ) )
+    {
+        aiRemove = c(aiRemove, iCol)
+    }
+  }
+  # Remove and document
+  aiData = setdiff( aiData, aiRemove)
+  lsQCCounts$iZeroDominantData = aiRemove
+  if(length(aiRemove))
+  {
+    c_logrMaaslin$info( "Removing the following for having not enough non-zero measurments for analysis.")
+    c_logrMaaslin$info( format( colnames( frmeData )[aiRemove] ))
   }
 
   c_logrMaaslin$debug("End FuncClean")

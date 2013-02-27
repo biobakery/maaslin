@@ -116,7 +116,7 @@ pArgs <- add_option( pArgs, c("-r", "--minRelativeAbundance"), type="double", ac
 ## Minimum feature prevalence filtering
 pArgs <- add_option( pArgs, c("-p", "--minPrevalence"), type="double", action="store", dest="dMinSamp", default=0.1, metavar="minPrevalence", help="The minimum percentage of samples a feature can have abundance in before being removed. Also is the minimum percentage of samples a metadata can have NAs before being removed.")
 ## Fence for outlier, if not set Grubbs test is used
-pArgs <- add_option( pArgs, c("-o", "--outlierFence"), type="double", action="store", dest="dOutlierFence", default=3.0, metavar="outlierFence", help="Outliers are defined as this number times the interquartile range added/subtracted from the 3rd/1st quartiles respectively. If set to 0, outliers are defined by the Grubbs test.")
+pArgs <- add_option( pArgs, c("-o", "--outlierFence"), type="double", action="store", dest="dOutlierFence", default=0, metavar="outlierFence", help="Outliers are defined as this number times the interquartile range added/subtracted from the 3rd/1st quartiles respectively. If set to 0 (default), outliers are defined by the Grubbs test.")
 ## Fixed (not random) covariates
 pArgs <- add_option( pArgs, c("-R","--random"), type="character", action="store", dest="strRandomCovariates", default=NULL, metavar="fixed", help="These metadata will be treated as random covariates. Comma delimited data feature names. These features must be listed in the read.config file. Example '-R RandomMetadata1,RandomMetadata2'")
 ## Change the type of correction fo rmultiple corrections
@@ -349,7 +349,7 @@ funcProcess <- NULL
 if(!is.null(funcSourceScript(lsArgs$options$strInputR))){funcProcess <- get(c_strCustomProcessFunction)}
 
 #Clean the data and update the current data list to the cleaned data list
-lsRet = funcClean( frmeData=frmeData, funcDataProcess=funcProcess, aiMetadata=aiMetadata, aiData=aiData, lsQCCounts=lsData$lsQCCounts, astrNoImpute=xNoImpute, dMinSamp = lsArgs$options$dMinSamp, dFence=lsArgs$options$dOutlierFence, funcTransform=afuncVariableAnalysis[[c_iTransform]])
+lsRet = funcClean( frmeData=frmeData, funcDataProcess=funcProcess, aiMetadata=aiMetadata, aiData=aiData, lsQCCounts=lsData$lsQCCounts, astrNoImpute=xNoImpute, dMinSamp = lsArgs$options$dMinSamp, dMinAbd = lsArgs$options$dMinAbd, dFence=lsArgs$options$dOutlierFence, funcTransform=afuncVariableAnalysis[[c_iTransform]])
 logdebug("lsRet", c_logrMaaslin)
 logdebug(format(lsRet), c_logrMaaslin)
 #Update the variables after cleaning
