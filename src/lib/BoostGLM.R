@@ -67,6 +67,10 @@ dFence,
 funcTransform
 ### The data transformation function or a dummy function that does not affect the data
 ){
+#  print("Start clean")
+#  print("aiData")
+#  print(aiData)
+#  print(frmeData[,aiData])
   # Call the custom script and set current data and indicies to the processes data and indicies.
   c_logrMaaslin$debug( "Start Clean")
   if( !is.null( funcDataProcess ) )
@@ -80,7 +84,7 @@ funcTransform
     lsQCCounts$lsQCCustom = pTmp$lsQCCounts
   }
 
-  # Remove missing data, remove any sample has less than dMinSamp * the number of data
+  # Remove missing data, remove any sample has less than dMinSamp * the number of data or low abundance
   aiRemove = c()
   aiRemoveLowAbundance = c()
   for( iCol in aiData )
@@ -112,12 +116,18 @@ funcTransform
     c_logrMaaslin$info( "Removing the following for too many low abundance bugs.")
     c_logrMaaslin$info( format( colnames( frmeData )[aiRemoveLowAbundance] ))
   }
+#  print("After low abundance")
+#  print(frmeData[,aiData])
 
   #Transform data
   for(aiDatum in aiData)
   {
     frmeData[,aiDatum] = funcTransform(frmeData[,aiDatum])
   }
+
+#  print("After transform")
+#  print(frmeData[,aiData])
+
   # Transform lowest abundance value threshold
   dMinAbd = funcTransform(dMinAbd)
 	  
@@ -134,6 +144,9 @@ funcTransform
     }
   }
 
+#  print("After factorize")
+#  print(frmeData[,aiData])
+
   # Metadata: Remove missing data
   # This is defined as if there is only one non-NA value or
   # if the number of NOT NA data is less than a percentage of the data defined by dMinSamp
@@ -147,6 +160,9 @@ funcTransform
       aiRemove = c(aiRemove, iCol)
     }
   }
+
+#  print("After NA count")
+#  print(frmeData[,aiData])
 
   # Remove metadata
   aiMetadata = setdiff( aiMetadata, aiRemove )
@@ -227,6 +243,9 @@ funcTransform
   }
   lsQCCounts$aiSumOutlierPerDatum = aiSumOutlierPerDatum
 
+#  print("After outliers")
+#  print(frmeData[,aiData])
+
   # Keep track of factor levels in a list for later use
   lslsFactors <- list()
   for( iCol in c(aiMetadata) )
@@ -255,12 +274,17 @@ funcTransform
   }
   # Remove and document
   aiData = setdiff( aiData, aiRemoveData )
+#  print("aiData")
+#  print(aiData)
   lsQCCounts$iMissingData = c(lsQCCounts$iMissingData,aiRemoveData)
   if(length(aiRemoveData))
   {
     c_logrMaaslin$info( "Removing the following for having only NAs after cleaning (maybe due to only having NA after outlier testing).")
     c_logrMaaslin$info( format( colnames( frmeData )[aiRemoveData] ))
   }
+
+#  print("After imputing")
+#  print(frmeData[,aiData])
 
   #Use na.gam.replace to manage NA metadata
   aiTmp <- setdiff( aiMetadata, which( colnames( frmeData ) %in% astrNoImpute ) )
@@ -307,6 +331,10 @@ funcTransform
     c_logrMaaslin$info( format( colnames( frmeData )[aiRemove] ))
   }
 
+#  print("End clean")
+#  print("aiData")
+#  print(aiData)
+#  print(frmeData[,aiData])
   c_logrMaaslin$debug("End FuncClean")
   return( list(frmeData = frmeData, aiMetadata = aiMetadata, aiData = aiData, lsQCCounts = lsQCCounts, liNaIndices=liNaIndices) )
   ### Return list of

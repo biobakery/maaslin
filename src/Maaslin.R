@@ -120,7 +120,7 @@ pArgs <- add_option( pArgs, c("-o", "--outlierFence"), type="double", action="st
 ## Fixed (not random) covariates
 pArgs <- add_option( pArgs, c("-R","--random"), type="character", action="store", dest="strRandomCovariates", default=NULL, metavar="fixed", help="These metadata will be treated as random covariates. Comma delimited data feature names. These features must be listed in the read.config file. Example '-R RandomMetadata1,RandomMetadata2'")
 ## Change the type of correction fo rmultiple corrections
-pArgs <- add_option( pArgs, c("-T","--testingCorrect"), type="character", action="store", dest="strMultTestCorrection", default="BH", metavar="multipleTestingCorrection", help="This indicates which multiple hypothesis testing method will be used, available are holm, hochberg, hommel, bonferroni, BH, BY")
+pArgs <- add_option( pArgs, c("-T","--testingCorrection"), type="character", action="store", dest="strMultTestCorrection", default="BH", metavar="multipleTestingCorrection", help="This indicates which multiple hypothesis testing method will be used, available are holm, hochberg, hommel, bonferroni, BH, BY")
 
 # Arguments used in validation of MaAsLin
 ## Model selection (enumerate) c("none","boost","penalized","forward","backward")
@@ -145,11 +145,11 @@ pArgs <- add_option( pArgs, c("-O","--omitLogFile"), type="logical", action="sto
 ### Run maaslin without creating a log file
 pArgs <- add_option( pArgs, c("-t", "--invert"), type="logical", action="store_true", dest="fInvert", default=FALSE, metavar="invert", help="When given, flag indicates to invert the background of figures to black.")
 ### Selection Frequency
-pArgs <- add_option( pArgs, c("-f","--selectionFrequency"), type="double", action="store", dest="dSelectionFrequency", default=NA, metavar="selectionFrequency", help="Selection Frequency for boosting (max 100 will remove almost everything). Interpreted as requiring boosting to select metadata 100% percent of the time (or less if given a number that is less).")
+pArgs <- add_option( pArgs, c("-f","--selectionFrequency"), type="double", action="store", dest="dSelectionFrequency", default=NA, metavar="selectionFrequency", help="Selection Frequency for boosting (max 1 will remove almost everything). Interpreted as requiring boosting to select metadata 100% percent of the time (or less if given a number that is less). Value should be between 1 (100&) and 0 (0%), NA (default is determined by data size).")
 ### All v All
 pArgs <- add_option( pArgs, c("-a","--allvall"), type="logical", action="store_true", dest="fAllvAll", default=FALSE, metavar="compare_all", help="When given, the flag indicates that each fixed covariate that is not indicated as Forced is compared once at a time per data feature (bug). Made to be used with the -F option to specify one part of the model while allowing the other to cycle through a group of covariates. Does not affect Random covariates, which are always included when specified.")
 pArgs <- add_option( pArgs, c("-N","--PlotNA"), type="logical", action="store_true", default=FALSE, dest="fPlotNA", metavar="plotNAs",help="Plot data that was originally NA, by default they are not plotted.")
-### Alternaitve methodology settings
+### Alternative methodology settings
 pArgs <- add_option( pArgs, c("-A","--pAlpha"), type="double", action="store", dest="dPenalizedAlpha", default=0.95, metavar="PenalizedAlpha",help="The alpha for penalization (1.0=L1 regularization, LASSO; 0.0=L2 regularization, ridge regression")
 
 ### Misc MFA plot arguments
@@ -370,7 +370,7 @@ if(lsArgs$options$fPlotNA)
 #Write QC files only in certain modes of verbosity
 if( c_logrMaaslin$level <= loglevels["DEBUG"] ) {
 	#Record the data after cleaning
-	funcWriteMatrices(dataFrameList=list(Cleaned = lsRet$frmeData), saveFileList=c(file.path(strQCDir,"read_cleaned.tsv")), configureFileName=c(file.path(strQCDir,"read_cleaned.read.config")), acharDelimiter="\t") }
+	funcWriteMatrices(dataFrameList=list(Cleaned = lsRet$frmeData[union(lsRet$aiMetadata,lsRet$aiData)]), saveFileList=c(file.path(strQCDir,"read_cleaned.tsv")), configureFileName=c(file.path(strQCDir,"read_cleaned.read.config")), acharDelimiter="\t") }
 
 #These variables will be used to count how many features get analysed
 lsRet$lsQCCounts$iBoosts = 0
