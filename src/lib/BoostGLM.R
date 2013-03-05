@@ -40,6 +40,9 @@ suppressMessages(library( pscl, warn.conflicts=FALSE, quietly=TRUE, verbose=FALS
 #source(file.path("input","maaslin","src","Constants.R"))
 #source("Constants.R")
 
+#strTagX = "PC9"
+#strTagY = "k__Bacteria|p__Bacteroidetes|c__Bacteroidia|o__Bacteroidales|f__Prevotellaceae|g__Prevotella"
+
 ## Get logger
 c_logrMaaslin <- getLogger( "maaslin" )
 
@@ -64,13 +67,20 @@ dMinAbd,
 # Minimum sample abundance
 dFence,
 ### How many quartile ranges defines the fence to define outliers.
-funcTransform
+funcTransform,
 ### The data transformation function or a dummy function that does not affect the data
+dPOutlier = 0.05
+### The significance threshold for the grubbs test to identify an outlier.
 ){
 #  print("Start clean")
 #  print("aiData")
 #  print(aiData)
 #  print(frmeData[,aiData])
+
+#  pdf("1_Start_Clean.pdf")
+#  plot(x=frmeData[[strTagX]],y=frmeData[[strTagY]],main = "Start Clean")
+#  dev.off()
+
   # Call the custom script and set current data and indicies to the processes data and indicies.
   c_logrMaaslin$debug( "Start Clean")
   if( !is.null( funcDataProcess ) )
@@ -83,6 +93,10 @@ funcTransform
     aiData = pTmp$aiData
     lsQCCounts$lsQCCustom = pTmp$lsQCCounts
   }
+
+#  pdf("2_After_preprocess.pdf")
+#  plot(x=frmeData[[strTagX]],y=frmeData[[strTagY]],main = "After Preprocess")
+#  dev.off()
 
   # Remove missing data, remove any sample has less than dMinSamp * the number of data or low abundance
   aiRemove = c()
@@ -119,17 +133,22 @@ funcTransform
 #  print("After low abundance")
 #  print(frmeData[,aiData])
 
+#  pdf("3_After_MissingLowAbundance.pdf")
+#  plot(x=frmeData[[strTagX]],y=frmeData[[strTagY]],main = "After Missing Data and Low Abundance")
+#  dev.off()
+
   #Transform data
   for(aiDatum in aiData)
   {
     frmeData[,aiDatum] = funcTransform(frmeData[,aiDatum])
   }
 
+#  pdf("4_After_transform.pdf")
+#  plot(x=frmeData[[strTagX]],y=frmeData[[strTagY]],main = "After Transform")
+#  dev.off()
+
 #  print("After transform")
 #  print(frmeData[,aiData])
-
-  # Transform lowest abundance value threshold
-  dMinAbd = funcTransform(dMinAbd)
 	  
   # Set data indicies after custom QC process.
   lsQCCounts$aiAfterPreprocess = aiData
@@ -143,6 +162,10 @@ funcTransform
       frmeData[,i] = factor( frmeData[,i] )
     }
   }
+
+#  pdf("5_After_factorize_metadata.pdf")
+#  plot(x=frmeData[[strTagX]],y=frmeData[[strTagY]],main = "After Factorizing Metadata")
+#  dev.off()
 
 #  print("After factorize")
 #  print(frmeData[,aiData])
@@ -160,6 +183,10 @@ funcTransform
       aiRemove = c(aiRemove, iCol)
     }
   }
+
+#  pdf("6_After_remove_missing_metadata.pdf")
+#  plot(x=frmeData[[strTagX]],y=frmeData[[strTagY]],main = "After Remove Missing Metadata")
+#  dev.off()
 
 #  print("After NA count")
 #  print(frmeData[,aiData])
@@ -219,14 +246,14 @@ funcTransform
       aiSumOutlierPerDatum = c(aiSumOutlierPerDatum,length(aiRemove))
     }
   #Do not use the fence, use the Grubbs test
-  } else {
+  } else if(dPOutlier!=0.0){
     for( iData in aiData )
     {
       adData <- frmeData[,iData]
       while( TRUE )
       {
         lsTest <- try( grubbs.test( adData ), silent = TRUE )
-        if( ( class( lsTest ) == "try-error" ) || is.na( lsTest$p.value ) || ( lsTest$p.value > c_dPOutlier ) )
+        if( ( class( lsTest ) == "try-error" ) || is.na( lsTest$p.value ) || ( lsTest$p.value > dPOutlier ) )
         {break}
         adData[outlier( adData, logical = TRUE )] <- NA
       }
@@ -242,6 +269,10 @@ funcTransform
     }
   }
   lsQCCounts$aiSumOutlierPerDatum = aiSumOutlierPerDatum
+
+#  pdf("7_After_remove_outliers.pdf")
+#  plot(x=frmeData[[strTagX]],y=frmeData[[strTagY]],main = "After Remove Outliers")
+#  dev.off()
 
 #  print("After outliers")
 #  print(frmeData[,aiData])
@@ -282,9 +313,14 @@ funcTransform
     c_logrMaaslin$info( "Removing the following for having only NAs after cleaning (maybe due to only having NA after outlier testing).")
     c_logrMaaslin$info( format( colnames( frmeData )[aiRemoveData] ))
   }
+#  pdf("8_After_impute.pdf")
+#  plot(x=frmeData[[strTagX]],y=frmeData[[strTagY]],main = "After Impute")
+#  dev.off()
 
 #  print("After imputing")
 #  print(frmeData[,aiData])
+#  print("astrNoImpute")
+#  print(astrNoImpute)
 
   #Use na.gam.replace to manage NA metadata
   aiTmp <- setdiff( aiMetadata, which( colnames( frmeData ) %in% astrNoImpute ) )
@@ -331,9 +367,15 @@ funcTransform
     c_logrMaaslin$info( format( colnames( frmeData )[aiRemove] ))
   }
 
+#  pdf("9_End_Clean.pdf")
+#  plot(x=frmeData[[strTagX]],y=frmeData[[strTagY]],main = "End Clean")
+#  dev.off()
+
 #  print("End clean")
 #  print("aiData")
 #  print(aiData)
+#  print("aiMetadata")
+#  print(aiMetadata)
 #  print(frmeData[,aiData])
   c_logrMaaslin$debug("End FuncClean")
   return( list(frmeData = frmeData, aiMetadata = aiMetadata, aiData = aiData, lsQCCounts = lsQCCounts, liNaIndices=liNaIndices) )

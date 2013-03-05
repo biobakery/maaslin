@@ -527,6 +527,7 @@ tempPCH=20
         dBugScale=dBugScale, lsFeatureLabels=funcRename( rownames( lsPCA$var$coord )[afFeatures] ), lLegendLoc=llMarkerInfo$lLegendInfo)
     }
   }
+
   dev.off( )
 }
 

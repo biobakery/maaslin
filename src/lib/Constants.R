@@ -72,9 +72,6 @@ c_cFeatureDelimRex = "\\|"
 #The word used for unclassified
 c_strUnclassified = "unclassified"
 
-#Outlier related constants
-c_dPOutlier <- 0.05
-
 #Maaslincore settings
 #If a metadata does not have more than count of unique values, it is changed to factor data mode.
 c_iNonFactorLevelThreshold = 3

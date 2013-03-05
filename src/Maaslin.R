@@ -117,6 +117,8 @@ pArgs <- add_option( pArgs, c("-r", "--minRelativeAbundance"), type="double", ac
 pArgs <- add_option( pArgs, c("-p", "--minPrevalence"), type="double", action="store", dest="dMinSamp", default=0.1, metavar="minPrevalence", help="The minimum percentage of samples a feature can have abundance in before being removed. Also is the minimum percentage of samples a metadata can have NAs before being removed.")
 ## Fence for outlier, if not set Grubbs test is used
 pArgs <- add_option( pArgs, c("-o", "--outlierFence"), type="double", action="store", dest="dOutlierFence", default=0, metavar="outlierFence", help="Outliers are defined as this number times the interquartile range added/subtracted from the 3rd/1st quartiles respectively. If set to 0 (default), outliers are defined by the Grubbs test.")
+## Significance for Grubbs test
+pArgs <- add_option(pArgs, c("-G","--grubbsSig"), type="double", action="store", dest="dPOutlier", default=0.05, metavar="grubbsAlpha", help="This is the significance cuttoff used to indicate if something is an outlier or not. The closer to zero, the more significant an outlier must be to be removed.")
 ## Fixed (not random) covariates
 pArgs <- add_option( pArgs, c("-R","--random"), type="character", action="store", dest="strRandomCovariates", default=NULL, metavar="fixed", help="These metadata will be treated as random covariates. Comma delimited data feature names. These features must be listed in the read.config file. Example '-R RandomMetadata1,RandomMetadata2'")
 ## Change the type of correction fo rmultiple corrections
@@ -140,12 +142,12 @@ pArgs <- add_option( pArgs, c("-n","--noImpute"), type="character", action="stor
 ### Argument to control logging (enumerate)
 strDefaultLogging = "INFO"
 pArgs <- add_option( pArgs, c("-v", "--verbosity"), type="character", action="store", dest="strVerbosity", default=strDefaultLogging, metavar="verbosity", help="Logging verbosity")
-### Argument for inverting background to black
-pArgs <- add_option( pArgs, c("-O","--omitLogFile"), type="logical", action="store_true", default=FALSE, dest="fOmitLogFile", metavar="omitlogfile",help="Including this flag will stop the creation of the output log file.")
 ### Run maaslin without creating a log file
+pArgs <- add_option( pArgs, c("-O","--omitLogFile"), type="logical", action="store_true", default=FALSE, dest="fOmitLogFile", metavar="omitlogfile",help="Including this flag will stop the creation of the output log file.")
+### Argument for inverting background to black
 pArgs <- add_option( pArgs, c("-t", "--invert"), type="logical", action="store_true", dest="fInvert", default=FALSE, metavar="invert", help="When given, flag indicates to invert the background of figures to black.")
 ### Selection Frequency
-pArgs <- add_option( pArgs, c("-f","--selectionFrequency"), type="double", action="store", dest="dSelectionFrequency", default=NA, metavar="selectionFrequency", help="Selection Frequency for boosting (max 1 will remove almost everything). Interpreted as requiring boosting to select metadata 100% percent of the time (or less if given a number that is less). Value should be between 1 (100&) and 0 (0%), NA (default is determined by data size).")
+pArgs <- add_option( pArgs, c("-f","--selectionFrequency"), type="double", action="store", dest="dSelectionFrequency", default=NA, metavar="selectionFrequency", help="Selection Frequency for boosting (max 1 will remove almost everything). Interpreted as requiring boosting to select metadata 100% percent of the time (or less if given a number that is less). Value should be between 1 (100%) and 0 (0%), NA (default is determined by data size).")
 ### All v All
 pArgs <- add_option( pArgs, c("-a","--allvall"), type="logical", action="store_true", dest="fAllvAll", default=FALSE, metavar="compare_all", help="When given, the flag indicates that each fixed covariate that is not indicated as Forced is compared once at a time per data feature (bug). Made to be used with the -F option to specify one part of the model while allowing the other to cycle through a group of covariates. Does not affect Random covariates, which are always included when specified.")
 pArgs <- add_option( pArgs, c("-N","--PlotNA"), type="logical", action="store_true", default=FALSE, dest="fPlotNA", metavar="plotNAs",help="Plot data that was originally NA, by default they are not plotted.")
@@ -349,7 +351,7 @@ funcProcess <- NULL
 if(!is.null(funcSourceScript(lsArgs$options$strInputR))){funcProcess <- get(c_strCustomProcessFunction)}
 
 #Clean the data and update the current data list to the cleaned data list
-lsRet = funcClean( frmeData=frmeData, funcDataProcess=funcProcess, aiMetadata=aiMetadata, aiData=aiData, lsQCCounts=lsData$lsQCCounts, astrNoImpute=xNoImpute, dMinSamp = lsArgs$options$dMinSamp, dMinAbd = lsArgs$options$dMinAbd, dFence=lsArgs$options$dOutlierFence, funcTransform=afuncVariableAnalysis[[c_iTransform]])
+lsRet = funcClean( frmeData=frmeData, funcDataProcess=funcProcess, aiMetadata=aiMetadata, aiData=aiData, lsQCCounts=lsData$lsQCCounts, astrNoImpute=xNoImpute, dMinSamp = lsArgs$options$dMinSamp, dMinAbd = lsArgs$options$dMinAbd, dFence=lsArgs$options$dOutlierFence, funcTransform=afuncVariableAnalysis[[c_iTransform]], dPOutlier=lsArgs$options$dPOutlier)
 logdebug("lsRet", c_logrMaaslin)
 logdebug(format(lsRet), c_logrMaaslin)
 #Update the variables after cleaning
