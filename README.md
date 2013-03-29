@@ -109,7 +109,7 @@ text file with the extension ".pcl".
 
 ### 2\. "\*.read.config"
 
-Required input file. A read config file allows one to indicate what data is read from a PCL file without having to change the pcl file or change code. This means one can have a pcl file which is a superset of metadata and abundances which includes data you are not interested in for the run. This file is a text file with ".read.config" as an extension. This file is later described in detail in section “F. Process Flow Overview” subsection “4. Create your read.config file”.
+Required input file. A read config file allows one to indicate what data is read from a PCL file without having to change the pcl file or change code. This means one can have a pcl file which is a superset of metadata and abundances which includes data you are not interested in for the run. This file is a text file with ".read.config" as an extension. This file is later described in detail in section **F. Process Flow Overview** subsection **4. Create your read.config file**.
 
 ### 3\. "\*.R"
 
@@ -132,7 +132,7 @@ visualization, or other changes.
 7. Run
 8. Discover amazing associations in your results!
 
-F. Process Flow Detail
+# F. Process Flow Detail
 
 ### 1\. Obtain your abundance table.
 
@@ -174,7 +174,7 @@ output) use the merge_metadata.py script provided in this project
 (`maaslin/src/merge_metadata.py`) and documented in
 `maaslin/doc/Merge_Metadata_Read_Me.txt`.
 
-PCL format description:
+###PCL format description:
 
 i. Row 1 is expected to be \#ID_indicator and then sample ids in each
 following column separated by tabs.
@@ -384,7 +384,7 @@ get the message:
       File "/home/user/sfle/SConstruct", line 2:
         import sfle
 
-Solution: You need to update your path. On a linux or MacOS terminal
+**Solution:** You need to update your path. On a linux or MacOS terminal
 in the sfle directory type the following.
 
     export PATH=/usr/local/bin:`pwd`/src:$PATH
@@ -394,7 +394,7 @@ in the sfle directory type the following.
 ###2\. When trying to run a script I am told I do not have permission
 even though file permissions have been set for myself.
 
-Solution: Most likely, you need to set the main MaAsLin script
+**Solution:** Most likely, you need to set the main MaAsLin script
 (Maaslin.R) to executable.
 
 #I. Installation as an Automated Pipeline
