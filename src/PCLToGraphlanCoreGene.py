@@ -53,7 +53,7 @@ def funcIsInt(strInt):
 def funcGetIndices(lsFeature, lsFunctionNames):
   if(len(lsFeature)) == 1:
       if(funcIsInt(lsFeature[0])):
-        return int(lsFeature[0])
+        return int(lsFeature[0])-1
       return [lsFeatureNames.index(lsFeature[0])]
   if(len(lsFeature)) == 2:
     iIndices = []
@@ -65,7 +65,7 @@ def funcGetIndices(lsFeature, lsFunctionNames):
         elif(iPosition==2):
           iIndices.append(len(lsFunctionNames)-1)
       elif(funcIsInt(sFeature)):
-        iIndices.append(int(sFeature))
+        iIndices.append(int(sFeature)-1)
       else:
         iIndices.append(lsFeatureNames.index(sFeature))
       iPosition = iPosition + 1

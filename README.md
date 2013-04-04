@@ -60,13 +60,6 @@ analysis:
     analysis. For more information on GraPlAn please visit
     [http://huttenhower.sph.harvard.edu/graphlan](http://huttenhower.sph.harvard.edu/graphlan).
 
-* **MetaCheck** is a utility project, still underdevelopment, which is
-    targeted at diagnosis and visualizing the metadata in a study. The
-    intent is to create visualizations to comment on the balance,
-    correlation structure, and other properties of your metadata to
-    better use MaAsLin. To download please visit
-    [https://bitbucket.org/timothyltickle/metacheck](https://bitbucket.org/timothyltickle/metacheck).
-
 * **QiimeToMaAsLin** is a project that reformats abundance files from
     Qiime for MaAsLin. Several formats of Qiime consensus lineages are
     supported for this project. To download please visit

@@ -703,11 +703,12 @@ strRandomFormula = NULL
 
   if(!is.null(strRandomFormula))
   {
-    return(try(glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=binomial(link=logit), data=frmeTmp)))
+    #TODO need to estimate the theta
+    return(try(glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=negative.binomial(theta = 2, link=log), data=frmeTmp)))
     #lme4 package but does not have pvalues for the fixed variables (have to use a mcmcsamp/pvals.fnc function which are currently disabled)
     #return(try ( glmer(as.formula(strFormula), data=frmeTmp, family=binomial(link=logit), na.action=c_strNA_Action) ))
   } else {
-    return(try( glm(as.formula(strFormula), family=binomial(link=logit), data=frmeTmp, na.action=c_strNA_Action) ))
+    return(try( glm.nb(as.formula(strFormula), data=frmeTmp, na.action=c_strNA_Action) ))
   }
   ### lmod result object from lm
 }
