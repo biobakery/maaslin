@@ -306,7 +306,7 @@ asSuppressCovariates=c()
         #Bonferonni correct the factor p-values based on the factor levels-1 comparisons
         if( class( adMetadata ) == "factor" )
         {
-          dP <- dP * ( nlevels( adMetadata ) - 1 )
+          dP <- dP * ( length( unique( adMetadata )) - 1 )
         }
 
         #Store (factor level modified) p-value
