@@ -72,15 +72,6 @@ funcTransform,
 dPOutlier = 0.05
 ### The significance threshold for the grubbs test to identify an outlier.
 ){
-#  print("Start clean")
-#  print("aiData")
-#  print(aiData)
-#  print(frmeData[,aiData])
-
-#  pdf("1_Start_Clean.pdf")
-#  plot(x=frmeData[[strTagX]],y=frmeData[[strTagY]],main = "Start Clean")
-#  dev.off()
-
   # Call the custom script and set current data and indicies to the processes data and indicies.
   c_logrMaaslin$debug( "Start Clean")
   if( !is.null( funcDataProcess ) )
@@ -93,10 +84,6 @@ dPOutlier = 0.05
     aiData = pTmp$aiData
     lsQCCounts$lsQCCustom = pTmp$lsQCCounts
   }
-
-#  pdf("2_After_preprocess.pdf")
-#  plot(x=frmeData[[strTagX]],y=frmeData[[strTagY]],main = "After Preprocess")
-#  dev.off()
 
   # Remove missing data, remove any sample has less than dMinSamp * the number of data or low abundance
   aiRemove = c()
@@ -130,12 +117,6 @@ dPOutlier = 0.05
     c_logrMaaslin$info( "Removing the following for too many low abundance bugs.")
     c_logrMaaslin$info( format( colnames( frmeData )[aiRemoveLowAbundance] ))
   }
-#  print("After low abundance")
-#  print(frmeData[,aiData])
-
-#  pdf("3_After_MissingLowAbundance.pdf")
-#  plot(x=frmeData[[strTagX]],y=frmeData[[strTagY]],main = "After Missing Data and Low Abundance")
-#  dev.off()
 
   #Transform data
   for(aiDatum in aiData)
@@ -143,13 +124,6 @@ dPOutlier = 0.05
     frmeData[,aiDatum] = funcTransform(frmeData[,aiDatum])
   }
 
-#  pdf("4_After_transform.pdf")
-#  plot(x=frmeData[[strTagX]],y=frmeData[[strTagY]],main = "After Transform")
-#  dev.off()
-
-#  print("After transform")
-#  print(frmeData[,aiData])
-	  
   # Set data indicies after custom QC process.
   lsQCCounts$aiAfterPreprocess = aiData
 
@@ -162,13 +136,6 @@ dPOutlier = 0.05
       frmeData[,i] = factor( frmeData[,i] )
     }
   }
-
-#  pdf("5_After_factorize_metadata.pdf")
-#  plot(x=frmeData[[strTagX]],y=frmeData[[strTagY]],main = "After Factorizing Metadata")
-#  dev.off()
-
-#  print("After factorize")
-#  print(frmeData[,aiData])
 
   # Metadata: Remove missing data
   # This is defined as if there is only one non-NA value or
@@ -183,13 +150,6 @@ dPOutlier = 0.05
       aiRemove = c(aiRemove, iCol)
     }
   }
-
-#  pdf("6_After_remove_missing_metadata.pdf")
-#  plot(x=frmeData[[strTagX]],y=frmeData[[strTagY]],main = "After Remove Missing Metadata")
-#  dev.off()
-
-#  print("After NA count")
-#  print(frmeData[,aiData])
 
   # Remove metadata
   aiMetadata = setdiff( aiMetadata, aiRemove )
@@ -270,13 +230,6 @@ dPOutlier = 0.05
   }
   lsQCCounts$aiSumOutlierPerDatum = aiSumOutlierPerDatum
 
-#  pdf("7_After_remove_outliers.pdf")
-#  plot(x=frmeData[[strTagX]],y=frmeData[[strTagY]],main = "After Remove Outliers")
-#  dev.off()
-
-#  print("After outliers")
-#  print(frmeData[,aiData])
-
   # Keep track of factor levels in a list for later use
   lslsFactors <- list()
   for( iCol in c(aiMetadata) )
@@ -305,22 +258,12 @@ dPOutlier = 0.05
   }
   # Remove and document
   aiData = setdiff( aiData, aiRemoveData )
-#  print("aiData")
-#  print(aiData)
   lsQCCounts$iMissingData = c(lsQCCounts$iMissingData,aiRemoveData)
   if(length(aiRemoveData))
   {
     c_logrMaaslin$info( "Removing the following for having only NAs after cleaning (maybe due to only having NA after outlier testing).")
     c_logrMaaslin$info( format( colnames( frmeData )[aiRemoveData] ))
   }
-#  pdf("8_After_impute.pdf")
-#  plot(x=frmeData[[strTagX]],y=frmeData[[strTagY]],main = "After Impute")
-#  dev.off()
-
-#  print("After imputing")
-#  print(frmeData[,aiData])
-#  print("astrNoImpute")
-#  print(astrNoImpute)
 
   #Use na.gam.replace to manage NA metadata
   aiTmp <- setdiff( aiMetadata, which( colnames( frmeData ) %in% astrNoImpute ) )
@@ -367,16 +310,6 @@ dPOutlier = 0.05
     c_logrMaaslin$info( format( colnames( frmeData )[aiRemove] ))
   }
 
-#  pdf("9_End_Clean.pdf")
-#  plot(x=frmeData[[strTagX]],y=frmeData[[strTagY]],main = "End Clean")
-#  dev.off()
-
-#  print("End clean")
-#  print("aiData")
-#  print(aiData)
-#  print("aiMetadata")
-#  print(aiMetadata)
-#  print(frmeData[,aiData])
   c_logrMaaslin$debug("End FuncClean")
   return( list(frmeData = frmeData, aiMetadata = aiMetadata, aiData = aiData, lsQCCounts = lsQCCounts, liNaIndices=liNaIndices) )
   ### Return list of
@@ -430,8 +363,10 @@ liNaIndices = list(),
 ### Indicies of imputed NA data
 lxParameters=list(),
 ### List holds parameters for different variable selection techniques
-strTestingCorrection = "BH"
+strTestingCorrection = "BH",
 ### Correction for multiple testing
+fIsUnivariate = FALSE
+### Indicates if the function is univariate
 ){
   c_logrMaaslin$debug("Start funcBugs")
   if( is.na( strDirOut )||is.null(strDirOut))
@@ -467,8 +402,7 @@ strTestingCorrection = "BH"
       c_logrMaaslin$info( "Taxon %d/%d", iTaxon, max( aiData ) )
     }
     #Call analysis method
-
-    lsOne <- funcBugHybrid( iTaxon, frmeData, lsData, aiMetadata, dSig, dMinSamp, adP, lsSig, strLog, funcReg, lsNonPenalizedPredictors, funcAnalysis, lsRandomCovariates, funcGetResults, fAllvAll, lxParameters )
+    lsOne <- funcBugHybrid( iTaxon, frmeData, lsData, aiMetadata, dSig, dMinSamp, adP, lsSig, strLog, funcReg, lsNonPenalizedPredictors, funcAnalysis, lsRandomCovariates, funcGetResults, fAllvAll, fIsUnivariate, lxParameters )
 
     #TODO Check#If you get a NA (happens when the lmm gets all random covariates) move on
     if(is.na(lsOne)){next}
@@ -609,6 +543,8 @@ funcGetResult=NULL,
 ### Function to unpack results from analysis
 fAllvAll=FALSE,
 ### Flag to turn on all against all comparisons
+fIsUnivariate = FALSE,
+### Indicates the analysis function is univariate
 lxParameters=list()
 ### List holds parameters for different variable selection techniques
 ){
@@ -717,7 +653,7 @@ lxParameters=list()
       #Set up suppressing forced covariates in a all v all scenario only
       asSuppress = c()
       #Enable all against all comparisons
-      if(fAllvAll)
+      if(fAllvAll && !fIsUnivariate)
       {
         lsVaryingCovariates = setdiff(astrTerms,lsNonPenalizedPredictors)
         lsConstantCovariates = setdiff(lsNonPenalizedPredictors,lsRandomCovariates)

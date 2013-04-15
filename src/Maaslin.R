@@ -70,6 +70,8 @@ sMethodKey
     lm = funcLM,
     none = NA)
 
+  lRetMethods[[c_iIsUnivariate]]=sMethodKey=="univariate"
+
   #Insert method to get results
   lRetMethods[[c_iResults]] = switch(sMethodKey,
     neg_binomial = funcGetLMResults,
@@ -180,7 +182,7 @@ main <- function(
 ### (those whose q-values {BH FDR correction} are <= the threshold given in the optional arguments.
 pArgs
 ### Parsed commandline arguments
-) {
+){
 lsArgs <- parse_args( pArgs, positional_arguments = TRUE )
 #logdebug("lsArgs", c_logrMaaslin)
 #logdebug(paste(lsArgs,sep=" "), c_logrMaaslin)
@@ -388,7 +390,7 @@ if(lsArgs$options$strMethod %in% c("univariate")){ fDoRPlot=FALSE }
 #Run analysis
 alsRetBugs = funcBugs( lsRet$frmeData, lsRet, lsRet$aiMetadata, lsRet$aiData, strBase, lsArgs$options$dSignificanceLevel, lsArgs$options$dMinSamp, lsArgs$options$fInvert,
         outputDirectory, astrScreen = c(), funcReg=afuncVariableAnalysis[[c_iSelection]], funcUnTransform=afuncVariableAnalysis[[c_iUnTransform]], lsForcedParameters,
-        funcAnalysis=afuncVariableAnalysis[[c_iAnalysis]], lsRandomCovariates, funcGetResults=afuncVariableAnalysis[[c_iResults]], fDoRPlot=fDoRPlot, fOmitLogFile=lsArgs$options$fOmitLogFile, fAllvAll=lsArgs$options$fAllvAll, liNaIndices=lsRet$liNaIndices, lxParameters=lxParameters, strTestingCorrection=lsArgs$options$strMultTestCorrection )
+        funcAnalysis=afuncVariableAnalysis[[c_iAnalysis]], lsRandomCovariates, funcGetResults=afuncVariableAnalysis[[c_iResults]], fDoRPlot=fDoRPlot, fOmitLogFile=lsArgs$options$fOmitLogFile, fAllvAll=lsArgs$options$fAllvAll, liNaIndices=lsRet$liNaIndices, lxParameters=lxParameters, strTestingCorrection=lsArgs$options$strMultTestCorrection, fIsUnivariate=afuncVariableAnalysis[[c_iIsUnivariate]] )
 aiBugs = alsRetBugs$aiReturnBugs
 
 #Write QC files only in certain modes of verbosity
