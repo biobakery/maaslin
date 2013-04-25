@@ -40,11 +40,93 @@ suppressMessages(library( pscl, warn.conflicts=FALSE, quietly=TRUE, verbose=FALS
 #source(file.path("input","maaslin","src","Constants.R"))
 #source("Constants.R")
 
-#strTagX = "PC9"
-#strTagY = "k__Bacteria|p__Bacteroidetes|c__Bacteroidia|o__Bacteroidales|f__Prevotellaceae|g__Prevotella"
-
 ## Get logger
 c_logrMaaslin <- getLogger( "maaslin" )
+
+funcDoGrubbs <- function(
+### Use the Grubbs Test to identify outliers
+iData,
+### Column index in the data frame to test
+frmeData,
+### The data frame holding the data
+dPOutlier,
+### P-value threshold to indicate an outlier is significant
+lsQC
+### List holding the QC info of the cleaning step. Which indices are outliers is added.
+){
+  adData <- frmeData[,iData]
+
+  # Original number of NA
+  iNAOrig = sum(is.na(adData))
+
+  while( TRUE )
+  {
+    lsTest <- try( grubbs.test( adData ), silent = TRUE )
+    if( ( class( lsTest ) == "try-error" ) || is.na( lsTest$p.value ) || ( lsTest$p.value > dPOutlier ) )
+    {break}
+    viOutliers = outlier( adData, logical = TRUE )
+    adData[viOutliers] <- NA
+  }
+
+  # Document removal
+  if( sum( is.na( adData ) ) )
+  {
+    c_logrMaaslin$info( "Grubbs Test::Removing %d outliers from %s", sum( is.na( adData ) ), colnames(frmeData)[iData] )
+			  c_logrMaaslin$info( format( rownames( frmeData )[is.na( adData )] ))
+  }
+  # Record removed data
+  lsQC$aiDataSumOutlierPerDatum = c(lsQC$aiDataSumOutlierPerDatum,sum(is.na(adData))-iNAOrig)
+  return(list(data=adData,QC=lsQC))
+}
+
+funcDoFenceTest <- function(
+### Use a threshold based on the quartiles of the data to identify outliers
+iData,
+### Column index in the data frame to test
+frmeData,
+### The data frame holding the data
+dFence,
+### The fence outside the first and third quartiles to use as a threshold for cutt off.
+### This many times the interquartile range +/- to the 3rd/1st quartiles
+lsQC
+### List holding the QC info of the cleaning step. Which indices are outliers is added.
+){
+  # Establish fence
+  adData <- frmeData[,iData]
+  adQ <- quantile( adData, c(0.25, 0.5, 0.75), na.rm = TRUE )
+
+  dIQR <- adQ[3] - adQ[1]
+  if(!dIQR)
+  {
+    dIQR = sd(adData,na.rm = TRUE)
+  }
+  dUF <- adQ[3] + ( dFence * dIQR )
+  dLF <- adQ[1] - ( dFence * dIQR )
+
+  # Record indices of values outside of fence to remove and remove.
+  aiRemove <- c()
+  for( j in 1:length( adData ) )
+  {
+    d <- adData[j]
+    if( !is.na( d ) && ( ( d < dLF ) || ( d > dUF ) ) )
+    {
+      aiRemove <- c(aiRemove, j)
+    }
+  }
+  adData[aiRemove] <- NA
+
+  # Document to screen
+  if( length( aiRemove ) )
+  {
+    c_logrMaaslin$info( "OutliersByFence::Removing %d outliers from %s", length( aiRemove ), colnames(frmeData)[iData] )
+    c_logrMaaslin$info( format( rownames( frmeData )[aiRemove] ))
+  }
+
+  # Record removed data
+  lsQC$aiDataSumOutlierPerDatum = c(lsQC$aiDataSumOutlierPerDatum,length(aiRemove))
+
+  return(list(data=adData,QC=lsQC))
+}
 
 funcClean <- function(
 ### Properly clean / get data ready for analysis
@@ -166,69 +248,26 @@ dPOutlier = 0.05
   # If the dFence Value is set use the method of defining the outllier as
   # dFence * the interquartile range + or - the 3rd and first quartile respectively.
   # If not the gibbs test is used.
-  aiSumOutlierPerDatum = c()
+  lsQCCounts$aiDataSumOutlierPerDatum = c()
   if( dFence > 0.0 )
   {
-    # For each sample measurements
+    # For data
     for( iData in aiData )
     {
-      # Establish fence
-      adData <- frmeData[,iData]
-      adQ <- quantile( adData, c(0.25, 0.5, 0.75), na.rm = TRUE )
-
-      dIQR <- adQ[3] - adQ[1]
-      if(!dIQR)
-      {
-        dIQR = sd(adData,na.rm = TRUE)
-      }
-      dUF <- adQ[3] + ( dFence * dIQR )
-      dLF <- adQ[1] - ( dFence * dIQR )
-
-      # Record indices of values outside of fence to remove.
-      aiRemove <- c()
-      for( j in 1:length( adData ) )
-      {
-        d <- adData[j]
-        if( !is.na( d ) && ( ( d < dLF ) || ( d > dUF ) ) )
-        {
-          aiRemove <- c(aiRemove, j)
-        }
-      }
-
-      # Document
-      if( length( aiRemove ) )
-      {
-        c_logrMaaslin$info( "OutliersByFence::Removing %d outliers from %s", length( aiRemove ), colnames(frmeData)[iData] )
-        c_logrMaaslin$info( format( rownames( frmeData )[aiRemove] ))
-      }
-      adData[aiRemove] <- NA
-      frmeData[,iData] <- adData
-      aiSumOutlierPerDatum = c(aiSumOutlierPerDatum,length(aiRemove))
+      lOutlierInfo <- funcDoFenceTest(iData=iData,frmeData=frmeData,dFence=dFence,lsQC=lsQCCounts)
+      frmeData[,iData] <- lOutlierInfo["data"]
+      lsQCCounts$aiDataSumOutlierPerDatum <- lOutlierInfo["QC"]$QC$aiDataSumOutlierPerDatum
     }
   #Do not use the fence, use the Grubbs test
   } else if(dPOutlier!=0.0){
+    # For data
     for( iData in aiData )
     {
-      adData <- frmeData[,iData]
-      while( TRUE )
-      {
-        lsTest <- try( grubbs.test( adData ), silent = TRUE )
-        if( ( class( lsTest ) == "try-error" ) || is.na( lsTest$p.value ) || ( lsTest$p.value > dPOutlier ) )
-        {break}
-        adData[outlier( adData, logical = TRUE )] <- NA
-      }
-
-      # Document removal
-      if( sum( is.na( adData ) ) )
-      {
-        c_logrMaaslin$info( "Grubbs Test::Removing %d outliers from %s", sum( is.na( adData ) ), colnames(frmeData)[iData] )
-			  c_logrMaaslin$info( format( rownames( frmeData )[is.na( adData )] ))
-      }
-      aiSumOutlierPerDatum = c(aiSumOutlierPerDatum,length(is.na(adData)))
-      frmeData[,iData] <- adData
+      lOutlierInfo <- funcDoGrubbs(iData=iData,frmeData=frmeData,dPOutlier=dPOutlier,lsQC=lsQCCounts)
+      frmeData[,iData] <- lOutlierInfo["data"]
+      lsQCCounts$aiDataSumOutlierPerDatum <- lOutlierInfo["QC"]$QC$aiDataSumOutlierPerDatum
     }
   }
-  lsQCCounts$aiSumOutlierPerDatum = aiSumOutlierPerDatum
 
   # Keep track of factor levels in a list for later use
   lslsFactors <- list()
@@ -256,6 +295,7 @@ dPOutlier = 0.05
       aiRemoveData = c(aiRemoveData,iCol)
     }
   }
+
   # Remove and document
   aiData = setdiff( aiData, aiRemoveData )
   lsQCCounts$iMissingData = c(lsQCCounts$iMissingData,aiRemoveData)
@@ -301,6 +341,7 @@ dPOutlier = 0.05
         aiRemove = c(aiRemove, iCol)
     }
   }
+
   # Remove and document
   aiData = setdiff( aiData, aiRemove)
   lsQCCounts$iZeroDominantData = aiRemove

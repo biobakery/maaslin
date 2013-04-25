@@ -25,7 +25,7 @@
 
 inlinedocs <- function(
 ##author<< Curtis Huttenhower <chuttenh@hsph.harvard.edu> and Timothy Tickle <ttickle@hsph.harvard.edu>
-##description<< Collection of mnor utility scripts
+##description<< Collection of minor utility scripts
 ) { return( pArgs ) }
 
 #source("Constants.R")
@@ -375,7 +375,7 @@ liMetadataDim
   funcWrite( paste("Data Count after preprocess: ",length(lsQCData$aiAfterPreprocess),sep=""), strProcessFileName )
   funcWrite( paste("Removed for missing metadata: ",length(lsQCData$iMissingMetadata),sep=""), strProcessFileName )
   funcWrite( paste("Removed for missing data: ",length(lsQCData$iMissingData),sep=""), strProcessFileName )
-  funcWrite( paste("Data with outliers: ",length(lsQCData$aiSumOutlierPerDatum[lsQCData$aiSumOutlierPerDatum>0]),sep=""), strProcessFileName )
+  funcWrite( paste("Data with outliers: ",length(lsQCData$aiDataSumOutlierPerDatum[lsQCData$aiDataSumOutlierPerDatum>0]),sep=""), strProcessFileName )
   funcWrite( paste("Metadata count which survived clean: ",length(lsQCData$aiMetadataCleaned),sep=""), strProcessFileName )
   funcWrite( paste("Data count which survived clean: ",length(lsQCData$aiDataCleaned),sep=""), strProcessFileName )
   funcWrite( paste("\nBoostings: ",lsQCData$iBoosts,sep=""), strProcessFileName )
@@ -401,7 +401,7 @@ liMetadataDim
   funcWrite("\nRemoved for missing data: ", strProcessFileName )
   funcWrite(lsQCData$iMissingData, strProcessFileName )
   funcWrite("\nOutlier Count per Datum: ", strProcessFileName )
-  funcWrite(lsQCData$aiSumOutlierPerDatum, strProcessFileName )
+  funcWrite(lsQCData$aiDataSumOutlierPerDatum, strProcessFileName )
   funcWrite("\nMetadata which survived clean: ", strProcessFileName )
   funcWrite(lsQCData$aiMetadataCleaned, strProcessFileName )
   funcWrite("\nData which survived clean: ", strProcessFileName )
