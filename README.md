@@ -366,7 +366,9 @@ Can be used to read in read_cleaned.tsv.
 Contains quality control for the MaAsLin analysis. This includes
 information on the magnitude of outlier removal.
 
-#H. Troubleshooting
+#H. Other Analysis Flows###1. All verses AllThe all verses all analysis flow is a way of manipulating how metadata are used. In this method there is a group of metadata that are always evaluated, as well there are a group that are added to this one at a time. To give a more concrete example: You may have metadata cage, diet, and treatment. You may always want to have the association of abundance evaluated controlling for cage but otherwise looking at the metadata one at a time. In this way the cage metadata is the “forced” part of the evaluation while the others are not forced and evaluated in serial. The appropriate commandline (placed in your args file) to indicate this is:> -a –F cage-a indicates all verses all is being used, -F indicates which metadata are forced (multiple metadata can be given comma delimited as shown here –F metadata1,metadata2,metadata3). This does not bypass the feature selection method so the metadata that are not forced are subject to feature selection and may be removed before coming to the evaluation. If you want all the metadata that are not forced to be evaluated in serial you will need to turn off feature selection and will have a final combined commandline as seen here:> -a –F cage –s none
+
+#I. Troubleshooting
 
 ###1\. (Only valid if using Sfle) ImportError: No module named sfle
 
@@ -390,7 +392,7 @@ even though file permissions have been set for myself.
 **Solution:** Most likely, you need to set the main MaAsLin script
 (Maaslin.R) to executable.
 
-#I. Installation as an Automated Pipeline
+#J. Installation as an Automated Pipeline
 
 SflE (pronounced souffl√©), is a framework for automation and
 parallelization on a multiprocessor machine. MaAsLin has been
@@ -405,7 +407,7 @@ all files in the `sfle/input/maaslin/input directory type scons
 output/maaslin in a terminal in the sfle directory`. This will produce
 output in the `sfle/output/maaslin` directory.
 
-#J. Commandline Options (Modifying Process and Figures)
+#K. Commandline Options (Modifying Process and Figures)
 
 Although we recommend the use of default options, commandline
 arguments exist to modify both MaAsLin methodology and figures. To see

@@ -70,6 +70,8 @@ sMethodKey
     lm = funcLM,
     none = NA)
 
+  # If a univariate method is used it is required to set this to true
+  # For correct handling.
   lRetMethods[[c_iIsUnivariate]]=sMethodKey=="univariate"
 
   #Insert method to get results
