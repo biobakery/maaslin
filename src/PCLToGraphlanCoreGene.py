@@ -97,7 +97,7 @@ llsIndices = []
 csvRC = open(args.strInputRC,'r') if isinstance(args.strInputRC, str) else args.strInputRC
 fRC = csv.reader(csvRC, delimiter=" ")
 for sLine in fRC:
-  #Get the row indexs or names
+  #Get the row indices or names
   if len(sLine):
     if sLine[0] == c_MatrixName:
       fIsData = sLine[1] == c_DataMatrix
@@ -107,12 +107,20 @@ for sLine in fRC:
         break
 csvRC.close()
 
+# Check to make sure RC file is read
+if len(llsIndices)==0:
+  print("PCLToGraphlanCoreGene:: Could Not find indices in RC file "+args.strInputRC+".")
+
 #Read in the PCL file and parse the file names to core genes format
 csvPCL = open(args.strInputPCL,'r') if isinstance(args.strInputPCL, str) else args.strInputPCL
 fPCL = csv.reader(csvPCL,delimiter="\t")
 #The first column of the csv file
 lsFeatureNames = [sLine[0] for sLine in fPCL]
 csvPCL.close()
+
+# Check to make sure PCL file is read
+if len(lsFeatureNames)==0:
+  print("PCLToGraphlanCoreGene:: Could Not find features in PCL file "+args.strInputPCL+".")
 
 #If the indices are names switch with numbers otherwise subtract 1 because they are ment for R
 liConvertedRangedIndices = [funcGetIndices(sIndex,lsFeatureNames) for sIndex in llsIndices] if len(llsIndices)>0 else []

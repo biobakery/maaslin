@@ -244,14 +244,16 @@ liNaIndices = c()
 ){
   # Get model matrix (raw data)
   adCur = frmTmp[[sResponseFeature]]
+
   # Make a formula to calculate the new model to get the full model residuals
-
   strFormula = paste("adCur",paste(sprintf( "`%s`", lsFullModelCovariateNames ),sep="", collapse="+"),sep="~")
-  # Calculate lm
 
+  # Calculate lm
   lmod = (lm(as.formula(strFormula),frmTmp))
+
   # Get all coefficient data in the new model
   dfdCoefs = coefficients(lmod)
+
   # Get all coefficient names in the new model
   asAllCoefNames = names(dfdCoefs)
 
@@ -260,12 +262,12 @@ liNaIndices = c()
   # Convert the coefficient name to the column name
   # If they are equal then the data is not discontinuous and you can use the raw data as is and multiple it by the coefficient in the model
   # If the not equal than the data is discontinuous, get the value for the data, set all but the levels equal to it to zero and multiply by the ceofficient from the model.
-  vY = rep(coefficients(lmod)[["(Intercept)"]],dim(frmTmp)[1])
+#  vY = rep(coefficients(lmod)[["(Intercept)"]],dim(frmTmp)[1])
+  vY = rep(0,dim(frmTmp)[1])
 
   #Here we are not dealing with column names but, if factor data, the coefficient names
   for(iCvIndex in 1:length(lsCovariateToControlForNames))
   {
-    asCoefNames = c()
     sCurrentCovariate = lsCovariateToControlForNames[iCvIndex]
     #Get the column name of the current covariate (this must be used to compare to other column names)
     sCurCovariateColumnName = funcCoef2Col(sCurrentCovariate, frmTmp)
@@ -286,8 +288,10 @@ liNaIndices = c()
   }
   #TODO based on transform   vY = vY+sin(residuals(lmod))^2
   if(!is.null(funcUnTransform))
-  { vY = vY + funcUnTransform(residuals(lmod))
-  } else { vY = vY + residuals(lmod) }
+  {
+    vY = vY + funcUnTransform(residuals(lmod))
+  } else {
+    vY = vY + residuals(lmod) }
 
   # Plot x, raw data
   ## y label 
@@ -312,6 +316,13 @@ liNaIndices = c()
     adCurXValues = factor(adCurXValues)
   }
 
+  # Scale to the original range
+  if(!(class( adCurXValues ) == "factor" ))
+  {
+    vY = vY + mean(adCurXValues,rm.na=TRUE)
+  }
+
+  # Plot Partial Residual Plot
   # If we are printing discontinuous data
   # Get the color of the box plots
   # Plot box plots

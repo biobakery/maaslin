@@ -44,6 +44,9 @@ suppressMessages(library( glmnet, warn.conflicts=FALSE, quietly=TRUE, verbose=FA
 #suppressMessages(library( lme4, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
 suppressMessages(library( nlme, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
 
+fAddBack = TRUE
+dUnevenMax = .9
+
 ### Helper functions
 # OK
 funcMakeContrasts <- function
@@ -372,25 +375,39 @@ strLog
     #Check the frequency of selection and skip if not selected more than set threshold dFreq
     for( strMetadata in lmod$var.names )
     {
+      #Get the name of the metadata
+      strTerm <- funcCoef2Col( strMetadata, frmeTmp, c(astrMetadata, astrGenetics) )
+
+      #Add back in uneven metadata
+      if(fAddBack)
+      {
+        ldMetadata = frmeTmp[[strMetadata]]
+        if(length(which(table(ldMetadata)/length(ldMetadata)>dUnevenMax))>0)
+        {
+          astrTerms <- c(astrTerms, strTerm)
+          next
+        }
+      }
+
       #If the selprob is less than a certain frequency, skip
       dSel <- lsSum$rel.inf[which( lsSum$var == strMetadata )] / 100
       if( is.na(dSel) || ( dSel < lsParameters$dFreq ) ){ next }
 
-      #Get the name of the metadata
-      strTerm <- funcCoef2Col( strMetadata, frmeTmp, c(astrMetadata, astrGenetics) )
-
       #If you should ignore the metadata, continue
       if( is.null( strTerm ) ) { next }
+
       #If you cant find the metadata name, write
       if( is.na( strTerm ) )
       {
         c_logrMaaslin$error( "Unknown coefficient: %s", strMetadata )
         next
       }
+
       #Collect metadata names
       astrTerms <- c(astrTerms, strTerm)
     }
   } else { astrTerms = lsForcedParameters }
+
   return(unique(c(astrTerms,lsForcedParameters)))
   ### Return a vector of predictor names to use in a reduced model
 }
@@ -683,7 +700,7 @@ strRandomFormula = NULL
 
 # Tested
 funcBinomialMult <- function(
-### Perform linear regression with binomial link
+### Perform linear regression with negative binomial link
 strFormula,
 ### lm style string defining reponse and predictors, for mixed effects models this holds the fixed variables
 frmeTmp,
