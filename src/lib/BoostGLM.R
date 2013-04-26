@@ -57,7 +57,7 @@ lsQC
   adData <- frmeData[,iData]
 
   # Original number of NA
-  iNAOrig = sum(is.na(adData))
+  viNAOrig = which(is.na(adData))
 
   while( TRUE )
   {
@@ -75,8 +75,9 @@ lsQC
 			  c_logrMaaslin$info( format( rownames( frmeData )[is.na( adData )] ))
   }
   # Record removed data
-  lsQC$aiDataSumOutlierPerDatum = c(lsQC$aiDataSumOutlierPerDatum,sum(is.na(adData))-iNAOrig)
-  return(list(data=adData,QC=lsQC))
+  viNAAfter = which(is.na(adData))
+
+  return(list(data=adData,outliers=length(viNAAfter)-length(viNAOrig),indices=setdiff(viNAAfter,viNAOrig)))
 }
 
 funcDoFenceTest <- function(
@@ -85,11 +86,9 @@ iData,
 ### Column index in the data frame to test
 frmeData,
 ### The data frame holding the data
-dFence,
+dFence
 ### The fence outside the first and third quartiles to use as a threshold for cutt off.
 ### This many times the interquartile range +/- to the 3rd/1st quartiles
-lsQC
-### List holding the QC info of the cleaning step. Which indices are outliers is added.
 ){
   # Establish fence
   adData <- frmeData[,iData]
@@ -122,10 +121,7 @@ lsQC
     c_logrMaaslin$info( format( rownames( frmeData )[aiRemove] ))
   }
 
-  # Record removed data
-  lsQC$aiDataSumOutlierPerDatum = c(lsQC$aiDataSumOutlierPerDatum,length(aiRemove))
-
-  return(list(data=adData,QC=lsQC))
+  return(list(data=adData,outliers=length(aiRemove),indices=aiRemove))
 }
 
 funcClean <- function(
@@ -210,12 +206,75 @@ dPOutlier = 0.05
   lsQCCounts$aiAfterPreprocess = aiData
 
   # Metadata: Properly factorize all logical data and integer and number data with less than iNonFactorLevelThreshold
+  # Also record which are numeric metadata
+  aiNumericMetadata = c()
   for( i in aiMetadata )
   {
     if( ( class( frmeData[,i] ) %in% c("integer", "numeric", "logical") ) &&
       ( length( unique( frmeData[,i] ) ) < c_iNonFactorLevelThreshold ) ) {
       c_logrMaaslin$debug(paste("Changing metadatum from numeric/integer/logical to factor",colnames(frmeData)[i],sep="="))
       frmeData[,i] = factor( frmeData[,i] )
+    } 
+    if( class( frmeData[,i] ) %in% c("integer","numeric") )
+    {
+      aiNumericMetadata = c(aiNumericMetadata,i)
+    }
+  }
+
+  # Remove outliers
+  # If the dFence Value is set use the method of defining the outllier as
+  # dFence * the interquartile range + or - the 3rd and first quartile respectively.
+  # If not the gibbs test is used.
+  lsQCCounts$aiDataSumOutlierPerDatum = c()
+  lsQCCounts$aiMetadataSumOutlierPerDatum = c()
+  lsQCCounts$liOutliers = list()
+
+  if( dFence > 0.0 )
+  {
+    # For data
+    for( iData in aiData )
+    {
+      lOutlierInfo <- funcDoFenceTest(iData=iData,frmeData=frmeData,dFence=dFence)
+      frmeData[,iData] <- lOutlierInfo[["data"]]
+      lsQCCounts$aiDataSumOutlierPerDatum <- c(lsQCCounts$aiDataSumOutlierPerDatum,lOutlierInfo[["outliers"]])
+      if(lOutlierInfo[["outliers"]]>0)
+      {
+        lsQCCounts$liOutliers[[paste(iData,sep="")]] <- lOutlierInfo[["indices"]]
+      }
+    }
+    # Remove outlier non-factor metadata
+    for( iMetadata in aiNumericMetadata )
+    {
+      lOutlierInfo <- funcDoFenceTest(iData=iMetadata,frmeData=frmeData,dFence=dFence)
+      frmeData[,iMetadata] <- lOutlierInfo[["data"]]
+      lsQCCounts$aiMetadataSumOutlierPerDatum <- c(lsQCCounts$aiMetadataSumOutlierPerDatum,lOutlierInfo[["outliers"]])
+      if(lOutlierInfo[["outliers"]]>0)
+      {
+        lsQCCounts$liOutliers[[paste(iMetadata,sep="")]] <- lOutlierInfo[["indices"]]
+      }
+    }
+  #Do not use the fence, use the Grubbs test
+  } else if(dPOutlier!=0.0){
+    # For data
+    for( iData in aiData )
+    {
+      lOutlierInfo <- funcDoGrubbs(iData=iData,frmeData=frmeData,dPOutlier=dPOutlier)
+      frmeData[,iData] <- lOutlierInfo[["data"]]
+      lsQCCounts$aiDataSumOutlierPerDatum <- c(lsQCCounts$aiDataSumOutlierPerDatum,lOutlierInfo[["outliers"]])
+      if(lOutlierInfo[["outliers"]]>0)
+      {
+        lsQCCounts$liOutliers[[paste(iData,sep="")]] <- lOutlierInfo[["indices"]]
+      }
+    }
+    for( iMetadata in aiNumericMetadata )
+    {
+      lOutlierInfo <- funcDoGrubbs(iData=iMetadata,frmeData=frmeData,dPOutlier=dPOutlier)
+      frmeData[,iMetadata] <- lOutlierInfo[["data"]]
+      lsQCCounts$aiMetadataSumOutlierPerDatum <- c(lsQCCounts$aiMetadataSumOutlierPerDatum,lOutlierInfo[["outliers"]])
+      if(lOutlierInfo[["outliers"]]>0)
+      {
+        lsQCCounts$liOutliers[[paste(iMetadata,sep="")]] <- lOutlierInfo[["indices"]]
+      }
     }
   }
 
@@ -242,31 +301,6 @@ dPOutlier = 0.05
   {
     c_logrMaaslin$info("Removing the following metadata for too much missing data or only one data value outside of NA.")
     c_logrMaaslin$info(format(colnames( frmeData )[aiRemove]))
-  }
-
-  # Remove outliers
-  # If the dFence Value is set use the method of defining the outllier as
-  # dFence * the interquartile range + or - the 3rd and first quartile respectively.
-  # If not the gibbs test is used.
-  lsQCCounts$aiDataSumOutlierPerDatum = c()
-  if( dFence > 0.0 )
-  {
-    # For data
-    for( iData in aiData )
-    {
-      lOutlierInfo <- funcDoFenceTest(iData=iData,frmeData=frmeData,dFence=dFence,lsQC=lsQCCounts)
-      frmeData[,iData] <- lOutlierInfo["data"]
-      lsQCCounts$aiDataSumOutlierPerDatum <- lOutlierInfo["QC"]$QC$aiDataSumOutlierPerDatum
-    }
-  #Do not use the fence, use the Grubbs test
-  } else if(dPOutlier!=0.0){
-    # For data
-    for( iData in aiData )
-    {
-      lOutlierInfo <- funcDoGrubbs(iData=iData,frmeData=frmeData,dPOutlier=dPOutlier,lsQC=lsQCCounts)
-      frmeData[,iData] <- lOutlierInfo["data"]
-      lsQCCounts$aiDataSumOutlierPerDatum <- lOutlierInfo["QC"]$QC$aiDataSumOutlierPerDatum
-    }
   }
 
   # Keep track of factor levels in a list for later use

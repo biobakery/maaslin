@@ -122,7 +122,7 @@ pArgs <- add_option( pArgs, c("-p", "--minPrevalence"), type="double", action="s
 ## Fence for outlier, if not set Grubbs test is used
 pArgs <- add_option( pArgs, c("-o", "--outlierFence"), type="double", action="store", dest="dOutlierFence", default=0, metavar="outlierFence", help="Outliers are defined as this number times the interquartile range added/subtracted from the 3rd/1st quartiles respectively. If set to 0 (default), outliers are defined by the Grubbs test.")
 ## Significance for Grubbs test
-pArgs <- add_option(pArgs, c("-G","--grubbsSig"), type="double", action="store", dest="dPOutlier", default=0.05, metavar="grubbsAlpha", help="This is the significance cuttoff used to indicate if something is an outlier or not. The closer to zero, the more significant an outlier must be to be removed.")
+pArgs <- add_option(pArgs, c("-G","--grubbsSig"), type="double", action="store", dest="dPOutlier", default=0.05, metavar="grubbsAlpha", help="This is the significance cuttoff used to indicate an outlier or not. The closer to zero, the more significant an outlier must be to be removed.")
 ## Fixed (not random) covariates
 pArgs <- add_option( pArgs, c("-R","--random"), type="character", action="store", dest="strRandomCovariates", default=NULL, metavar="fixed", help="These metadata will be treated as random covariates. Comma delimited data feature names. These features must be listed in the read.config file. Example '-R RandomMetadata1,RandomMetadata2'")
 ## Change the type of correction fo rmultiple corrections

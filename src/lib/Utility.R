@@ -375,7 +375,8 @@ liMetadataDim
   funcWrite( paste("Data Count after preprocess: ",length(lsQCData$aiAfterPreprocess),sep=""), strProcessFileName )
   funcWrite( paste("Removed for missing metadata: ",length(lsQCData$iMissingMetadata),sep=""), strProcessFileName )
   funcWrite( paste("Removed for missing data: ",length(lsQCData$iMissingData),sep=""), strProcessFileName )
-  funcWrite( paste("Data with outliers: ",length(lsQCData$aiDataSumOutlierPerDatum[lsQCData$aiDataSumOutlierPerDatum>0]),sep=""), strProcessFileName )
+  funcWrite( paste("Number of data with outliers: ",length(which(lsQCData$aiDataSumOutlierPerDatum>0)),sep=""), strProcessFileName )
+  funcWrite( paste("Number of metadata with outliers: ",length(which(lsQCData$aiMetadataSumOutlierPerDatum>0)),sep=""), strProcessFileName )
   funcWrite( paste("Metadata count which survived clean: ",length(lsQCData$aiMetadataCleaned),sep=""), strProcessFileName )
   funcWrite( paste("Data count which survived clean: ",length(lsQCData$aiDataCleaned),sep=""), strProcessFileName )
   funcWrite( paste("\nBoostings: ",lsQCData$iBoosts,sep=""), strProcessFileName )
@@ -400,8 +401,11 @@ liMetadataDim
   funcWrite(lsQCData$iMissingMetadata, strProcessFileName )
   funcWrite("\nRemoved for missing data: ", strProcessFileName )
   funcWrite(lsQCData$iMissingData, strProcessFileName )
-  funcWrite("\nOutlier Count per Datum: ", strProcessFileName )
-  funcWrite(lsQCData$aiDataSumOutlierPerDatum, strProcessFileName )
+  funcWrite("\nDetailed outlier indices: ", strProcessFileName )
+  for(sFeature in names(lsQCData$liOutliers))
+  {
+    funcWrite(paste("Feature",sFeature,"Outlier indice(s):", paste(lsQCData$liOutliers[[sFeature]],sep=",")), strProcessFileName )
+  }
   funcWrite("\nMetadata which survived clean: ", strProcessFileName )
   funcWrite(lsQCData$aiMetadataCleaned, strProcessFileName )
   funcWrite("\nData which survived clean: ", strProcessFileName )
