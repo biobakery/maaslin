@@ -249,10 +249,34 @@ asSuppressCovariates=c()
       #Get the coefficients
       #This should work for linear models
       frmeCoefs <- try( coefficients( lsSum ) )
-      adCoefs = as.vector(frmeCoefs)
+      
+      if( ( class(frmeCoefs ) == "try-error" ) || is.null( frmeCoefs ) )
+      {
+        adCoefs = try( coefficients( lmod ))
+        if(class( adCoefs ) == "try-error")
+        {
+          adCoefs = coef(lmod)
+        }
+        frmeCoefs <- NA
+      } else {
+        if( class( frmeCoefs ) == "list" )
+        {
+          frmeCoefs <- frmeCoefs$count
+        }
+        adCoefs = frmeCoefs[,1]
+      }
 
       #Go through each coefficient
       astrRows <- names( adCoefs )
+
+      ##lmm
+      if(is.null(astrRows))
+      {
+        astrRows = rownames(lsSum$tTable)
+        frmeCoefs = lsSum$tTable
+        iPValuePosition = 5
+        adCoefs = frmeCoefs[,1]
+      }
 
       for( iMetadata in 1:length( astrRows ) )
       {

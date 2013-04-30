@@ -68,14 +68,23 @@ lsQC
     adData[viOutliers] <- NA
   }
 
-  # Document removal
-  if( sum( is.na( adData ) ) )
-  {
-    c_logrMaaslin$info( "Grubbs Test::Removing %d outliers from %s", sum( is.na( adData ) ), colnames(frmeData)[iData] )
-			  c_logrMaaslin$info( format( rownames( frmeData )[is.na( adData )] ))
-  }
   # Record removed data
   viNAAfter = which(is.na(adData))
+
+  # If all were set to NA then ignore the filtering
+  if(length(adData)==length(viNAAfter))
+  {
+    viNAAfter = viNAOrig
+    adData = frmeData[,iData]
+    c_logrMaaslin$info( paste("Grubbs Test:: Identifed all data as outliers so was inactived for index=",iData," data=",paste(as.vector(frmeData[,iData]),collapse=","), "number zeros=", length(which(frmeData[,iData]==0)), sep = " " ))
+  } else {
+    # Document removal
+    if( sum( is.na( adData ) ) )
+    {
+      c_logrMaaslin$info( "Grubbs Test::Removing %d outliers from %s", sum( is.na( adData ) ), colnames(frmeData)[iData] )
+			  c_logrMaaslin$info( format( rownames( frmeData )[is.na( adData )] ))
+    }
+  }
 
   return(list(data=adData,outliers=length(viNAAfter)-length(viNAOrig),indices=setdiff(viNAAfter,viNAOrig)))
 }
@@ -112,13 +121,20 @@ dFence
       aiRemove <- c(aiRemove, j)
     }
   }
-  adData[aiRemove] <- NA
 
-  # Document to screen
-  if( length( aiRemove ) )
+  if(length(aiRemove)==length(adData))
   {
-    c_logrMaaslin$info( "OutliersByFence::Removing %d outliers from %s", length( aiRemove ), colnames(frmeData)[iData] )
-    c_logrMaaslin$info( format( rownames( frmeData )[aiRemove] ))
+    aiRemove = c()
+    c_logrMaaslin$info( "OutliersByFence:: Identified all data as outlier so was inactivated for index=", iData,"data=", paste(as.vector(frmeData[,iData]),collapse=","), "number zeros=", length(which(frmeData[,iData]==0)), sep=" " )
+  } else {
+    adData[aiRemove] <- NA
+
+    # Document to screen
+    if( length( aiRemove ) )
+    {
+      c_logrMaaslin$info( "OutliersByFence::Removing %d outliers from %s", length( aiRemove ), colnames(frmeData)[iData] )
+      c_logrMaaslin$info( format( rownames( frmeData )[aiRemove] ))
+    }
   }
 
   return(list(data=adData,outliers=length(aiRemove),indices=aiRemove))
@@ -242,6 +258,7 @@ dPOutlier = 0.05
         lsQCCounts$liOutliers[[paste(iData,sep="")]] <- lOutlierInfo[["indices"]]
       }
     }
+
     # Remove outlier non-factor metadata
     for( iMetadata in aiNumericMetadata )
     {
