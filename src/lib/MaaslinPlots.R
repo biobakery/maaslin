@@ -171,10 +171,8 @@ liNaIndices = c()
     strColor <- sprintf( "%sDD", funcColor( dColor, adMax = adColorMin, adMin = adColorMax, adMed = adColorMed ) )
     abline( reg = lmod, col = strColor, lwd = 3 )
   }
-
   ### Plot the residual plot
   if(fDoResidualPlot){funcResidualPlot(lsCur=lsCur, frmeTmp=frmeTmp, adColorMin=adColorMin, adColorMax=adColorMax, adColorMed=adColorMed, adMar, funcUnTransform=funcUnTransform, liNaIndices)}
-
   return(strFilePDF)
   ### File to which the pdf was written
 }
@@ -349,6 +347,22 @@ liNaIndices = c()
     strColor <- sprintf( "%sDD", funcColor( dColor, adMax = adColorMin, adMin = adColorMax, adMed = adColorMed ) )
     abline( reg =lmodLine, col = strColor, lwd = 3 )
   }
+}
+
+funcBoostInfluencePlot <- function(
+# Plot to show the rel.inf from boosting, what to know if the rank order is correct, better ranks for spiked data.
+# Show the cut off and features identified as uneven.
+vdRelInf, 
+sFeature,
+vsPredictorNames,
+vstrKeepMetadata,
+vstrUneven = c()
+){
+  vsCol = rep("black",length(vdRelInf))
+  vsCol[which(vsPredictorNames %in% vstrKeepMetadata)]="green"
+  vsCol[which(vsPredictorNames %in% vstrUneven)] = "orange"
+  plot(vdRelInf, col=vsCol, main=sFeature, xlab="Index", ylab="Relative Influence")
+  legend("topright", pch = paste(1:length(vsPredictorNames)), legend= vsPredictorNames, text.col=vsCol, col=vsCol)
 }
 
 funcResidualPlot <- function(

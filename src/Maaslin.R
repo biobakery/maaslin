@@ -40,8 +40,10 @@ sModelSelectionKey,
 ### Keyword defining the method of model selection
 sTransformKey,
 ### Keyword defining the method of data transformation
-sMethodKey
+sMethodKey,
 ### Keyword defining the method of analysis
+fZeroInflated = FALSE
+### Indicates if using zero inflated models
 ){
   lRetMethods = list()
   #Insert selection methods here
@@ -75,12 +77,22 @@ sMethodKey
   lRetMethods[[c_iIsUnivariate]]=sMethodKey=="univariate"
 
   #Insert method to get results
-  lRetMethods[[c_iResults]] = switch(sMethodKey,
-    neg_binomial = funcGetLMResults,
-    quasi = funcGetLMResults,
-    univariate = funcGetUnivariateResults,
-    lm = funcGetLMResults,
-    none = NA)
+  if(fZeroInflated)
+  {
+    lRetMethods[[c_iResults]] = switch(sMethodKey,
+      neg_binomial = funcGetZeroInflatedResults,
+      quasi = funcGetZeroInflatedResults,
+      univariate = funcGetUnivariateResults,
+      lm = funcGetZeroInflatedResults,
+      none = NA)
+  } else {
+    lRetMethods[[c_iResults]] = switch(sMethodKey,
+      neg_binomial = funcGetLMResults,
+      quasi = funcGetLMResults,
+      univariate = funcGetUnivariateResults,
+      lm = funcGetLMResults,
+      none = NA)
+  }
 
   return(lRetMethods)
   ### Returns a list of functions to be passed for regularization, data transformation, analysis,
@@ -127,6 +139,8 @@ pArgs <- add_option(pArgs, c("-G","--grubbsSig"), type="double", action="store",
 pArgs <- add_option( pArgs, c("-R","--random"), type="character", action="store", dest="strRandomCovariates", default=NULL, metavar="fixed", help="These metadata will be treated as random covariates. Comma delimited data feature names. These features must be listed in the read.config file. Example '-R RandomMetadata1,RandomMetadata2'")
 ## Change the type of correction fo rmultiple corrections
 pArgs <- add_option( pArgs, c("-T","--testingCorrection"), type="character", action="store", dest="strMultTestCorrection", default="BH", metavar="multipleTestingCorrection", help="This indicates which multiple hypothesis testing method will be used, available are holm, hochberg, hommel, bonferroni, BH, BY")
+## Use a zero inflated model of the inference method indicate in -m
+pArgs <- add_option( pArgs, c("-z","--doZeroInfated"), type="logical", action="store_true", default = FALSE, dest="fZeroInflated", metavar="fZeroInflated", help="If true, the zero inflated version of the inference model indicated in -m is used. For instance if using lm, zero-inflated regression on a gaussian distribution is used. Default = FALSE.")
 
 # Arguments used in validation of MaAsLin
 ## Model selection (enumerate) c("none","boost","penalized","forward","backward")
@@ -179,7 +193,7 @@ main <- function(
 ### 7. Standard quality control is performed on data
 ### 8. Cleaned metadata and data are written to output project for documentation.
 ### 9. A regularization method is ran (boosting by default).
-### 10. An analysis method is performed on the model (optionally boostd model).
+### 10. An analysis method is performed on the model (optionally boosted model).
 ### 11. Data is summarized and PDFs are created for significant associations
 ### (those whose q-values {BH FDR correction} are <= the threshold given in the optional arguments.
 pArgs
@@ -258,7 +272,7 @@ if(!lsArgs$options$strMultTestCorrection %in% c("holm", "hochberg", "hommel", "b
 }
 
 # Get analysis modules
-afuncVariableAnalysis = funcGetAnalysisMethods(lsArgs$options$strModelSelection,lsArgs$options$strTransform,lsArgs$options$strMethod)
+afuncVariableAnalysis = funcGetAnalysisMethods(lsArgs$options$strModelSelection,lsArgs$options$strTransform,lsArgs$options$strMethod,lsArgs$options$fZeroInflated)
 
 # Set up parameters for variable selection
 lxParameters = list(dFreq=lsArgs$options$dSelectionFrequency, dPAlpha=lsArgs$options$dPenalizedAlpha)
@@ -392,7 +406,7 @@ if(lsArgs$options$strMethod %in% c("univariate")){ fDoRPlot=FALSE }
 #Run analysis
 alsRetBugs = funcBugs( lsRet$frmeData, lsRet, lsRet$aiMetadata, lsRet$aiData, strBase, lsArgs$options$dSignificanceLevel, lsArgs$options$dMinSamp, lsArgs$options$fInvert,
         outputDirectory, astrScreen = c(), funcReg=afuncVariableAnalysis[[c_iSelection]], funcUnTransform=afuncVariableAnalysis[[c_iUnTransform]], lsForcedParameters,
-        funcAnalysis=afuncVariableAnalysis[[c_iAnalysis]], lsRandomCovariates, funcGetResults=afuncVariableAnalysis[[c_iResults]], fDoRPlot=fDoRPlot, fOmitLogFile=lsArgs$options$fOmitLogFile, fAllvAll=lsArgs$options$fAllvAll, liNaIndices=lsRet$liNaIndices, lxParameters=lxParameters, strTestingCorrection=lsArgs$options$strMultTestCorrection, fIsUnivariate=afuncVariableAnalysis[[c_iIsUnivariate]] )
+        funcAnalysis=afuncVariableAnalysis[[c_iAnalysis]], lsRandomCovariates, funcGetResults=afuncVariableAnalysis[[c_iResults]], fDoRPlot=fDoRPlot, fOmitLogFile=lsArgs$options$fOmitLogFile, fAllvAll=lsArgs$options$fAllvAll, liNaIndices=lsRet$liNaIndices, lxParameters=lxParameters, strTestingCorrection=lsArgs$options$strMultTestCorrection, fIsUnivariate=afuncVariableAnalysis[[c_iIsUnivariate]], fZeroInflated=lsArgs$options$fZeroInflated )
 aiBugs = alsRetBugs$aiReturnBugs
 
 #Write QC files only in certain modes of verbosity

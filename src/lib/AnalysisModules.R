@@ -44,6 +44,12 @@ suppressMessages(library( glmnet, warn.conflicts=FALSE, quietly=TRUE, verbose=FA
 #suppressMessages(library( lme4, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
 suppressMessages(library( nlme, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
 
+# Needed for zero inflated models
+#suppressMessages(library( MCMCglmm, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
+#suppressMessages(library( pscl, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
+suppressMessages(library( gamlss, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
+suppressMessages(library( glmmADMB, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
+
 fAddBack = TRUE
 dUnevenMax = .9
 
@@ -243,34 +249,10 @@ asSuppressCovariates=c()
       #Get the coefficients
       #This should work for linear models
       frmeCoefs <- try( coefficients( lsSum ) )
-
-      if( ( class( frmeCoefs ) == "try-error" ) || is.null( frmeCoefs ) )
-      {
-        adCoefs = try(coefficients( lmod ))
-        if(class( adCoefs ) == "try-error")
-        {
-          adCoefs = coef(lmod)
-        }
-        frmeCoefs <- NA
-      } else {
-        if( class( frmeCoefs ) == "list" )
-        {
-          frmeCoefs <- frmeCoefs$count
-        }
-        adCoefs = frmeCoefs[,1]
-      }
+      adCoefs = as.vector(frmeCoefs)
 
       #Go through each coefficient
       astrRows <- names( adCoefs )
-
-      ##lmm
-      if(is.null(astrRows))
-      {
-        astrRows = rownames(lsSum$tTable)
-        frmeCoefs = lsSum$tTable
-        iPValuePosition = 5
-        adCoefs = frmeCoefs[,1]
-      }
 
       for( iMetadata in 1:length( astrRows ) )
       {
@@ -288,6 +270,121 @@ asSuppressCovariates=c()
         #Attempt to extract the pvalue and std in mixed effects summary 
         #Could not get the pvalue so skip result
         if(is.nan(dP) || is.na(dP) || is.null(dP)) { next }
+
+        dCoef = adCoefs[iMetadata]
+
+        #Setting adMetadata
+        #Metadata values
+        strMetadata = funcCoef2Col( strOrig, frmeData, astrCols )
+        if( is.na( strMetadata ) )
+        {
+          if( substring( strOrig, nchar( strOrig ) - 1 ) == "NA" ) { next }
+          c_logrMaaslin$error( "Unknown coefficient: %s", strOrig )
+        }
+        if( substring( strOrig, nchar( strMetadata ) + 1 ) == "NA" ) { next }
+        adMetadata <- frmeData[,strMetadata]
+
+        #Bonferonni correct the factor p-values based on the factor levels-1 comparisons
+        if( class( adMetadata ) == "factor" )
+        {
+          dP <- dP * ( length( unique( adMetadata )) - 1 )
+        }
+
+        #Store (factor level modified) p-value
+        #Store general results for each coef
+        adP <- c(adP, dP)
+        lsSig[[length( lsSig ) + 1]] <- list(
+          #Current metadata name
+          name		= strMetadata,
+          #Current metadatda name (as a factor level if existing as such)
+          orig		= strOrig,#
+          #Taxon feature name
+          taxon		= strTaxon,
+          #Taxon data / response
+          data		= frmeData[,iTaxon],
+          #All levels
+          factors	= c(strMetadata),
+          #Metadata values
+          metadata	= adMetadata,
+          #Current coeficient value
+          value		= dCoef,
+          #Standard deviation
+          std		= dStd,
+          #Model coefficients
+          allCoefs	= adCoefs)
+      }
+    }
+  }
+  return(list(adP=adP, lsSig=lsSig, lsQCCounts=lsQCCounts))
+  ### List containing a list of pvalues, a list of significant data per association, and a list of QC data
+}
+
+funcGetZeroInflatedResults <- function
+### Reduce the lm object return to just the data needed for further analysis
+( llmod,
+### The result from a linear model
+frmeData,
+### Data analysis is performed on
+liTaxon,
+### The response id
+dSig,
+### Significance level for q-values
+adP,
+### List of pvalues from all associations performed
+lsSig,
+### List of information from the lm containing, metadata name, metadatda name (as a factor level if existing as such), Taxon feature name, Taxon data / response, All levels, Metadata values, Current coeficient value, Standard deviation, Model coefficients
+strLog,
+### File to which to document logging
+lsQCCounts,
+### Records of counts associated with quality control
+lastrCols,
+### Predictors used in the association
+asSuppressCovariates=c()
+### Vector of covariates to suppress and not give results for
+){
+  ilmodIndex = 0
+  for(lmod in llmod)
+  {
+    ilmodIndex = ilmodIndex + 1
+    lmod = llmod[[ilmodIndex]]
+    iTaxon = liTaxon[[ilmodIndex]]
+    astrCols = lastrCols[[ilmodIndex]]
+
+    #Exclude none and errors
+    if( !is.na( lmod ) && ( class( lmod ) != "try-error" ) )
+    {
+      #holds the location of the pvlaues if an lm, if lmm is detected this will be changed
+      iPValuePosition = 4
+
+      #Get the column name of the iTaxon index
+      #frmeTmp needs to be what?
+      strTaxon = colnames( frmeData )[iTaxon]
+
+      #Write summary information to log file
+      funcWrite( "#model", strLog )
+      funcWrite( lmod, strLog )
+
+      #Get the coefficients
+      #This should work for linear models
+      frmeCoefs <- summary(lmod)
+      adCoefs = frmeCoefs[,1]
+      names(adCoefs) = row.names(frmeCoefs)
+
+      #Go through each coefficient
+      astrRows <- row.names( frmeCoefs )
+
+      for( iMetadata in 1:length( astrRows ) )
+      {
+        #Current coef which is being evaluated 
+        strOrig = astrRows[iMetadata]
+        #Skip y interscept
+        if( strOrig %in% c("(Intercept)", "Intercept", "Log(theta)") ) { next }
+        #Skip suppressed covariates
+        if( funcCoef2Col(strOrig,frmeData) %in% asSuppressCovariates){next}
+
+        #Extract pvalue and std in standard model
+        dP = frmeCoefs[strOrig, iPValuePosition]
+        dStd = frmeCoefs[strOrig,2]
 
         dCoef = adCoefs[iMetadata]
 
@@ -371,6 +468,11 @@ strLog
     funcWrite( "#summary-gbm", strLog )
     funcWrite( lsSum, strLog )
 
+    # Uneven metadata
+    vstrUneven = c()
+    # Kept metadata
+    vstrKeepMetadata = c()
+
     #Select model predictors
     #Check the frequency of selection and skip if not selected more than set threshold dFreq
     for( strMetadata in lmod$var.names )
@@ -385,6 +487,7 @@ strLog
         if(length(which(table(ldMetadata)/length(ldMetadata)>dUnevenMax))>0)
         {
           astrTerms <- c(astrTerms, strTerm)
+          vstrUneven = c(vstrUneven,strMetadata)
           next
         }
       }
@@ -405,8 +508,11 @@ strLog
 
       #Collect metadata names
       astrTerms <- c(astrTerms, strTerm)
+      vstrKeepMetadata = c(vstrKeepMetadata,strTerm)
     }
   } else { astrTerms = lsForcedParameters }
+
+  funcBoostInfluencePlot(vdRelInf=lsSum$rel.inf, sFeature=lsParameters$sBugName, vsPredictorNames=lsSum$var, vstrKeepMetadata=vstrKeepMetadata, vstrUneven=vstrUneven)
 
   return(unique(c(astrTerms,lsForcedParameters)))
   ### Return a vector of predictor names to use in a reduced model
@@ -635,9 +741,15 @@ iTaxon,
 ### Index of the response data
 lsHistory,
 ### List recording p-values, association information, and QC counts
-strRandomFormula = NULL
+strRandomFormula = NULL,
 ### Has the formula for random covariates
+fZeroInflate = FALSE
 ){
+  if(fZeroInflate)
+  {
+    throw("There are no zero-inflated univariate models to perform your analysis.")
+  }
+
   # Get covariates
   astrCovariates = unique(c(funcFormulaStrToList(strFormula),funcFormulaStrToList(strRandomFormula)))
 
@@ -683,17 +795,24 @@ iTaxon,
 ### Index of the response data
 lsHistory,
 ### List recording p-values, association information, and QC counts
-strRandomFormula = NULL
+strRandomFormula = NULL,
 ### Has the formula for random covariates
+fZeroInflated = FALSE
+### Turns on the zero inflated model
 ){
   adCur = frmeTmp[,iTaxon]
-  if(!is.null(strRandomFormula))
+  if(fZeroInflated)
   {
-    return(try(glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=gaussian(link="identity"), data=frmeTmp)))
-    #lme4 package but does not have pvalues for the fixed variables (have to use a mcmcsamp/pvals.fnc function which are currently disabled)
-    #return(try( lmer(as.formula(strFormula), data=frmeTmp, na.action=c_strNA_Action) ))
+    return(try(gamlss(formula=as.formula(strFormula), family=BEZI, data=frmeTmp))) # gamlss
   } else {
-    return(try( lm(as.formula(strFormula), data=frmeTmp, na.action=c_strNA_Action) ))
+    if(!is.null(strRandomFormula))
+    {
+      return(try(glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=gaussian(link="identity"), data=frmeTmp)))
+      #lme4 package but does not have pvalues for the fixed variables (have to use a mcmcsamp/pvals.fnc function which are currently disabled)
+      #return(try( lmer(as.formula(strFormula), data=frmeTmp, na.action=c_strNA_Action) ))
+    } else {
+      return(try( lm(as.formula(strFormula), data=frmeTmp, na.action=c_strNA_Action) ))
+    }
   }
   ### lmod result object from lm
 }
@@ -709,19 +828,25 @@ iTaxon,
 ### Index of the response data
 lsHistory,
 ### List recording p-values, association information, and QC counts
-strRandomFormula = NULL
+strRandomFormula = NULL,
 ### Has the formula for random covariates
+fZeroInflated = FALSE
+### Turns on the zero inflated model
 ){
   adCur = frmeTmp[,iTaxon]
-
-  if(!is.null(strRandomFormula))
+  if(fZeroInflated)
   {
-    print("This analysis flow is not completely developed, please choose an option other than Negative bionomial with random covariates")
-    #TODO need to estimate the theta
-    #return(try(glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=negative.binomial(theta = 2, link=log), data=frmeTmp)))
-    #lme4 package but does not have pvalues for the fixed variables (have to use a mcmcsamp/pvals.fnc function which are currently disabled)
+    return(try(zeroinfl(as.formula(strFormula), data=frmeTmp, dist="negbin"))) # pscl
   } else {
-    return(try( glm.nb(as.formula(strFormula), data=frmeTmp, na.action=c_strNA_Action) ))
+    if(!is.null(strRandomFormula))
+    {
+      throw("This analysis flow is not completely developed, please choose an option other than Negative bionomial with random covariates")
+      #TODO need to estimate the theta
+      #return(try(glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=negative.binomial(theta = 2, link=log), data=frmeTmp)))
+      #lme4 package but does not have pvalues for the fixed variables (have to use a mcmcsamp/pvals.fnc function which are currently disabled)
+    } else {
+      return(try( glm.nb(as.formula(strFormula), data=frmeTmp, na.action=c_strNA_Action) ))
+    }
   }
   ### lmod result object from lm
 }
@@ -737,18 +862,26 @@ iTaxon,
 ### Index of the response data
 lsHistory,
 ### List recording p-values, association information, and QC counts
-strRandomFormula = NULL
+strRandomFormula = NULL,
 ### Has the formula for random covariates
+fZeroInflated = FALSE
+### Turns on a zero infalted model
 ){
   adCur = frmeTmp[,iTaxon]
-  #Check to see if | is in the model, if so use a lmm otherwise the standard glm is ok
-  if(!is.null(strRandomFormula))
+  if(fZeroInflated)
   {
-    return(try(glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family= quasipoisson, data=frmeTmp)))
-    #lme4 package but does not have pvalues for the fixed variables (have to use a mcmcsamp/pvals.fnc function which are currently disabled)
-    #return(try ( glmer(as.formula(strFormula), data=frmeTmp, family=quasipoisson, na.action=c_strNA_Action) ))
+    return(try(gamlss(formula=as.formula(strFormula), family=ZIP, data=frmeTmp))) # gamlss
+#    return(try(zeroinfl(as.formula(strFormula), data=frmeTmp, dist="poisson"))) # pscl
   } else {
-    return(try( glm(as.formula(strFormula), family=quasipoisson, data=frmeTmp, na.action=c_strNA_Action) ))
+    #Check to see if | is in the model, if so use a lmm otherwise the standard glm is ok
+    if(!is.null(strRandomFormula))
+    {
+      return(try(glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family= quasipoisson, data=frmeTmp)))
+      #lme4 package but does not have pvalues for the fixed variables (have to use a mcmcsamp/pvals.fnc function which are currently disabled)
+      #return(try ( glmer(as.formula(strFormula), data=frmeTmp, family=quasipoisson, na.action=c_strNA_Action) ))
+    } else {
+      return(try( glm(as.formula(strFormula), family=quasipoisson, data=frmeTmp, na.action=c_strNA_Action) ))
+    }
   }
   ### lmod result object from lm
 }
@@ -783,146 +916,4 @@ aData
 ){
   return(aData)
   ### Transformed data
-}
-
-### Modified Code
-### This code is from the package agricolae by Felipe de Mendiburu
-### Modifications here are minimal and allow one to use the p.values from the post hoc comparisons
-### Authors do not claim credit for this solution only needed to modify code to use the output.
-kruskal <- function (y, trt, alpha = 0.05, p.adj = c("none", "holm", "hochberg", 
-    "bonferroni", "BH", "BY", "fdr"), group = TRUE, main = NULL) 
-{
-    dfComparisons=NULL
-    dfMeans=NULL
-    dntStudent=NULL
-    dLSD=NULL
-    dHMean=NULL
-    name.y <- paste(deparse(substitute(y)))
-    name.t <- paste(deparse(substitute(trt)))
-    p.adj <- match.arg(p.adj)
-    junto <- subset(data.frame(y, trt), is.na(y) == FALSE)
-    N <- nrow(junto)
-    junto[, 1] <- rank(junto[, 1])
-    means <- tapply.stat(junto[, 1], junto[, 2], stat = "sum")
-    sds <- tapply.stat(junto[, 1], junto[, 2], stat = "sd")
-    nn <- tapply.stat(junto[, 1], junto[, 2], stat = "length")
-    means <- data.frame(means, replication = nn[, 2])
-    names(means)[1:2] <- c(name.t, name.y)
-    ntr <- nrow(means)
-    nk <- choose(ntr, 2)
-    DFerror <- N - ntr
-    rs <- 0
-    U <- 0
-    for (i in 1:ntr) {
-        rs <- rs + means[i, 2]^2/means[i, 3]
-        U <- U + 1/means[i, 3]
-    }
-    S <- (sum(junto[, 1]^2) - (N * (N + 1)^2)/4)/(N - 1)
-    H <- (rs - (N * (N + 1)^2)/4)/S
-#    cat("\nStudy:", main)
-#    cat("\nKruskal-Wallis test's\nTies or no Ties\n")
-#    cat("\nValue:", H)
-#    cat("\ndegrees of freedom:", ntr - 1)
-    p.chisq <- 1 - pchisq(H, ntr - 1)
-#    cat("\nPvalue chisq  :", p.chisq, "\n\n")
-    DFerror <- N - ntr
-    Tprob <- qt(1 - alpha/2, DFerror)
-    MSerror <- S * ((N - 1 - H)/(N - ntr))
-    means[, 2] <- means[, 2]/means[, 3]
-#    cat(paste(name.t, ",", sep = ""), " means of the ranks\n\n")
-    dfMeans=data.frame(row.names = means[, 1], means[, -1])
-    if (p.adj != "none") {
-#        cat("\nP value adjustment method:", p.adj)
-        a <- 1e-06
-        b <- 1
-        for (i in 1:100) {
-            x <- (b + a)/2
-            xr <- rep(x, nk)
-            d <- p.adjust(xr, p.adj)[1] - alpha
-            ar <- rep(a, nk)
-            fa <- p.adjust(ar, p.adj)[1] - alpha
-            if (d * fa < 0) 
-                b <- x
-            if (d * fa > 0) 
-                a <- x
-        }
-        Tprob <- qt(1 - x/2, DFerror)
-    }
-    nr <- unique(means[, 3])
-    if (group) {
-        Tprob <- qt(1 - alpha/2, DFerror)
-#        cat("\nt-Student:", Tprob)
-#        cat("\nAlpha    :", alpha)
-        dntStudent=Tprob
-        dAlpha=alpha
-        if (length(nr) == 1) {
-            LSD <- Tprob * sqrt(2 * MSerror/nr)
-#            cat("\nLSD      :", LSD, "\n")
-            dLSD=LSD
-        }
-        else {
-            nr1 <- 1/mean(1/nn[, 2])
-            LSD1 <- Tprob * sqrt(2 * MSerror/nr1)
-#            cat("\nLSD      :", LSD1, "\n")
-            dLSD =LSD1
-#            cat("\nHarmonic Mean of Cell Sizes ", nr1)
-            dHMean=nr1
-        }
-#        cat("\nMeans with the same letter are not significantly different\n")
-#        cat("\nGroups, Treatments and mean of the ranks\n")
-        output <- order.group(means[, 1], means[, 2], means[, 
-            3], MSerror, Tprob, std.err = sqrt(MSerror/means[, 
-            3]))
-        dfComparisons=order.group(means[, 1], means[, 2], means[, 
-            3], MSerror, Tprob, std.err = sqrt(MSerror/means[, 
-            3]))
-    }
-    if (!group) {
-        comb <- combn(ntr, 2)
-        nn <- ncol(comb)
-        dif <- rep(0, nn)
-        LCL <- dif
-        UCL <- dif
-        pvalue <- dif
-        sdtdif <- dif
-        for (k in 1:nn) {
-            i <- comb[1, k]
-            j <- comb[2, k]
-            if (means[i, 2] < means[j, 2]) {
-                comb[1, k] <- j
-                comb[2, k] <- i
-            }
-            dif[k] <- abs(means[i, 2] - means[j, 2])
-            sdtdif[k] <- sqrt(S * ((N - 1 - H)/(N - ntr)) * (1/means[i, 
-                3] + 1/means[j, 3]))
-            pvalue[k] <- 2 * round(1 - pt(dif[k]/sdtdif[k], DFerror), 
-                6)
-        }
-        if (p.adj != "none") 
-            pvalue <- round(p.adjust(pvalue, p.adj), 6)
-        LCL <- dif - Tprob * sdtdif
-        UCL <- dif + Tprob * sdtdif
-        sig <- rep(" ", nn)
-        for (k in 1:nn) {
-            if (pvalue[k] <= 0.001) 
-                sig[k] <- "***"
-            else if (pvalue[k] <= 0.01) 
-                sig[k] <- "**"
-            else if (pvalue[k] <= 0.05) 
-                sig[k] <- "*"
-            else if (pvalue[k] <= 0.1) 
-                sig[k] <- "."
-        }
-        tr.i <- means[comb[1, ], 1]
-        tr.j <- means[comb[2, ], 1]
-        dfComparisons <- data.frame(Difference = dif, p.value = pvalue, 
-            sig, LCL, UCL)
-        rownames(dfComparisons) <- paste(tr.i, tr.j, sep = " - ")
-#        cat("\nComparison between treatments mean of the ranks\n\n")
-#        print(output)
-        dfMeans <- data.frame(trt = means[, 1], means = means[, 
-            2], M = "", N = means[, 3])
-    }
-#    invisible(output)
-     invisible(list(study=main,test="Kruskal-Wallis test",value=H,df=(ntr - 1),chisq.p.value=p.chisq,p.adj.method=p.adj,ntStudent=dntStudent,alpha=alpha,LSD=dLSD,Harmonic.mean=dHMean,comparisons=dfComparisons,means=dfMeans))
 }

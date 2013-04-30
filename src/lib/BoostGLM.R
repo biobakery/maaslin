@@ -440,8 +440,10 @@ lxParameters=list(),
 ### List holds parameters for different variable selection techniques
 strTestingCorrection = "BH",
 ### Correction for multiple testing
-fIsUnivariate = FALSE
+fIsUnivariate = FALSE,
 ### Indicates if the function is univariate
+fZeroInflated = FALSE
+### Indicates to use a zero infalted model
 ){
   c_logrMaaslin$debug("Start funcBugs")
   if( is.na( strDirOut )||is.null(strDirOut))
@@ -477,7 +479,7 @@ fIsUnivariate = FALSE
       c_logrMaaslin$info( "Taxon %d/%d", iTaxon, max( aiData ) )
     }
     #Call analysis method
-    lsOne <- funcBugHybrid( iTaxon, frmeData, lsData, aiMetadata, dSig, dMinSamp, adP, lsSig, strLog, funcReg, lsNonPenalizedPredictors, funcAnalysis, lsRandomCovariates, funcGetResults, fAllvAll, fIsUnivariate, lxParameters )
+    lsOne <- funcBugHybrid( iTaxon, frmeData, lsData, aiMetadata, dSig, dMinSamp, adP, lsSig, strLog, funcReg, lsNonPenalizedPredictors, funcAnalysis, lsRandomCovariates, funcGetResults, fAllvAll, fIsUnivariate, lxParameters, fZeroInflated )
 
     #TODO Check#If you get a NA (happens when the lmm gets all random covariates) move on
     if(is.na(lsOne)){next}
@@ -498,7 +500,6 @@ fIsUnivariate = FALSE
   #Get indices of sorted data
   aiSig <- sort.list( adP )
   iTests = funcCalculateTestCounts(iDataCount = length(aiData), asMetadata = intersect( lsData$astrMetadata, colnames( frmeData )[aiMetadata] ), asForced = lsNonPenalizedPredictors, asRandom = lsRandomCovariates, fAllvAll = fAllvAll)
-
   #Perform FDR BH
   adQ  = p.adjust(adP,method=strTestingCorrection,n=max(length(adP),iTests))
 
@@ -527,7 +528,7 @@ fIsUnivariate = FALSE
     }
     astrRet <- unique( astrRet )
   }
-		
+
   for( strName in astrNames )
   {
     strFileTXT <- NA
@@ -560,13 +561,12 @@ fIsUnivariate = FALSE
       ## If the significance meets the threshold
       ## Write PDF file output
       if( adQ[j] > dSig ) { next }
+
       # Do not make residuals plots if univariate is selected
       strFilePDF = funcPDF( frmeTmp=frmeData, lsCur=lsCur, curPValue=adP[j], curQValue=adQ[j], strFilePDF=strFilePDF, strBaseOut=strBaseOut, strName=strName, funcUnTransform= funcUnTransform, fDoResidualPlot=fDoRPlot, fInvert=fInvert, liNaIndices=liNaIndices )
-    }
-
+   }
     if( dev.cur( ) != 1 ) { dev.off( ) }
   }
-
   aiTmp <- aiData
 
   logdebug("End funcBugs", c_logMaaslin)
@@ -620,8 +620,10 @@ fAllvAll=FALSE,
 ### Flag to turn on all against all comparisons
 fIsUnivariate = FALSE,
 ### Indicates the analysis function is univariate
-lxParameters=list()
+lxParameters=list(),
 ### List holds parameters for different variable selection techniques
+fZeroInflated = FALSE
+### Indicates if to use a zero infalted model
 ){
 #dTime00 <- proc.time()[3]
   #Get metadata column names
@@ -669,6 +671,7 @@ lxParameters=list()
 
   # Get the full data for the bug feature
   adCur = frmeTmp[,iTaxon]
+  lxParameters$sBugName = names(frmeTmp[iTaxon])
 
   # This can run multiple models so some of the results are held in lists and some are not
   llmod = list()
@@ -756,7 +759,7 @@ lxParameters=list()
       {
         i = length(llmod)+1
 
-        llmod[[i]] = funcAnalysis(strFormula=strAnalysisFormula, frmeTmp=frmeTmp, iTaxon=iTaxon, lsHistory=list(adP=adP, lsSig=lsSig, lsQCCounts=lsData$lsQCCounts), strRandomFormula=strRandomCovariatesFormula)
+        llmod[[i]] = funcAnalysis(strFormula=strAnalysisFormula, frmeTmp=frmeTmp, iTaxon=iTaxon, lsHistory=list(adP=adP, lsSig=lsSig, lsQCCounts=lsData$lsQCCounts), strRandomFormula=strRandomCovariatesFormula, fZeroInflated=fZeroInflated)
 
         liTaxon[[i]] = iTaxon
         lastrTerms[[i]] = funcFormulaStrToList(strAnalysisFormula)
