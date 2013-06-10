@@ -101,8 +101,12 @@ liNaIndices = c()
   # Remove NAs from data visualization if set to do so (if liNaIndices is not empty)
   if(lsCur$name %in% names(liNaIndices)&&(length(liNaIndices[[lsCur$name]])>0))
   {
-    adCur = adCur[-1*liNaIndices[[lsCur$name]]]
     adY <- adY[-1*liNaIndices[[lsCur$name]]]
+    adCur = adCur[-1*liNaIndices[[lsCur$name]]]
+    if(class(adCur)=="factor")
+    {
+      adCur = factor(adCur)
+    }
   }
 
   # Set the factor levels to include NA if they still exist
