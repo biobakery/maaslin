@@ -425,8 +425,6 @@ strData,
 ### Log file name
 dSig,
 ### Significance threshold for the qvalue cut off
-dMinSamp,
-### Minimum number of samples
 fInvert=FALSE,
 ### Invert images to have a black background
 strDirOut = NA,
@@ -496,7 +494,7 @@ fZeroInflated = FALSE
       c_logrMaaslin$info( "Taxon %d/%d", iTaxon, max( aiData ) )
     }
     #Call analysis method
-    lsOne <- funcBugHybrid( iTaxon, frmeData, lsData, aiMetadata, dSig, dMinSamp, adP, lsSig, strLog, funcReg, lsNonPenalizedPredictors, funcAnalysis, lsRandomCovariates, funcGetResults, fAllvAll, fIsUnivariate, lxParameters, fZeroInflated )
+    lsOne <- funcBugHybrid( iTaxon, frmeData, lsData, aiMetadata, dSig, adP, lsSig, strLog, funcReg, lsNonPenalizedPredictors, funcAnalysis, lsRandomCovariates, funcGetResults, fAllvAll, fIsUnivariate, lxParameters, fZeroInflated )
 
     #TODO Check#If you get a NA (happens when the lmm gets all random covariates) move on
     if(is.na(lsOne)){next}
@@ -615,8 +613,6 @@ aiMetadata,
 ### Numeric vector of indices
 dSig,
 ### Numeric significance threshold for q-value cut off
-dMinSamp,
-### Minimum amount of samples, used in QC
 adP,
 ### List of pvalues from associations
 lsSig,
@@ -645,41 +641,13 @@ fZeroInflated = FALSE
 #dTime00 <- proc.time()[3]
   #Get metadata column names
   astrMetadata = intersect( lsData$astrMetadata, colnames( frmeData )[aiMetadata] )
+
   #Get data measurements that are not NA
   aiRows <- which( !is.na( frmeData[,iTaxon] ) )
 
   #Get the dataframe of non-na data measurements
   frmeTmp <- frmeData[aiRows,]
-  #For each metadata, check it's data and see if there are too many NA to move forward.
-  astrRemove <- c()
-  for( strMetadatum in astrMetadata )
-  {
-    aMetadatum <- frmeTmp[,strMetadatum]
 
-    #TODO remove?
-    #Find the amount of NA and if over a certain ratio, remove that metadata from analysis
-    iNA = sum( is.na( aMetadatum ) ) + sum( aMetadatum == "NA", na.rm = TRUE )
-	#Be kinder to genetics than other metadata
-	#if( length( grep( "^((chr)|(rs)\\d+)", strMetadatum ) ) ) {
-	#	dMult <- 8 }
-	#else {
-	dMult <- 2 # }
-
-    if( ( iNA / length( aiRows ) ) > ( dMult * dMinSamp ) )
-    {
-      astrRemove <- c(astrRemove, strMetadatum)
-    }
-  }
-
-  #Document removal in logging
-  if(length(astrRemove))
-  {
-    c_logrMaaslin$debug("These metadata will be removed in func bug")
-    c_logrMaaslin$debug( format(c(colnames( frmeData )[iTaxon], astrRemove) ))
-  }
-
-  #Reset metadata with removed metadata removed.
-  astrMetadata <- setdiff( astrMetadata, astrRemove )
   #Set the min boosting selection frequency to a default if not given
   if( is.na( lxParameters$dFreq ) )
   {
