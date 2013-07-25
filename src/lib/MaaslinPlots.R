@@ -262,8 +262,8 @@ liNaIndices = c()
   # Get Y
   # For each covariate that is being plotted on the y axis
   # Convert the coefficient name to the column name
-  # If they are equal then the data is not discontinuous and you can use the raw data as is and multiple it by the coefficient in the model
-  # If the not equal than the data is discontinuous, get the value for the data, set all but the levels equal to it to zero and multiply by the ceofficient from the model.
+  # If they are equal then the data is not discontinuous and you can use the raw data as is and multiply it by the coefficient in the model
+  # If they are not equal than the data is discontinuous, get the value for the data, set all but the levels equal to it to zero and multiply by the ceofficient from the model.
 #  vY = rep(coefficients(lmod)[["(Intercept)"]],dim(frmTmp)[1])
   vY = rep(0,dim(frmTmp)[1])
 
@@ -273,6 +273,7 @@ liNaIndices = c()
     sCurrentCovariate = lsCovariateToControlForNames[iCvIndex]
     #Get the column name of the current covariate (this must be used to compare to other column names)
     sCurCovariateColumnName = funcCoef2Col(sCurrentCovariate, frmTmp)
+
     #This is continuous data
     if(sCurrentCovariate == sCurCovariateColumnName)
     {
@@ -285,7 +286,9 @@ liNaIndices = c()
       # Get locations where the data = level
       aiLevelIndices = rep(0,dim(frmTmp)[1])
       aiLevelIndices[which(frmTmp[sCurCovariateColumnName] == xLevel)]=1
-      vY = vY + dfdCoefs[sCurrentCovariate] * aiLevelIndices
+      sCurrentCovariateBeta = dfdCoefs[sCurrentCovariate]
+      if(is.na(sCurrentCovariateBeta)){sCurrentCovariateBeta=0}
+      vY = vY + sCurrentCovariateBeta * aiLevelIndices
     }
   }
   #TODO based on transform   vY = vY+sin(residuals(lmod))^2
@@ -405,9 +408,15 @@ liNaIndices = c()
   # All coefficients except for the one of interest
   lsOtherCoefs = setdiff(asAllColNames, c(lsCur$name))
 
+  lsCovariatesToPlot = NULL
+  if(is.factor(lsCur$metadata))
+  {
+    lsCovariatesToPlot = paste(lsCur$name,levels(lsCur$metadata),sep="")
+  }else{lsCovariatesToPlot=c(lsCur$orig)}
+
   # If there are no other coefficients then skip plot
 #  if(!length(lsOtherCoefs)){return()}
 
   # Plot residuals
-  funcResidualPlotHelper(frmTmp=frmeTmp,sResponseFeature=lsCur$taxon,lsFullModelCovariateNames=asAllColNames,lsCovariateToControlForNames=lsCur$orig,sCovariateOfInterest=lsCur$name, adColorMin=adColorMin, adColorMax=adColorMax, adColorMed=adColorMed, adMar=adMar, funcUnTransform=funcUnTransform, liNaIndices=liNaIndices)
+  funcResidualPlotHelper(frmTmp=frmeTmp, sResponseFeature=lsCur$taxon, lsFullModelCovariateNames=asAllColNames, lsCovariateToControlForNames=lsCovariatesToPlot, sCovariateOfInterest=lsCur$name, adColorMin=adColorMin, adColorMax=adColorMax, adColorMed=adColorMed, adMar=adMar, funcUnTransform=funcUnTransform, liNaIndices=liNaIndices)
 }
