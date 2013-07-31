@@ -40,7 +40,7 @@ c_afileTestsR = [sfle.d( pE, c_fileDirLib, s ) for s in
 						("IO.R", "SummarizeMaaslin.R", "Utility.R", "ValidateData.R")]
 
 c_afileDocsR = c_afileTestsR + [sfle.d( pE, c_fileDirLib, s ) for s in
-						( "AnalysisModules.R", "scriptBiplotTSV.R", "BoostGLM.R", "Constants.R", "MaaslinPlots.R", "MFA.R")]
+						( "AnalysisModules.R", "scriptBiplotTSV.R", "BoostGLM.R", "Constants.R", "MaaslinPlots.R")]
 
 ##Test scripts
 for fileInputR in c_afileTestsR:
