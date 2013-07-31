@@ -429,8 +429,6 @@ fInvert=FALSE,
 ### Invert images to have a black background
 strDirOut = NA,
 ### Output project directory
-astrScreen = c(),
-### 
 funcReg=NULL,
 ### Function for regularization
 funcUnTransform=NULL,
@@ -525,23 +523,16 @@ fZeroInflated = FALSE
   }
   astrNames <- unique( astrNames )
 
-  # Sets up named label return for MFA
-  astrRet <- c()
+  # Sets up named label return for global plotting
+  lsReturnTaxa <- list()
   for( j in aiSig )
   {
     if( adQ[j] > dSig ) { next }
-    #This allows only c_iMFA count of significant data to be passed to the MFA plot
-    #Or in general to be pass out of the function.
-    if( length( astrRet ) >= c_iMFA ) { break }
-
-    lsCur <- lsSig[[j]]
-    astrFactors <- lsCur$factors
-    strTaxon <- lsCur$taxon
-	
-    if( !length( astrScreen ) || sum( astrFactors %in% astrScreen ) ) {
-      astrRet <- c(astrRet, strTaxon)
-    }
-    astrRet <- unique( astrRet )
+    strTaxon <- lsSig[[j]]$taxon
+    if(strTaxon %in% names(lsReturnTaxa))
+    {
+      lsReturnTaxa[[strTaxon]] = min(lsReturnTaxa[[strTaxon]],adQ[j])
+    } else { lsReturnTaxa[[strTaxon]] = adQ[j]}
   }
 
   for( strName in astrNames )
@@ -585,9 +576,9 @@ fZeroInflated = FALSE
   aiTmp <- aiData
 
   logdebug("End funcBugs", c_logMaaslin)
-  aiReturnBugs = aiTmp[colnames( frmeData )[aiTmp] %in% astrRet]
+#  aiReturnBugs = aiTmp[colnames( frmeData )[aiTmp] %in% astrRet]
 #  return( aiTmp[colnames( frmeData )[aiTmp] %in% astrRet] )
-  return(list(aiReturnBugs=aiReturnBugs, lsQCCounts=lsData$lsQCCounts))
+  return(list(lsReturnBugs=lsReturnTaxa, lsQCCounts=lsData$lsQCCounts))
   ### List of data features successfully associated without error and quality control data
 }
 

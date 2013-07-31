@@ -163,6 +163,8 @@ log = FALSE
   #Read in config file info
   #Read each data block extracted from the config file
   lsDataBlocks <- funcReadConfigFile(configureFile, defaultFile)
+  print("lsDataBlocks")
+  print(lsDataBlocks)
   if(!length(lsDataBlocks)) {
 	  astrMetadata <- NULL
 	  astrMetadata[2] <- defaultFile
@@ -221,6 +223,14 @@ tempLog=FALSE
   rowNameList = dataMatrix[1][[1]]
 
   #Convert characters to vectors of indices
+  print("columnNameList")
+  print(columnNameList)
+  print("rowNameList")
+  print(rowNameList)
+  print("tempColumns")
+  print(tempColumns)
+  print("tempRows")
+  print(tempRows)
   tempColumns = funcParseIndexSlices(ifelse(is.na(tempColumns),"-",tempColumns), columnNameList)
   tempRows = funcParseIndexSlices(ifelse(is.na(tempRows),"-", tempRows), rowNameList)
 
@@ -281,7 +291,26 @@ defaultFile = NA
   #Read configure file
   fileDataList <- list()
   if(!is.null( configureFile ) ) {
-    fileDataList <- scan( file = configureFile, what = character(), quiet=TRUE) }
+    fileDataList <- scan( file = configureFile, what = character(), sep="\n", quiet=TRUE) }
+  print("fileDataList")
+  print(fileDataList)
+  newList = list()
+  for(sLine in fileDataList)
+  {
+    sLine = gsub("\\s","",sLine)
+    vUnits = unlist(strsplit(sLine,":"))
+    print("vUnits")
+    print(vUnits)
+    if(length(vUnits)>1)
+    {
+      vUnits[1] = paste(vUnits[1],":",sep="")
+      newList[[length(newList)+1]] = vUnits
+    }
+  }
+  fileDataList = unlist(newList)
+  print("fileDataList 2")
+  print(fileDataList)
+
   matrixName <- NA
   fileName <- defaultFile
 
@@ -347,6 +376,8 @@ strIndexString,
 cstrNames
 ### Column names of the data so names can be resolved to indicies
 ){
+  print("#############################strIndexString")
+  print(strIndexString)
   #If the slices are NA then return
   if(is.na(strIndexString)){return(strIndexString)}
 
@@ -354,8 +385,11 @@ cstrNames
   viRetIndicies = c()
 
   #Split on commas
-  lIndexString = strsplit(strIndexString, c_COMMA)
-  for(strIndexItem in lIndexString[[1]])
+  print(strIndexString)
+  print(strsplit(strIndexString, c_COMMA))
+  lIndexString = sapply(strsplit(strIndexString, c_COMMA),function(x) return(x))
+  print(lIndexString)
+  for(strIndexItem in lIndexString)
   {
     #Handle the - case
     if(strIndexItem=="-"){strIndexItem = paste("2-",length(cstrNames),sep="")}
