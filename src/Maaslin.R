@@ -169,7 +169,7 @@ pArgs <- add_option( pArgs, c("-n","--noImpute"), type="character", action="stor
 
 #Miscellaneouse arguments
 ### Argument to control logging (enumerate)
-strDefaultLogging = "INFO"
+strDefaultLogging = "DEBUG"
 pArgs <- add_option( pArgs, c("-v", "--verbosity"), type="character", action="store", dest="strVerbosity", default=strDefaultLogging, metavar="verbosity", help="Logging verbosity  [Default %default]")
 ### Run maaslin without creating a log file
 pArgs <- add_option( pArgs, c("-O","--omitLogFile"), type="logical", action="store_true", default=FALSE, dest="fOmitLogFile", metavar="omitlogfile",help="Including this flag will stop the creation of the output log file.  [Default %default]")

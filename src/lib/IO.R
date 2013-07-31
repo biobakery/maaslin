@@ -163,8 +163,6 @@ log = FALSE
   #Read in config file info
   #Read each data block extracted from the config file
   lsDataBlocks <- funcReadConfigFile(configureFile, defaultFile)
-  print("lsDataBlocks")
-  print(lsDataBlocks)
   if(!length(lsDataBlocks)) {
 	  astrMetadata <- NULL
 	  astrMetadata[2] <- defaultFile
@@ -223,14 +221,6 @@ tempLog=FALSE
   rowNameList = dataMatrix[1][[1]]
 
   #Convert characters to vectors of indices
-  print("columnNameList")
-  print(columnNameList)
-  print("rowNameList")
-  print(rowNameList)
-  print("tempColumns")
-  print(tempColumns)
-  print("tempRows")
-  print(tempRows)
   tempColumns = funcParseIndexSlices(ifelse(is.na(tempColumns),"-",tempColumns), columnNameList)
   tempRows = funcParseIndexSlices(ifelse(is.na(tempRows),"-", tempRows), rowNameList)
 
@@ -292,15 +282,11 @@ defaultFile = NA
   fileDataList <- list()
   if(!is.null( configureFile ) ) {
     fileDataList <- scan( file = configureFile, what = character(), sep="\n", quiet=TRUE) }
-  print("fileDataList")
-  print(fileDataList)
   newList = list()
   for(sLine in fileDataList)
   {
     sLine = gsub("\\s","",sLine)
     vUnits = unlist(strsplit(sLine,":"))
-    print("vUnits")
-    print(vUnits)
     if(length(vUnits)>1)
     {
       vUnits[1] = paste(vUnits[1],":",sep="")
@@ -308,8 +294,6 @@ defaultFile = NA
     }
   }
   fileDataList = unlist(newList)
-  print("fileDataList 2")
-  print(fileDataList)
 
   matrixName <- NA
   fileName <- defaultFile
@@ -376,8 +360,6 @@ strIndexString,
 cstrNames
 ### Column names of the data so names can be resolved to indicies
 ){
-  print("#############################strIndexString")
-  print(strIndexString)
   #If the slices are NA then return
   if(is.na(strIndexString)){return(strIndexString)}
 
@@ -385,10 +367,7 @@ cstrNames
   viRetIndicies = c()
 
   #Split on commas
-  print(strIndexString)
-  print(strsplit(strIndexString, c_COMMA))
   lIndexString = sapply(strsplit(strIndexString, c_COMMA),function(x) return(x))
-  print(lIndexString)
   for(strIndexItem in lIndexString)
   {
     #Handle the - case
