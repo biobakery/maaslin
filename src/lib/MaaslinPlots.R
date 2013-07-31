@@ -264,8 +264,8 @@ liNaIndices = c()
   # Convert the coefficient name to the column name
   # If they are equal then the data is not discontinuous and you can use the raw data as is and multiply it by the coefficient in the model
   # If they are not equal than the data is discontinuous, get the value for the data, set all but the levels equal to it to zero and multiply by the ceofficient from the model.
-#  vY = rep(coefficients(lmod)[["(Intercept)"]],dim(frmTmp)[1])
-  vY = rep(0,dim(frmTmp)[1])
+  vY = rep(coefficients(lmod)[["(Intercept)"]],dim(frmTmp)[1])
+#  vY = rep(0,dim(frmTmp)[1])
 
   #Here we are not dealing with column names but, if factor data, the coefficient names
   for(iCvIndex in 1:length(lsCovariateToControlForNames))
