@@ -314,11 +314,16 @@ liNaIndices = c()
 
   # Set the factor levels to include NA if they still exist
   # This is so if something is not imputed, then if there are NAs they will be plotted (to show no imputing)
+  # Do not forget to keep te level order incase it was changed by the custom scripts.
   if( class( adCurXValues ) == "factor" )
   {
-    adCurXValues = (as.character(adCurXValues))
-    adCurXValues[is.na(adCurXValues)]="NA"
-    adCurXValues = factor(adCurXValues)
+    vsLevels = levels(adCurXValues)
+    if(sum(is.na(adCurXValues))>0)
+    {
+      adCurXValues = as.character(adCurXValues)
+      adCurXValues[is.na(adCurXValues)]="NA"
+      adCurXValues = factor(adCurXValues, levels=c(vsLevels,"NA"))
+    }
   }
 
   # Scale to the original range
@@ -334,7 +339,7 @@ liNaIndices = c()
   # Plot data as strip charts
   if(is.factor(adCurXValues))
   {
-    adCurXValues = factor(adCurXValues)
+#    adCurXValues = factor(adCurXValues)
     astrColors = funcGetFactorBoxColors(adCurXValues,vY,adColorMin,adColorMax,adColorMed)
     asNames = c()
     for(sLevel in levels(adCurXValues))

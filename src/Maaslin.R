@@ -186,12 +186,13 @@ pArgs <- add_option( pArgs, c("-A","--pAlpha"), type="double", action="store", d
 
 ### Misc biplot arguments
 pArgs <- add_option( pArgs, c("-M","--BiplotMetadataScale"), type="double", action="store", dest="dBiplotMetadataScale", default=1, metavar="scaleForMetadata", help="A real number used to scale the metadata labels on the biplot (otherwise a default will be selected from the data).  [Default %default]")
-pArgs <- add_option( pArgs, c("-C", "--BiplotColor"), type="character", action="store", dest="strBiplotColor", default=NULL, metavar="BiplotColorCovariate", help="A continuous metadata that will be used to color samples in the biplot ordination plot (otherwise a default will be selected from the data).  [Default %default]")
-pArgs <- add_option( pArgs, c("-S", "--BiplotShape"), type="character", action="store", dest="strBiplotShape", default=NULL, metavar="BiplotShapeCovariate", help="A discontinuous metadata that will be used to indicate shapes of samples in the Biplot ordination plot (otherwise a default will be selected from the data).  [Default %default]")
+pArgs <- add_option( pArgs, c("-C", "--BiplotColor"), type="character", action="store", dest="strBiplotColor", default=NULL, metavar="BiplotColorCovariate", help="A continuous metadata that will be used to color samples in the biplot ordination plot (otherwise a default will be selected from the data). Example Age  [Default %default]")
+pArgs <- add_option( pArgs, c("-S", "--BiplotShapeBy"), type="character", action="store", dest="strBiplotShapeBy", default=NULL, metavar="BiplotShapeCovariate", help="A discontinuous metadata that will be used to indicate shapes of samples in the Biplot ordination plot (otherwise a default will be selected from the data). Example Sex  [Default %default]")
 pArgs <- add_option( pArgs, c("-P", "--BiplotPlotFeatures"), type="character", action="store", dest="strBiplotPlotFeatures", default=NULL, metavar="BiplotFeaturesToPlot", help="Metadata and data features to plot (otherwise a default will be selected from the data). Comma Delimited.")
-pArgs <- add_option( pArgs, c("-D", "--BiplotRotateMetadata"), type="character", action="store", dest="sRotateByMetadata", default=NULL, metavar="BiplotRotateMetadata", help="Metadata to use to rotate the biplot.  [Default %default]")
+pArgs <- add_option( pArgs, c("-D", "--BiplotRotateMetadata"), type="character", action="store", dest="sRotateByMetadata", default=NULL, metavar="BiplotRotateMetadata", help="Metadata to use to rotate the biplot. Format 'Metadata,value'. 'Age,0.5' .  [Default %default]")
 pArgs <- add_option( pArgs, c("-B", "--BiplotShapes"), type="character", action="store", dest="sShapes", default=NULL, metavar="BiplotShapes", help="Specify shapes specifically for metadata or metadata values.  [Default %default]")
-pArgs <- add_option( pArgs, c("-b", "--BugCount"), type="integer", action="store", dest="iNumberBugs", default=1, metavar="PlottedBugCount", help="The number of bugs automatically selected from the data to plot.  [Default %default]")
+pArgs <- add_option( pArgs, c("-b", "--BugCount"), type="integer", action="store", dest="iNumberBugs", default=3, metavar="PlottedBugCount", help="The number of bugs automatically selected from the data to plot.  [Default %default]")
+pArgs <- add_option( pArgs, c("-E", "--MetadataCount"), type="integer", action="store", dest="iNumberMetadata", default=2, metavar="PlottedMetadataCount", help="The number of metadata automatically selected from the data to plot.  [Default %default]")
 
 #pArgs <- add_option( pArgs, c("-c","--MFAFeatureCount"), type="integer", action="store", dest="iMFAMaxFeatures", default=3, metavar="maxMFAFeature", help="Number of features or number of bugs to plot (default=3; 3 metadata and 3 data).")
 
@@ -218,7 +219,7 @@ pArgs
   #logdebug("lsArgs", c_logrMaaslin)
   #logdebug(paste(lsArgs,sep=" "), c_logrMaaslin)
 
-  # Parse Piped parameters
+  # Parse parameters
   lsForcedParameters = NULL
   if(!is.null(lsArgs$options$strForcedPredictors))
   {
@@ -477,53 +478,92 @@ pArgs
     funcWrite(paste("Ignore unless penalized feature selection was used. Alpha to determine the type of penalty=",lsArgs$options$dPenalizedAlpha), file.path(strQCDir,"Run_Parameters.txt"))
     funcWrite(paste("Biplot parameter, user defined metadata scale=",lsArgs$options$dBiplotMetadataScale), file.path(strQCDir,"Run_Parameters.txt"))
     funcWrite(paste("Biplot parameter, user defined metadata used to color the plot=",lsArgs$options$strBiplotColor), file.path(strQCDir,"Run_Parameters.txt"))
-    funcWrite(paste("Biplot parameter, user defined metadata used to dictate the shapes of the plot markers=",lsArgs$options$strBiplotShape), file.path(strQCDir,"Run_Parameters.txt"))
+    funcWrite(paste("Biplot parameter, user defined metadata used to dictate the shapes of the plot markers=",lsArgs$options$strBiplotShapeBy), file.path(strQCDir,"Run_Parameters.txt"))
     funcWrite(paste("Biplot parameter, user defined user requested features to plot=",lsArgs$options$strBiplotPlotFeatures), file.path(strQCDir,"Run_Parameters.txt"))
     funcWrite(paste("Biplot parameter, user defined metadata used to rotate the plot ordination=",lsArgs$options$sRotateByMetadata), file.path(strQCDir,"Run_Parameters.txt"))
     funcWrite(paste("Biplot parameter, user defined custom shapes for metadata=",lsArgs$options$sShapes), file.path(strQCDir,"Run_Parameters.txt"))
+    funcWrite(paste("Biplot parameter, user defined number of bugs to plot =",lsArgs$options$iNumberBugs), file.path(strQCDir,"Run_Parameters.txt"))
   }
 
   ### Write summary table
   #Summarize output files based on a keyword and a significance threshold
   #Look for less than or equal to the threshold (approapriate for p-value and q-value type measurements)
-  funcSummarizeDirectory(astrOutputDirectory=outputDirectory,
+  dfSummary = funcSummarizeDirectory(astrOutputDirectory=outputDirectory,
                        strBaseName=strBase,
                        astrSummaryFileName=file.path(outputDirectory,paste(strBase,c_sSummaryFileSuffix, sep="")), 
                        astrKeyword=c_strKeywordEvaluatedForInclusion, 
                        afSignificanceLevel=lsArgs$options$dSignificanceLevel)
 
   ### Start biplot
-  # Get metadata of interest
-  aiUMD <- intersect( lsRet$aiMetadata, which( colnames( lsRet$frmeData ) %in% lsRet$astrMetadata ) )
+  # Get metadata of interest and reduce to default size
+  lsSigMetadata = unique(dfSummary[[1]])
+  lsSigMetadata = lsSigMetadata[1:max(lsArgs$options$iNumberMetadata,length(lsSigMetadata))]
+  # Convert to indices
+  liSigMetadata = which( colnames( lsRet$frmeData ) %in% lsSigMetadata )
+#  aiUMD <- intersect( lsRet$aiMetadata, which( colnames( lsRet$frmeData ) %in% lsRet$astrMetadata ) )
 
-  # Get bugs of interest
-  lsSigBugs = unlist(alsRetBugs$lsReturnBugs)
-  print("lsSigBugs")
-  print(lsSigBugs)
+  # Get bugs of interest and reduce to default size
+  lsSigBugs = unique(dfSummary[[2]])
+
   if(lsArgs$options$iNumberBugs < 1)
   {
     lsSigBugs = c()
   } else {
-    lsSigBugs = names(sort(lsSigBugs)[1:min(length(lsSigBugs),lsArgs$options$iNumberBugs)])
+    iTotalBugs = max(lsArgs$options$iNumberBugs,length(lsSigBugs))
+    lsSigBugs = lsSigBugs[1:iTotalBugs]
   }
-  print("lsSigBugs")
-  print(lsSigBugs)
+
+  # Set color by and shape by features if not given
+  if(is.null(lsArgs$options$strBiplotColor)||is.null(lsArgs$options$strBiplotShapeBy))
+  {
+    for(sMetadata in lsSigMetadata)
+    {
+      if(is.factor(lsRet$frmeRaw[[sMetadata]]))
+      {
+        if(is.null(lsArgs$options$strBiplotShapeBy))
+        {
+          lsArgs$options$strBiplotShapeBy = sMetadata
+          if(!is.null(lsArgs$options$strBiplotColor))
+          {
+            break
+          }
+        }
+      }
+      if(is.numeric(lsRet$frmeRaw[[sMetadata]]))
+      {
+        if(is.null(lsArgs$options$strBiplotColor))
+        {
+          lsArgs$options$strBiplotColor = sMetadata
+          if(!is.null(lsArgs$options$strBiplotShapeBy))
+          {
+            break
+          }
+        }
+      }
+    }
+  }
 
   #If a user defines a feature, make sure it is in the bugs/data indices
-  if(!is.null(lsFeaturesToPlot) || !is.null(lsArgs$options$strBiplotColor) || !is.null(lsArgs$options$strBiplotShape))
+  if(!is.null(lsFeaturesToPlot) || !is.null(lsArgs$options$strBiplotColor) || !is.null(lsArgs$options$strBiplotShapeBy))
   {
-    lsCombinedFeaturesToPlot = unique(c(lsFeaturesToPlot,lsArgs$options$strBiplotColor,lsArgs$options$strBiplotShape))
+    lsCombinedFeaturesToPlot = unique(c(lsFeaturesToPlot,lsArgs$options$strBiplotColor,lsArgs$options$strBiplotShapeBy))
     lsCombinedFeaturesToPlot = lsCombinedFeaturesToPlot[!is.null(lsCombinedFeaturesToPlot)]
 
-    aiUMD = unique(c(aiUMD,which( colnames( lsRet$frmeData ) %in% intersect(lsCombinedFeaturesToPlot, lsOriginalMetadataNames))))
+    # If bugs to plot were given then do not use the significant bugs from the MaAsLin output which is default
+    if(!is.null(lsFeaturesToPlot))
+    {
+      lsSigBugs = c()
+      liSigMetadata = c()
+    }
+    liSigMetadata = unique(c(liSigMetadata,which(colnames(lsRet$frmeData) %in% setdiff(lsCombinedFeaturesToPlot, lsOriginalFeatureNames))))
     lsSigBugs = unique(c(lsSigBugs, intersect(lsCombinedFeaturesToPlot, lsOriginalFeatureNames)))
   }
 
   # Convert bug names and metadata names to comma delimited strings
   vsBugs = paste(lsSigBugs,sep=",",collapse=",")
-  vsMetadata = paste(colnames(lsRet$frmeData)[aiUMD],sep=",",collapse=",")
+  vsMetadata = paste(colnames(lsRet$frmeData)[liSigMetadata],sep=",",collapse=",")
   vsMetadataByLevel = c()
-  for(aiMetadataIndex in aiUMD)
+  for(aiMetadataIndex in liSigMetadata)
   {
     lxCurMetadata = lsRet$frmeData[[aiMetadataIndex]]
     sCurName = names(lsRet$frmeData[aiMetadataIndex])
@@ -535,13 +575,11 @@ pArgs
     }
   }
 
-  # All bugs and metadata
-  aiAllFeatures = sort(unique(c(aiUMD,which(colnames( lsRet$frmeData ) %in% lsSigBugs))))
-
   # If NAs should not be plotted, make them the background color
   sPlotNAColor = "white"
+  if(lsArgs$options$fInvert){sPlotNAColor = "black"}
   if(lsArgs$options$fPlotNA){sPlotNAColor = "grey"}
-  sLastMetadata = names(lsRet$frmeData)[sort(aiUMD)[length(aiUMD)]]
+  sLastMetadata = lsOriginalMetadataNames[max(which(lsOriginalMetadataNames %in% names(lsRet$frmeData)))]
 
   # Plot biplot
   logdebug("PlotBiplot:Started")
@@ -550,12 +588,12 @@ pArgs
     sMetadata = vsMetadataByLevel,
     sColorBy = lsArgs$options$strBiplotColor,
     sPlotNAColor = sPlotNAColor,
-    sShapeBy = lsArgs$options$strBiplotShape,
+    sShapeBy = lsArgs$options$strBiplotShapeBy,
     sShapes = lsArgs$options$sShapes,
     sDefaultMarker = "16",
     sRotateByMetadata = lsArgs$options$sRotateByMetadata,
     dResizeArrow = lsArgs$options$dBiplotMetadataScale,
-    sInputFileName = lsRet$frmeData[aiAllFeatures],
+    sInputFileName = lsRet$frmeRaw,
     sLastMetadata = sLastMetadata,
     sOutputFileName = file.path(outputDirectory,paste(strBase,"-biplot.pdf",sep="")))
   logdebug("PlotBiplot:Stopped")

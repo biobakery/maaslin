@@ -76,4 +76,5 @@ afSignificanceLevel
   } else {
     funcWriteTable( dfSignificantData, astrSummaryFileName, fAppend = FALSE )
   }
+  return(dfSignificantData)
 } 

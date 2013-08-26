@@ -160,7 +160,7 @@ c_sDefaultColorRange = "orange,cyan"
 c_sDefaultTextColor = "black"
 c_sDefaultArrowColor = "cyan"
 c_sDefaultArrowTextColor = "Blue"
-c_sDefaultNAColor = NULL
+c_sDefaultNAColor = "grey"
 c_sDefaultShapeBy = NULL
 c_sDefaultShapes = NULL
 c_sDefaultMarker = "16"
@@ -222,7 +222,7 @@ sShapes = c_sDefaultShapes,
 sDefaultMarker = c_sDefaultMarker,
 ### The default marker shape to use if shapes are not otherwise indicated.
 sRotateByMetadata = c_sDefaultRotateByMetadata,
-### Metadta and value to rotate by. example Environment_HighLumninosity,100
+### Metadata and value to rotate by. example Environment_HighLumninosity,100
 dResizeArrow = c_sDefaultResizeArrow,
 ### Scale factor to resize tthe metadata arrows
 sTitle = c_sDefaultTitle,
@@ -253,6 +253,7 @@ sOutputFileName = c_sDefaultOutputFile
   {
     vsBugsToPlot = unlist(strsplit(sBugs,","))
   }
+
   # Metadata to plot
   vsMetadata = c()
   if(!is.null(sMetadata))
@@ -399,7 +400,7 @@ sOutputFileName = c_sDefaultOutputFile
     }
   }
 
-  pdf(sOutputFileName)
+  pdf(sOutputFileName, useDingbats=FALSE)
   plot(mNMDSData$points, xlab=paste("NMDS1","Stress=",mNMDSData$stress), ylab="NMDS2", pch=vsShapes, col=vsColors)
   title(sTitle,line=3)
   # Plot Bugs

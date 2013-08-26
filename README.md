@@ -111,12 +111,11 @@ programming pattern that allows one to add/modify specific code to
 customize analysis without touching the main MaAsLin engine. A generic
 R script is provided â€œmaaslin_demo2.Râ€ and can be renamed and used for
 any study. The R script can be modified to add quality control or
-formatting of data, add ecological measurements, affect the MFA
-visualization, or other changes.
+formatting of data, add ecological measurements, or other changes.
 
 # E. Process Flow Overview
 
-1. Obtain your abundance table.
+1. Obtain your abundance or relative function table.
 2. Obtain your metadata.
 3. Format and combine your abundance table and metadata as a pcl file for MaAsLin.
 4. Create your read.config file.
@@ -127,10 +126,10 @@ visualization, or other changes.
 
 # F. Process Flow Detail
 
-### 1\. Obtain your abundance table.
+### 1\. Obtain your abundance or relative function table.
 
 Abundance tables are normally derived from sequence data using
-*Mothur*, *Qiime*, or *MetaPhlAn*. Please refer to their documentation
+*Mothur*, *Qiime*, *HUMAnN*, or *MetaPhlAn*. Please refer to their documentation
 for further details.
 
 ### 2\. Obtain your metadata.
@@ -366,7 +365,16 @@ Can be used to read in read_cleaned.tsv.
 Contains quality control for the MaAsLin analysis. This includes
 information on the magnitude of outlier removal.
 
-#H. Other Analysis Flows###1. All verses AllThe all verses all analysis flow is a way of manipulating how metadata are used. In this method there is a group of metadata that are always evaluated, as well there are a group that are added to this one at a time. To give a more concrete example: You may have metadata cage, diet, and treatment. You may always want to have the association of abundance evaluated controlling for cage but otherwise looking at the metadata one at a time. In this way the cage metadata is the ÒforcedÓ part of the evaluation while the others are not forced and evaluated in serial. The appropriate commandline (placed in your args file) to indicate this is:> -a ÐF cage-a indicates all verses all is being used, -F indicates which metadata are forced (multiple metadata can be given comma delimited as shown here ÐF metadata1,metadata2,metadata3). This does not bypass the feature selection method so the metadata that are not forced are subject to feature selection and may be removed before coming to the evaluation. If you want all the metadata that are not forced to be evaluated in serial you will need to turn off feature selection and will have a final combined commandline as seen here:> -a ÐF cage Ðs none
+#H. Other Analysis Flows
+
+###1. All verses All
+The all verses all analysis flow is a way of manipulating how metadata are used. In this method there is a group of metadata that are always evaluated, as well there are a group that are added to this one at a time. To give a more concrete example: You may have metadata cage, diet, and treatment. You may always want to have the association of abundance evaluated controlling for cage but otherwise looking at the metadata one at a time. In this way the cage metadata is the \D2forced\D3 part of the evaluation while the others are not forced and evaluated in serial. The appropriate commandline (placed in your args file) to indicate this is:
+
+> -a \D0F cage
+
+-a indicates all verses all is being used, -F indicates which metadata are forced (multiple metadata can be given comma delimited as shown here \D0F metadata1,metadata2,metadata3). This does not bypass the feature selection method so the metadata that are not forced are subject to feature selection and may be removed before coming to the evaluation. If you want all the metadata that are not forced to be evaluated in serial you will need to turn off feature selection and will have a final combined commandline as seen here:
+
+> -a \D0F cage \D0s none
 
 #I. Troubleshooting
 
@@ -428,10 +436,10 @@ Maaslin.R. An example of the contents of an args file is given here.
 
 **Example.args:**
 
-    -v DEBUG â€“d 0.1 â€“C 5
+    -v DEBUG â€“d 0.1 â€“b 5
 
 In this example MaAsLin is modified to produce verbose output for
 debugging (-v DEBUG), to change the threshold for making pdfs to a
-q-value equal to or less than 0.1 (-d 0.1), and to plot 5 metadata and
-5 data (bug) features in the MFA plot (-C 5).
+q-value equal to or less than 0.1 (-d 0.1), and to plot 
+5 data (bug) features in the biplot (-b 5).
 
