@@ -536,7 +536,7 @@ strLog
     }
   } else { astrTerms = lsForcedParameters }
 
-  funcBoostInfluencePlot(vdRelInf=lsSum$rel.inf, sFeature=lsParameters$sBugName, vsPredictorNames=lsSum$var, vstrKeepMetadata=vstrKeepMetadata, vstrUneven=vstrUneven)
+#  funcBoostInfluencePlot(vdRelInf=lsSum$rel.inf, sFeature=lsParameters$sBugName, vsPredictorNames=lsSum$var, vstrKeepMetadata=vstrKeepMetadata, vstrUneven=vstrUneven)
 
   return(unique(c(astrTerms,lsForcedParameters)))
   ### Return a vector of predictor names to use in a reduced model
