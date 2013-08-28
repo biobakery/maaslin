@@ -310,7 +310,7 @@ liNaIndices = c()
   {
     adCurXValues = adCurXValues[-1*liNaIndices[[sCovariateOfInterest]]]
     vY <- vY[-1*liNaIndices[[sCovariateOfInterest]]]
-    adCurXValues = factor(adCurXValues)
+    if(is.factor(adCurXValues)){adCurXValues = factor(adCurXValues)}
   }
 
   # Set the factor levels to include NA if they still exist
