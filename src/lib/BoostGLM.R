@@ -179,7 +179,7 @@ dPOutlier = 0.05
     lsQCCounts$lsQCCustom = pTmp$lsQCCounts
   }
 
-  # Remove missing data, remove any sample has less than dMinSamp * the number of data or low abundance
+  # Remove missing data, remove any sample that has less than dMinSamp * the number of data or low abundance
   aiRemove = c()
   aiRemoveLowAbundance = c()
   for( iCol in aiData )
@@ -389,7 +389,7 @@ dPOutlier = 0.05
     adCol = frmeData[,iCol]
     if(length( which(adCol!=0)) < ( dMinSamp * length( adCol ) ) )
     {
-        aiRemove = c(aiRemove, iCol)
+      aiRemove = c(aiRemove, iCol)
     }
   }
 
@@ -459,14 +459,17 @@ fZeroInflated = FALSE
 ### Indicates to use a zero infalted model
 ){
   c_logrMaaslin$debug("Start funcBugs")
-  if( is.na( strDirOut )||is.null(strDirOut))
+  # If no output directory is indicated
+  # Then make it the current directory
+  if( is.na( strDirOut ) || is.null( strDirOut ) )
   {
-    if(!is.na(strData))
+    if( !is.na( strData ) )
     {
       strDirOut <- paste( dirname( strData ), "/", sep = "" )
     } else { strDirOut = "" }
   }
 
+  # Make th log file and output file names based on the log file name
   strLog = NA
   strBase = ""
   if(!is.na(strData))
@@ -474,48 +477,76 @@ fZeroInflated = FALSE
     strBaseOut <- paste( strDirOut, sub( "\\.([^.]+)$", "", basename(strData) ), sep = "/" )
     strLog <- paste( strBaseOut,c_sLogFileSuffix, ".txt", sep = "" )
   }
+
+  # If indicated, stop the creation of the log file
+  # Otherwise delete the log file if it exists and log
   if(fOmitLogFile){ strLog = NA }
   if(!is.na(strLog))
   {
     c_logrMaaslin$info( "Outputting to: %s", strLog )
     unlink( strLog )
   }
-
-  #Will contain pvalues
-  #Will contain objects associated with significance
+ 
+  # Will contain pvalues
   adP = c()
+  adPAdj = c()
+
+  # List of lists with association information
   lsSig <- list()
+  # Go through each data that was not previously removed and perform inference
   for( iTaxon in aiData )
   {
+    # Log to screen progress per 10 associations.
+    # Can be thown off if iTaxon is missing a mod 10 value
+    # So the taxons may not be logged every 10 but not a big deal
     if( !( iTaxon %% 10 ) )
     {
       c_logrMaaslin$info( "Taxon %d/%d", iTaxon, max( aiData ) )
     }
-    #Call analysis method
+
+    # Call analysis method
     lsOne <- funcBugHybrid( iTaxon, frmeData, lsData, aiMetadata, dSig, adP, lsSig, strLog, funcReg, lsNonPenalizedPredictors, funcAnalysis, lsRandomCovariates, funcGetResults, fAllvAll, fIsUnivariate, lxParameters, fZeroInflated )
 
-    #TODO Check#If you get a NA (happens when the lmm gets all random covariates) move on
-    if(is.na(lsOne)){next}
+    # If you get a NA (happens when the lmm gets all random covariates) move on
+    if( is.na( lsOne ) ){ next }
 
-    #Update pvalue array
+    # The updating of the following happens in the inference method call in the funcBugHybrid call
+    # New pvalue array
     adP <- lsOne$adP
-    #lsSig contains data about significant feature v metadata comparisons
+    # New lsSig contains data about significant feature v metadata comparisons
     lsSig <- lsOne$lsSig
-    #Update the qc data
+    # New qc data
     lsData$lsQCCounts = lsOne$lsQCCounts
   }
+
+  # Log the QC info
   c_logrMaaslin$debug("lsData$lsQCCounts")
   c_logrMaaslin$debug(format(lsData$lsQCCounts))
 
-  #Presort for order for FDR calculation
   if( is.null( adP ) ) { return( NULL ) }
 
-  #Get indices of sorted data
-  aiSig <- sort.list( adP )
-  iTests = funcCalculateTestCounts(iDataCount = length(aiData), asMetadata = intersect( lsData$astrMetadata, colnames( frmeData )[aiMetadata] ), asForced = lsNonPenalizedPredictors, asRandom = lsRandomCovariates, fAllvAll = fAllvAll)
-  #Perform FDR BH
-  adQ  = p.adjust(adP,method=strTestingCorrection,n=max(length(adP),iTests))
+  # Perform bonferonni corrections on factor data (for levels), calculate the number of tests performed, and FDR adjust for multiple hypotheses
+  # Perform Bonferonni adjustment on factor data
+  for( iADIndex in 1:length( adP ) )
+  {
+    # Only perform on factor data
+    if( is.factor( lsSig[[ iADIndex ]]$metadata ) )
+    {
+      adPAdj = c( adPAdj, funcBonferonniCorrectFactorData( dPvalue = adP[ iADIndex ], vsFactors = lsSig[[ iADIndex ]]$metadata, fIgnoreNAs = length(liNaIndices)>0) )
+    } else {
+      adPAdj = c( adPAdj, adP[ iADIndex ] )
+    }
+  }
 
+  iTests = funcCalculateTestCounts(iDataCount = length(aiData), asMetadata = intersect( lsData$astrMetadata, colnames( frmeData )[aiMetadata] ), asForced = lsNonPenalizedPredictors, asRandom = lsRandomCovariates, fAllvAll = fAllvAll)
+
+  #Get indices of sorted data after the factor correction but before the multiple hypothesis corrections.
+  aiSig <- sort.list( adPAdj )
+
+  # Perform FDR BH
+  adQ = p.adjust(adPAdj, method=strTestingCorrection, n=max(length(adPAdj), iTests))
+
+  # Find all covariates that had significant associations
   astrNames <- c()
   for( i in 1:length( lsSig ) )
   {
@@ -535,6 +566,8 @@ fZeroInflated = FALSE
     } else { lsReturnTaxa[[strTaxon]] = adQ[j]}
   }
 
+  # For each covariate with significant associations
+  # Write out a file with association information
   for( strName in astrNames )
   {
     strFileTXT <- NA
@@ -576,8 +609,6 @@ fZeroInflated = FALSE
   aiTmp <- aiData
 
   logdebug("End funcBugs", c_logMaaslin)
-#  aiReturnBugs = aiTmp[colnames( frmeData )[aiTmp] %in% astrRet]
-#  return( aiTmp[colnames( frmeData )[aiTmp] %in% astrRet] )
   return(list(lsReturnBugs=lsReturnTaxa, lsQCCounts=lsData$lsQCCounts))
   ### List of data features successfully associated without error and quality control data
 }

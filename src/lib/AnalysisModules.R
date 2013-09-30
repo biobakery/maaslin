@@ -53,6 +53,7 @@ suppressMessages(library( gamlss, warn.conflicts=FALSE, quietly=TRUE, verbose=FA
 fAddBack = TRUE
 dUnevenMax = .9
 
+
 ### Helper functions
 # OK
 funcMakeContrasts <- function
@@ -211,16 +212,13 @@ lastrCols,
 asSuppressCovariates=c()
 ### Vector of covariates to suppress and not give results for
 ){
-  #TODO are we updating the QCCounts?
-  #TODO add in to summary or somewhere
-
   ilmodIndex = 0
-  for(lmod in llmod)
+  for( lmod in llmod )
   {
     ilmodIndex = ilmodIndex + 1
-    lmod = llmod[[ilmodIndex]]
-    iTaxon = liTaxon[[ilmodIndex]]
-    astrCols = lastrCols[[ilmodIndex]]
+    lmod = llmod[[ ilmodIndex ]]
+    iTaxon = liTaxon[[ ilmodIndex ]]
+    astrCols = lastrCols[[ ilmodIndex ]]
 
     #Exclude none and errors
     if( !is.na( lmod ) && ( class( lmod ) != "try-error" ) )
@@ -270,9 +268,9 @@ asSuppressCovariates=c()
       astrRows <- names( adCoefs )
 
       ##lmm
-      if(is.null(astrRows))
+      if( is.null( astrRows ) )
       {
-        astrRows = rownames(lsSum$tTable)
+        astrRows = rownames( lsSum$tTable )
         frmeCoefs = lsSum$tTable
         iPValuePosition = 5
         adCoefs = frmeCoefs[,1]
@@ -281,21 +279,21 @@ asSuppressCovariates=c()
       for( iMetadata in 1:length( astrRows ) )
       {
         #Current coef which is being evaluated 
-        strOrig = astrRows[iMetadata]
+        strOrig = astrRows[ iMetadata ]
         #Skip y interscept
         if( strOrig %in% c("(Intercept)", "Intercept", "Log(theta)") ) { next }
         #Skip suppressed covariates
-        if( funcCoef2Col(strOrig,frmeData) %in% asSuppressCovariates){next}
+        if( funcCoef2Col( strOrig, frmeData ) %in% asSuppressCovariates){ next }
 
         #Extract pvalue and std in standard model
-        dP = frmeCoefs[strOrig, iPValuePosition]
-        dStd = frmeCoefs[strOrig,2]
+        dP = frmeCoefs[ strOrig, iPValuePosition ]
+        dStd = frmeCoefs[ strOrig, 2 ]
 
         #Attempt to extract the pvalue and std in mixed effects summary 
         #Could not get the pvalue so skip result
-        if(is.nan(dP) || is.na(dP) || is.null(dP)) { next }
+        if( is.nan( dP ) || is.na( dP ) || is.null( dP ) ) { next }
 
-        dCoef = adCoefs[iMetadata]
+        dCoef = adCoefs[ iMetadata ]
 
         #Setting adMetadata
         #Metadata values
@@ -306,40 +304,36 @@ asSuppressCovariates=c()
           c_logrMaaslin$error( "Unknown coefficient: %s", strOrig )
         }
         if( substring( strOrig, nchar( strMetadata ) + 1 ) == "NA" ) { next }
-        adMetadata <- frmeData[,strMetadata]
+        adMetadata <- frmeData[, strMetadata ]
 
-        #Bonferonni correct the factor p-values based on the factor levels-1 comparisons
-        if( class( adMetadata ) == "factor" )
-        {
-          dP <- dP * ( length( unique( adMetadata )) - 1 )
-        }
+        # Store (factor level modified) p-value
+        # Store general results for each coef
+        adP <- c( adP, dP )
 
-        #Store (factor level modified) p-value
-        #Store general results for each coef
-        adP <- c(adP, dP)
-        lsSig[[length( lsSig ) + 1]] <- list(
-          #Current metadata name
+         # Append to the list of information about associations
+        lsSig[[ length( lsSig ) + 1 ]] <- list(
+          # Current metadata name
           name		= strMetadata,
-          #Current metadatda name (as a factor level if existing as such)
-          orig		= strOrig,#
-          #Taxon feature name
+          # Current metadatda name (as a factor level if existing as such)
+          orig		= strOrig,
+          # Taxon feature name
           taxon		= strTaxon,
-          #Taxon data / response
-          data		= frmeData[,iTaxon],
-          #All levels
-          factors	= c(strMetadata),
-          #Metadata values
+          # Taxon data / response
+          data		= frmeData[, iTaxon ],
+          # All levels
+          factors	= c( strMetadata ),
+          # Metadata values
           metadata	= adMetadata,
-          #Current coeficient value
+          # Current coeficient value
           value		= dCoef,
-          #Standard deviation
+          # Standard deviation
           std		= dStd,
-          #Model coefficients
-          allCoefs	= adCoefs)
+          # Model coefficients
+          allCoefs	= adCoefs )
       }
     }
   }
-  return(list(adP=adP, lsSig=lsSig, lsQCCounts=lsQCCounts))
+  return( list( adP = adP, lsSig = lsSig, lsQCCounts = lsQCCounts ) )
   ### List containing a list of pvalues, a list of significant data per association, and a list of QC data
 }
 

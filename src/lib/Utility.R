@@ -54,6 +54,20 @@ astrNames
   ### List of modified names
 }
 
+funcBonferonniCorrectFactorData <- function
+### Bonferroni correct for factor data
+(dPvalue,
+### P-value to correct
+vsFactors,
+### Factors of the data to correct
+fIgnoreNAs = TRUE
+){
+  vsUniqueFactors = unique( vsFactors )
+  if( fIgnoreNAs ){ vsUniqueFactors = setdiff( vsUniqueFactors, c("NA","na","Na","nA") ) }
+  return( dPvalue * max( 1, ( length( vsUniqueFactors ) - 1 ) ) )
+  ### Numeric p-value that is correct for levels (excluding NA levels)
+}
+
 funcCalculateTestCounts <- function(
 ### Calculates the number of tests used in inference
 iDataCount,
