@@ -216,7 +216,7 @@ Here is an example of the contents of a *.read.config file.
 
 The minimal requirement for a MaAsLin .read.config file is as
 follows. The Matrix: should be specified. Metadata needs to be named
-"Matadata" for the metadata section and "Abundance" for the abundance
+"Metadata" for the metadata section and "Abundance" for the abundance
 section. “Read\_PCL\_Rows:” is used to indicate which rows are data or
 metadata to be analyzed. Rows can be identified by their metadata/data
 id. Separate ids by commas. If there is a consecutive group of
