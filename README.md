@@ -76,13 +76,12 @@ analysis:
 R Libraries: Several libraries need to be installed in R these are
   the following:
 
-  * agricolae, FactoMineR, gam, gbm, inlinedocs, lme4, logging, MASS,
-    nlme, optparse, outliers, penalized, pscl, robustbase, testhat
+  * agricolae, gam, gamlss, gbm, glmmADMB, glmnet, inlinedocs, logging, MASS, nlme, optparse, outliers, pscl, robustbase, testthat
 
 You can install them by typing R in a terminal and using the
   install.packages command:
 
-      install.packages(c('agricolae', 'FactoMineR', 'gam', 'gbm', 'inlinedocs', 'lme4', 'logging', 'MASS', 'nlme', 'optparse', 'outliers', 'penalized', 'pscl', 'robustbase', 'testthat'))
+      install.packages(c('agricolae', 'gam', 'gamlss', 'gbm', 'glmmADMB', 'glmnet', 'inlinedocs', 'logging', 'MASS', 'nlme', 'optparse', 'outliers', 'pscl', 'robustbase', 'testthat'))
 
 # D. MaAsLin Inputs
 
@@ -253,7 +252,7 @@ only be used by someone very comfortable with the R language.
 
 ###7. Run.
 
-Go to ../sfle and type the following: scons output/the_Name_of_your_pcl_file_without_the_extension
+Go to ../sfle and type the following: scons output/maaslin
 
 ###8. Discover amazing associations in your results!
 
