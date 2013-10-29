@@ -410,8 +410,8 @@ interested in installing MaAsLin in a SflE environment. After
 installing SflE, download or move the complete maaslin directory into
 `sfle/input`. After setting up, one places all maaslin input files in
 `sfle/input/maaslin/input`. To run the automated pipeline and analyze
-all files in the `sfle/input/maaslin/input directory type scons
-output/maaslin in a terminal in the sfle directory`. This will produce
+all files in the `sfle/input/maaslin/input` directory, type: `scons output/maaslin`
+in a terminal in the sfle directory. This will produce
 output in the `sfle/output/maaslin` directory.
 
 #K. Commandline Options (Modifying Process and Figures)
