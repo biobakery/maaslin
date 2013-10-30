@@ -74,7 +74,7 @@ R Libraries: Several libraries need to be installed in R these are
 You can install them by typing R in a terminal and using the
   install.packages command:
 
-      install.packages(c('agricolae', 'gam', 'gamlss', 'gbm', 'glmnet', 'inlinedocs', 'logging', 'MASS', 'nlme', 'optparse', 'outliers', 'penalized', 'pscl', 'robustbase', 'testhat', 'vegan'))
+      install.packages(c('agricolae', 'gam', 'gamlss', 'gbm', 'glmnet', 'inlinedocs', 'logging', 'MASS', 'nlme', 'optparse', 'outliers', 'penalized', 'pscl', 'robustbase', 'testthat', 'vegan'))
 
 # D. MaAsLin Inputs
 
@@ -234,9 +234,14 @@ only be used by someone very comfortable with the R language.
 
 ###7. Run.
 
-By running the commandline script:On the commandline call the Maaslin.R script. Please refer to the help (-h, --help) for command line options. If running from commandline, the PCL file will need to be transposed. A script is included in Maaslin for your convenience (src/transpose.py). The following example will have such a call included. An example call from the Maaslin folder for the demo data could be as follows.
-./src/transpose.py < input/maaslin_demo2.pcl > maaslin_demo2.tsv./src/Maaslin.R -i input/maaslin_demo2.read.config demo.text maaslin_demo2.tsv
-When using sfle:Go to ../sfle and type the following: scons output/maaslin
+By running the commandline script:
+On the commandline call the Maaslin.R script. Please refer to the help (-h, --help) for command line options. If running from commandline, the PCL file will need to be transposed. A script is included in Maaslin for your convenience (src/transpose.py). The following example will have such a call included. An example call from the Maaslin folder for the demo data could be as follows.
+
+./src/transpose.py < input/maaslin_demo2.pcl > maaslin_demo2.tsv
+./src/Maaslin.R -i input/maaslin_demo2.read.config demo.text maaslin_demo2.tsv
+
+When using sfle:
+Go to ../sfle and type the following: scons output/maaslin
 
 ###8. Discover amazing associations in your results!
 
@@ -325,7 +330,8 @@ Can be used to read in read_cleaned.tsv.
 Contains quality control for the MaAsLin analysis. This includes
 information on the magnitude of outlier removal.
 
-**Run_Parameters.txt**Contains an account of all the options used when running MaAsLin so the exact methodology can be recreated if needed.
+**Run_Parameters.txt**
+Contains an account of all the options used when running MaAsLin so the exact methodology can be recreated if needed.
 
 #H. Other Analysis Flows
 
