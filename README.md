@@ -1,7 +1,7 @@
-MaAsLin User Guide v3.0
+MaAsLin User Guide v3.1
 =======================
 
-February 2012
+September 2013
 
 Timothy Tickle and Curtis Huttenhower
 
@@ -53,13 +53,6 @@ For more information about maaslin please visit
 Other projects exist at www.bitbucket.com that may help in your
 analysis:
 
-* **GraPhlAn** is a visualization tool focused on annotated
-    dendrograms. If installing MaAsLin in the SflE framework, install
-    graphlan in `sfle/input` to allow MaAsLin to produce automated
-    GraPhlAn figures. This is optional and does not affect MaAsLin
-    analysis. For more information on GraPlAn please visit
-    [http://huttenhower.sph.harvard.edu/graphlan](http://huttenhower.sph.harvard.edu/graphlan).
-
 * **QiimeToMaAsLin** is a project that reformats abundance files from
     Qiime for MaAsLin. Several formats of Qiime consensus lineages are
     supported for this project. To download please visit
@@ -76,20 +69,16 @@ analysis:
 R Libraries: Several libraries need to be installed in R these are
   the following:
 
-  * agricolae, gam, gamlss, gbm, glmnet, inlinedocs, logging, MASS, nlme, optparse, outliers, pscl, robustbase, testthat
+  * agricolae, gam, gamlss, gbm, glmnet, inlinedocs, logging, MASS, nlme, optparse, outliers, penalized, pscl, robustbase, testhat, vegan
 
 You can install them by typing R in a terminal and using the
   install.packages command:
 
-      install.packages(c('agricolae', 'gam', 'gamlss', 'gbm', 'glmnet', 'inlinedocs', 'logging', 'MASS', 'nlme', 'optparse', 'outliers', 'pscl', 'robustbase', 'testthat'))
+      install.packages(c('agricolae', 'gam', 'gamlss', 'gbm', 'glmnet', 'inlinedocs', 'logging', 'MASS', 'nlme', 'optparse', 'outliers', 'penalized', 'pscl', 'robustbase', 'testhat', 'vegan'))
 
 # D. MaAsLin Inputs
 
-There are 3 input files for each project, the "\*.read.config" file,
-the "\*.pcl" file, and the "\*.R" script. Although the "\*" in the
-file names can be anything, it needs to be identical for all three
-files. All three files need to be in the
-`../sfle/input/maasalin/input/` folder. Details of each file follow:
+There are 3 input files for each project, the "\*.read.config" file, the "\*.pcl" file, and the "\*.R" script. (If using the sfle automated pipeline, the "\*" in the file names can be anything but need to be identical for all three files. All three files need to be in the `../sfle/input/maasalin/input` folder only if using sfle). Details of each file follow:
 
 ### 1\. "\*.pcl"
 
@@ -105,12 +94,7 @@ Required input file. A read config file allows one to indicate what data is read
 
 ### 3\. "\*.R"
 
-Optional input file. The R script file is using a call back
-programming pattern that allows one to add/modify specific code to
-customize analysis without touching the main MaAsLin engine. A generic
-R script is provided “maaslin_demo2.R” and can be renamed and used for
-any study. The R script can be modified to add quality control or
-formatting of data, add ecological measurements, or other changes.
+Optional input file. The R script file is using a call back programming pattern that allows one to add/modify specific code to customize analysis without touching the main MaAsLin engine. A generic R script is provided "maaslin_demo2.R" and can be renamed and used for any study. The R script can be modified to add quality control or formatting of data, add ecological measurements, or other changes to the underlying data before MaAsLin runs on it. This file is not required to run MaAsLin.
 
 # E. Process Flow Overview
 
@@ -119,7 +103,7 @@ formatting of data, add ecological measurements, or other changes.
 3. Format and combine your abundance table and metadata as a pcl file for MaAsLin.
 4. Create your read.config file.
 5. Create your R script or use the default.
-6. Place .pcl, .read.config, .R files in `../sfle/input/maaslin/input/`
+6. Place .pcl, .read.config, .R files in `../sfle/input/maaslin/input/` (sfle only)
 7. Run
 8. Discover amazing associations in your results!
 
@@ -158,7 +142,7 @@ more details see section B).
 file for *MaAsLin*.
 
 Please note two tools have been developed to help you! If you are
-working from a Qiime output and have a metadata text file try using
+working from a Qiime OTU output and have a metadata text file try using
 *QiimeToMaaslin* found at bitbucket. If you have a tab delimited file
 which matches the below .pcl description (for instance MetaPhlAn
 output) use the merge_metadata.py script provided in this project
@@ -167,8 +151,7 @@ output) use the merge_metadata.py script provided in this project
 
 ###PCL format description:
 
-i. Row 1 is expected to be \#ID_indicator and then sample ids in each
-following column separated by tabs.
+i. Row 1 is expected to be sample IDs beginning the first column with a feature name to identify the row, for example "ID".
 
 ii. Rows of metadata. Each row is one metadata, the first column entry
 being the name of the metadata and each following column being the
@@ -178,15 +161,14 @@ iii. Row of taxa/otu abundance. Each row is one taxa/otu, the first
 column entry being the name of the taxa/otu followed by abundances of
 the taxa/otu per sample.
 
-iv. Abundances should be normalized by dividing each abundance by the
-sum of the column (sample) abundances.  
+iv. Abundances should be normalized by dividing each abundance measurement by the sum of the column (sample) abundances.  
 
 v. Here is an example of the contents of an extremely small pcl file;
 another example can be found in this project at
 `maaslin/input/maaslin_demo.pcl`.
 
 
-    #SampleID	Sample1	Sample2	Sample3	Sample4
+    ID	Sample1	Sample2	Sample3	Sample4
     metadata1	True	True	False	False
     metadata2	1.23	2.34	3.22	3.44
     metadata3	Male	Female	Male	Female
@@ -248,11 +230,13 @@ default “*.R” script is available with the default MaAsLin project at
 maaslin/input/maaslin_demo2.R. This is an expert option and should
 only be used by someone very comfortable with the R language.
 
-###6. Place .pcl, .read.config, and optional .R files in ../sfle/input/maasalin/input/
+###6. Optional step if using the sfle analysis pipeline. Place .pcl, .read.config, and optional .R files in `../sfle/input/maasalin/input`
 
 ###7. Run.
 
-Go to ../sfle and type the following: scons output/maaslin
+By running the commandline script:On the commandline call the Maaslin.R script. Please refer to the help (-h, --help) for command line options. If running from commandline, the PCL file will need to be transposed. A script is included in Maaslin for your convenience (src/transpose.py). The following example will have such a call included. An example call from the Maaslin folder for the demo data could be as follows.
+./src/transpose.py < input/maaslin_demo2.pcl > maaslin_demo2.tsv./src/Maaslin.R -i input/maaslin_demo2.read.config demo.text maaslin_demo2.tsv
+When using sfle:Go to ../sfle and type the following: scons output/maaslin
 
 ###8. Discover amazing associations in your results!
 
@@ -260,8 +244,7 @@ Go to ../sfle and type the following: scons output/maaslin
 #G. Expected Output Files
 
 The following files will be generated per MaAsLin run. In the
-following listing the term projectname refers to what you named your
-“\*.pcl” file without the extension.
+following listing the term projectname refers to what you named your "\*.pcl" file without the extension.
 
 ###Output files that are always created:
 
@@ -292,36 +275,14 @@ residual plot.
 
 **projectname.pdf**
 
-Contains the multifactoral analysis visualization. This visualization
-is presented as a build and can be affected by modifications in the
-R.script or by using commandline.
+Contains the biplot visualization. This visualization is presented as a build and can be affected by modifications in the R.script or by using commandline.
 
 **projectname.txt**
 
 A collection of all entries in the projectname-metadata.pdf. Can be
 opened as a text file or spreadsheet.
 
-###Optional GraPhlAn output (if GraPhlAn is installed):
-
-**projectname-ann.txt**
-
-Input file for GraPhlAn generated from the MaAsLin run summary file;
-contains annotation for figure.
-
-**projectname-core.txt**
-
-Input file for GraPhlAn generated from the MaAsLin run summary file;
-contains the elements of the dendrogram.
-
-**projectname-ann-core.txt**
-
-File for GraPhlAn, PhyloXML format.
-
-**projectname-graphlan.pdf**
-
-GraPhlAn representation of all associations in the summary file.
-
-###Additional troubleshooting files when the commandline –v DEBUG is used:
+###Additional troubleshooting files when the commandline:
 
 **data.tsv**
 
@@ -364,16 +325,18 @@ Can be used to read in read_cleaned.tsv.
 Contains quality control for the MaAsLin analysis. This includes
 information on the magnitude of outlier removal.
 
+**Run_Parameters.txt**Contains an account of all the options used when running MaAsLin so the exact methodology can be recreated if needed.
+
 #H. Other Analysis Flows
 
 ###1. All verses All
-The all verses all analysis flow is a way of manipulating how metadata are used. In this method there is a group of metadata that are always evaluated, as well there are a group that are added to this one at a time. To give a more concrete example: You may have metadata cage, diet, and treatment. You may always want to have the association of abundance evaluated controlling for cage but otherwise looking at the metadata one at a time. In this way the cage metadata is the \D2forced\D3 part of the evaluation while the others are not forced and evaluated in serial. The appropriate commandline (placed in your args file) to indicate this is:
+The all verses all analysis flow is a way of manipulating how metadata are used. In this method there is a group of metadata that are always evaluated, as well there are a group that are added to this one at a time. To give a more concrete example: You may have metadata cage, diet, and treatment. You may always want to have the association of abundance evaluated controlling for cage but otherwise looking at the metadata one at a time. In this way the cage metadata is the \D2forced\D3 part of the evaluation while the others are not forced and evaluated in serial. The appropriate commandline to indicate this follows (placed in your args file if using sfle, otherwise added in the commandline call):
 
-> -a \D0F cage
+> -a -F cage
 
--a indicates all verses all is being used, -F indicates which metadata are forced (multiple metadata can be given comma delimited as shown here \D0F metadata1,metadata2,metadata3). This does not bypass the feature selection method so the metadata that are not forced are subject to feature selection and may be removed before coming to the evaluation. If you want all the metadata that are not forced to be evaluated in serial you will need to turn off feature selection and will have a final combined commandline as seen here:
+-a indicates all verses all is being used, -F indicates which metadata are forced (multiple metadata can be given comma delimited as shown here -F metadata1,metadata2,metadata3). This does not bypass the feature selection method so the metadata that are not forced are subject to feature selection and may be removed before coming to the evaluation. If you want all the metadata that are not forced to be evaluated in serial you will need to turn off feature selection and will have a final combined commandline as seen here:
 
-> -a \D0F cage \D0s none
+> -a -F cage -s none
 
 #I. Troubleshooting
 
@@ -401,7 +364,7 @@ even though file permissions have been set for myself.
 
 #J. Installation as an Automated Pipeline
 
-SflE (pronounced soufflé), is a framework for automation and
+SflE (pronounced souffle), is a framework for automation and
 parallelization on a multiprocessor machine. MaAsLin has been
 developed to be compatible with this framework. More information can
 be found at
@@ -435,7 +398,7 @@ Maaslin.R. An example of the contents of an args file is given here.
 
 **Example.args:**
 
-    -v DEBUG –d 0.1 –b 5
+    -v DEBUG -d 0.1 -b 5
 
 In this example MaAsLin is modified to produce verbose output for
 debugging (-v DEBUG), to change the threshold for making pdfs to a
