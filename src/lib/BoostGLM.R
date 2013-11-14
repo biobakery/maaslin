@@ -77,6 +77,10 @@ lsQC
     viNAAfter = viNAOrig
     adData = frmeData[,iData]
     c_logrMaaslin$info( paste("Grubbs Test:: Identifed all data as outliers so was inactived for index=",iData," data=",paste(as.vector(frmeData[,iData]),collapse=","), "number zeros=", length(which(frmeData[,iData]==0)), sep = " " ))
+  } else if(mean(adData, na.rm=TRUE) == 0) {
+    viNAAfter = viNAOrig
+    adData = frmeData[,iData]
+    c_logrMaaslin$info( paste("Grubbs Test::Removed all values but 0, ignored. Index=",iData,".",sep=" " ) )
   } else {
     # Document removal
     if( sum( is.na( adData ) ) )
@@ -140,6 +144,38 @@ dFence
   return(list(data=adData,outliers=length(aiRemove),indices=aiRemove))
 }
 
+funcZerosAreUneven = function(### vdRawData,### Raw data to be checked during transformationfuncTransform,### Data transform to performvsStratificationFeatures,
+### Groupings to check for unevenness
+dfData
+### Data frame holding the features){
+  # Return indicator of unevenness  fUneven = FALSE
+
+  # Transform the data to compare  vdTransformed = funcTransform( vdRawData )
+
+  # Go through each stratification of data  for( sStratification in vsStratificationFeatures )  {
+    # Current stratification    vFactorStrats = dfData[[ sStratification ]]
+
+    # If the metadata is not a factor then skip
+    # Only binned data can be evaluated this way.
+    if( !is.factor( vFactorStrats )){ next }
+    
+    viZerosCountsRaw = c()    for( sLevel in levels( vFactorStrats ) )    {
+      vdTest = vdRawData[ which( vFactorStrats == sLevel ) ]
+      viZerosCountsRaw = c( viZerosCountsRaw, length(which(vdTest == 0)))
+      vdTest = vdTransformed[ which( vFactorStrats == sLevel ) ]    }
+    dExpectation = 1 / length( viZerosCountsRaw )
+    dMin = dExpectation / 2
+    dMax = dExpectation + dMin
+    viZerosCountsRaw = viZerosCountsRaw / sum( viZerosCountsRaw )
+    if( ( length( which( viZerosCountsRaw <= dMin ) ) > 0 ) || ( length( which( viZerosCountsRaw >= dMax ) ) > 0 ) )
+    {
+      return( TRUE )
+    }
+  }  return( fUneven )}
+funcTransformIncreasesOutliers = function(### Checks if a data transform increases outliers in a distributionvdRawData,
+### Raw data to check for outlier zerosfuncTransform){  iUnOutliers = length( boxplot( vdRawData, plot = FALSE )$out )  iTransformedOutliers = length( boxplot( funcTransform( vdRawData ), plot = FALSE )$out )
+  return( iUnOutliers <= iTransformedOutliers ) }
+
 funcClean <- function(
 ### Properly clean / get data ready for analysis
 ### Includes custom analysis from the custom R script if it exists
@@ -178,6 +214,8 @@ dPOutlier = 0.05
     aiData = pTmp$aiData
     lsQCCounts$lsQCCustom = pTmp$lsQCCounts
   }
+  # Set data indicies after custom QC process.
+  lsQCCounts$aiAfterPreprocess = aiData
 
   # Remove missing data, remove any sample that has less than dMinSamp * the number of data or low abundance
   aiRemove = c()
@@ -213,13 +251,20 @@ dPOutlier = 0.05
   }
 
   #Transform data
+  iTransformed = 0
+  viNotTransformedData = c()
   for(aiDatum in aiData)
   {
-    frmeData[,aiDatum] = funcTransform(frmeData[,aiDatum])
+    adValues = frmeData[,aiDatum]
+#    if( ! funcTransformIncreasesOutliers( adValues, funcTransform ) )
+#    {
+      frmeData[,aiDatum] = funcTransform( adValues )
+#      iTransformed = iTransformed + 1
+#    } else {
+#      viNotTransformedData = c( viNotTransformedData, aiDatum )
+#    }
   }
-
-  # Set data indicies after custom QC process.
-  lsQCCounts$aiAfterPreprocess = aiData
+  c_logrMaaslin$info(paste("Number of features transformed = ",iTransformed))
 
   # Metadata: Properly factorize all logical data and integer and number data with less than iNonFactorLevelThreshold
   # Also record which are numeric metadata
@@ -338,11 +383,12 @@ dPOutlier = 0.05
   {
     adCol <- frmeData[,iCol]
     adCol[is.infinite( adCol )] <- NA
-    adCol[is.na( adCol )] <- mean( adCol, na.rm = TRUE )
+    adCol[is.na( adCol )] <- mean( adCol[which(adCol>0)], na.rm = TRUE )
     frmeData[,iCol] <- adCol
 
     if(length(which(is.na(frmeData[,iCol]))) == length(frmeData[,iCol]))
     {
+      print( paste("Removing data", iCol, "for being all NA after QC"))
       aiRemoveData = c(aiRemoveData,iCol)
     }
   }
@@ -403,7 +449,7 @@ dPOutlier = 0.05
   }
 
   c_logrMaaslin$debug("End FuncClean")
-  return( list(frmeData = frmeData, aiMetadata = aiMetadata, aiData = aiData, lsQCCounts = lsQCCounts, liNaIndices=liNaIndices) )
+  return( list(frmeData = frmeData, aiMetadata = aiMetadata, aiData = aiData, lsQCCounts = lsQCCounts, liNaIndices=liNaIndices, viNotTransformedData = viNotTransformedData) )
   ### Return list of
   ### frmeData: The Data after cleaning
   ### aiMetadata: The indices of the metadata still being used after filtering
@@ -421,6 +467,8 @@ aiMetadata,
 ### Indices of metadata used in analysis
 aiData,
 ### Indices of response data
+aiNotTransformedData,
+### Indicies of the data not transformed
 strData,
 ### Log file name
 dSig,
@@ -431,8 +479,10 @@ strDirOut = NA,
 ### Output project directory
 funcReg=NULL,
 ### Function for regularization
+funcTransform=NULL,
+### Function used to transform the data
 funcUnTransform=NULL,
-### If a transform is used the opporite of that transfor must be used on the residuals in the partial residual plots
+### If a transform is used the opposite of that transfor must be used on the residuals in the partial residual plots
 lsNonPenalizedPredictors=NULL,
 ### These predictors will not be penalized in the feature (model) selection step
 funcAnalysis=NULL,
@@ -505,7 +555,7 @@ fZeroInflated = FALSE
     }
 
     # Call analysis method
-    lsOne <- funcBugHybrid( iTaxon, frmeData, lsData, aiMetadata, dSig, adP, lsSig, strLog, funcReg, lsNonPenalizedPredictors, funcAnalysis, lsRandomCovariates, funcGetResults, fAllvAll, fIsUnivariate, lxParameters, fZeroInflated )
+    lsOne <- funcBugHybrid( iTaxon=iTaxon, frmeData=frmeData, lsData=lsData, aiMetadata=aiMetadata, dSig=dSig, adP=adP, lsSig=lsSig, funcTransform=funcTransform, funcUnTransform=funcUnTransform, strLog=strLog, funcReg=funcReg, lsNonPenalizedPredictors=lsNonPenalizedPredictors, funcAnalysis=funcAnalysis, lsRandomCovariates=lsRandomCovariates, funcGetResult=funcGetResults, fAllvAll=fAllvAll, fIsUnivariate=fIsUnivariate, lxParameters=lxParameters, fZeroInflated=fZeroInflated, fIsTransformed= ! iTaxon %in% aiNotTransformedData )
 
     # If you get a NA (happens when the lmm gets all random covariates) move on
     if( is.na( lsOne ) ){ next }
@@ -576,7 +626,9 @@ fZeroInflated = FALSE
     {
       lsCur		<- lsSig[[j]]
       strCur		<- lsCur$name
+
       if( strCur != strName ) { next }
+
       strTaxon		<- lsCur$taxon
       adData		<- lsCur$data
       astrFactors	<- lsCur$factors
@@ -639,6 +691,10 @@ adP,
 ### List of pvalues from associations
 lsSig,
 ### List which serves as a cache of data about significant associations
+funcTransform,
+### The tranform used on the data
+funcUnTransform,
+### The reverse transform on the data
 strLog = NA,
 ### String, file to which to log
 funcReg=NULL,
@@ -657,8 +713,10 @@ fIsUnivariate = FALSE,
 ### Indicates the analysis function is univariate
 lxParameters=list(),
 ### List holds parameters for different variable selection techniques
-fZeroInflated = FALSE
+fZeroInflated = FALSE,
 ### Indicates if to use a zero infalted model
+fIsTransformed = TRUE
+### Indicates that the bug is transformed
 ){
 #dTime00 <- proc.time()[3]
   #Get metadata column names
@@ -685,8 +743,8 @@ fZeroInflated = FALSE
   liTaxon = list()
   lastrTerms = list()
 
-  #Build formula for simple mixed effects models
-  #Removes random covariates from variable selection
+  # Build formula for simple mixed effects models
+  # Removes random covariates from variable selection
   astrMetadata  = setdiff(astrMetadata, lsRandomCovariates)
   strFormula <- paste( "adCur ~", paste( sprintf( "`%s`", astrMetadata ), collapse = " + " ), sep = " " )
 
@@ -708,11 +766,25 @@ fZeroInflated = FALSE
     #If the feature selection function is set to None, set all terms of the model to all the metadata
   } else { astrTerms = astrMetadata }
 
-  #Get look through the boosting results to get a model
-  #Holds the predictors in the predictors in the model that were selected by the boosting
+  # Get look through the boosting results to get a model
+  # Holds the predictors in the predictors in the model that were selected by the boosting
   if(is.null( astrTerms )){lsData$lsQCCounts$iBoostErrors = lsData$lsQCCounts$iBoostErrors + 1}
 
-  #Run association analysis if predictors exist and an analysis function is specified
+  # Get the indices that are transformed
+  # Of those indices check for uneven metadata
+  # Untransform any of the metadata that failed
+  # Failed means true for uneven occurences of zeros
+#  if( fIsTransformed )
+#  {
+#    vdUnevenZeroCheck = funcUnTransform( frmeData[[ iTaxon ]] )
+#    if( funcZerosAreUneven( vdRawData=vdUnevenZeroCheck, funcTransform=funcTransform, vsStratificationFeatures=astrTerms, dfData=frmeData ) )
+#    {
+#      frmeData[[ iTaxon ]] = vdUnevenZeroCheck
+#      c_logrMaaslin$debug( paste( "Taxon transformation reversed due to unevenness of zero distribution.", iTaxon ) )
+#    }
+#  }
+
+  # Run association analysis if predictors exist and an analysis function is specified
   # Run analysis
   if(!is.na(funcAnalysis) )
   {

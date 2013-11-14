@@ -396,15 +396,38 @@ pArgs
   lsQCCounts = list(aiDataCleaned = c(), aiMetadataCleaned = c())
   lsRet = list(frmeData=frmeData, aiData=aiData, aiMetadata=aiMetadata, lsQCCounts=lsQCCounts, liNaIndices=c())
 
+  viNotTransformedDataIndices = c()
   if(!lsArgs$options$fNoQC)
   {
+    c_logrMaaslin$info( "Running quality control." )
     lsRet = funcClean( frmeData=frmeData, funcDataProcess=funcProcess, aiMetadata=aiMetadata, aiData=aiData, lsQCCounts=lsData$lsQCCounts, astrNoImpute=xNoImpute, dMinSamp = lsArgs$options$dMinSamp, dMinAbd = lsArgs$options$dMinAbd, dFence=lsArgs$options$dOutlierFence, funcTransform=funcTransformData, dPOutlier=lsArgs$options$dPOutlier)
+
+    viNotTransformedDataIndices = lsRet$viNotTransformedData
+
+    #If using a count based model make sure all are integer (QCing can add in numeric values during interpolation for example)
+    if(lsArgs$options$strMethod %in% c_vCountBasedModels)
+    {
+      c_logrMaaslin$info( "Assuring the data matrix is integer." )
+      for(iDataIndex in aiData)
+      {
+        lsRet$frmeData[ iDataIndex ] = round( lsRet$frmeData[ iDataIndex ] )
+      }
+    }
   } else {
+    c_logrMaaslin$info( "Not running quality control, attempting transform." )
     ### Need to do transform if the QC is not performed
+    iTransformed = 0
     for(iDataIndex in aiData)
     {
-      frmeData[iDataIndex]=funcTransformData(frmeData[iDataIndex])
+      if( ! funcTransformIncreasesOutliers( lsRet$frmeData[iDataIndex], funcTransformData ) )
+      {
+        lsRet$frmeData[iDataIndex]=funcTransformData(lsRet$frmeData[iDataIndex])
+        iTransformed = iTransformed + 1
+      } else {
+        viNotTransformedDataIndices = c(viNotTransformedDataIndices, iDataIndex)
+      }
     }
+    c_logrMaaslin$info(paste("Number of features transformed = ", iTransformed))
   }
 
   logdebug("lsRet", c_logrMaaslin)
@@ -441,9 +464,9 @@ pArgs
   if(lsArgs$options$strMethod %in% c("univariate")){ fDoRPlot=FALSE }
 
   #Run analysis
-  alsRetBugs = funcBugs( lsRet$frmeData, lsRet, lsRet$aiMetadata, lsRet$aiData, strBase, lsArgs$options$dSignificanceLevel, lsArgs$options$fInvert,
-        outputDirectory, funcReg=afuncVariableAnalysis[[c_iSelection]], funcUnTransform=afuncVariableAnalysis[[c_iUnTransform]], lsForcedParameters,
-        funcAnalysis=afuncVariableAnalysis[[c_iAnalysis]], lsRandomCovariates, funcGetResults=afuncVariableAnalysis[[c_iResults]], fDoRPlot=fDoRPlot, fOmitLogFile=lsArgs$options$fOmitLogFile,
+  alsRetBugs = funcBugs( frmeData=lsRet$frmeData, lsData=lsRet, aiMetadata=lsRet$aiMetadata, aiData=lsRet$aiData, aiNotTransformedData=viNotTransformedDataIndices, strData=strBase, dSig=lsArgs$options$dSignificanceLevel, fInvert=lsArgs$options$fInvert,
+        strDirOut=outputDirectory, funcReg=afuncVariableAnalysis[[c_iSelection]], funcTransform=funcTransformData, funcUnTransform=afuncVariableAnalysis[[c_iUnTransform]], lsNonPenalizedPredictors=lsForcedParameters,
+        funcAnalysis=afuncVariableAnalysis[[c_iAnalysis]], lsRandomCovariates=lsRandomCovariates, funcGetResults=afuncVariableAnalysis[[c_iResults]], fDoRPlot=fDoRPlot, fOmitLogFile=lsArgs$options$fOmitLogFile,
         fAllvAll=lsArgs$options$fAllvAll, liNaIndices=lsRet$liNaIndices, lxParameters=lxParameters, strTestingCorrection=lsArgs$options$strMultTestCorrection, 
         fIsUnivariate=afuncVariableAnalysis[[c_iIsUnivariate]], fZeroInflated=lsArgs$options$fZeroInflated )
 

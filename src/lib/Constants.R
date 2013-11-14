@@ -112,5 +112,8 @@ c_iResults = 4
 c_iUnTransform = 5
 c_iIsUnivariate = 6
 
+#Count based models
+c_vCountBasedModels = c("neg_binomial","quasi")
+
 # Na action in anaylsis, placed here to standardize
 c_strNA_Action = "na.omit"

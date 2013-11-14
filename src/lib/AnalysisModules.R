@@ -46,9 +46,9 @@ suppressMessages(library( nlme, warn.conflicts=FALSE, quietly=TRUE, verbose=FALS
 
 # Needed for zero inflated models
 #suppressMessages(library( MCMCglmm, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
-#suppressMessages(library( pscl, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
+suppressMessages(library( pscl, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
 suppressMessages(library( gamlss, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
-#suppressMessages(library( glmmADMB, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
+# Do not use #suppressMessages(library( glmmADMB, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
 
 fAddBack = TRUE
 dUnevenMax = .9
@@ -385,6 +385,123 @@ asSuppressCovariates=c()
       #Get the coefficients
       #This should work for linear models
       frmeCoefs <- summary(lmod)
+      if(! is.null( frmeCoefs$coefficients$count ) ) # Needed for zeroinfl
+      {
+        frmeCoefs = frmeCoefs$coefficients$count
+      }
+      adCoefs = frmeCoefs[,1]
+      names(adCoefs) = row.names(frmeCoefs)
+
+      funcWrite( "#Coefs", strLog )
+      funcWrite( frmeCoefs, strLog )
+
+      #Go through each coefficient
+      astrRows <- row.names( frmeCoefs )
+
+      for( iMetadata in 1:length( astrRows ) )
+      {
+        #Current coef which is being evaluated 
+        strOrig = astrRows[iMetadata]
+        #Skip y interscept
+        if( strOrig %in% c("(Intercept)", "Intercept", "Log(theta)") ) { next }
+        #Skip suppressed covariates
+        if( funcCoef2Col(strOrig,frmeData) %in% asSuppressCovariates){next}
+
+        #Extract pvalue and std in standard model
+        dP = frmeCoefs[strOrig, iPValuePosition]
+        if(is.nan(dP)){next}
+        dStd = frmeCoefs[strOrig,2]
+
+        dCoef = adCoefs[iMetadata]
+
+        #Setting adMetadata
+        #Metadata values
+        strMetadata = funcCoef2Col( strOrig, frmeData, astrCols )
+        if( is.na( strMetadata ) )
+        {
+          if( substring( strOrig, nchar( strOrig ) - 1 ) == "NA" ) { next }
+          c_logrMaaslin$error( "Unknown coefficient: %s", strOrig )
+        }
+        if( substring( strOrig, nchar( strMetadata ) + 1 ) == "NA" ) { next }
+        adMetadata <- frmeData[,strMetadata]
+
+        #Store (factor level modified) p-value
+        #Store general results for each coef
+        adP <- c(adP, dP)
+        lsSig[[length( lsSig ) + 1]] <- list(
+          #Current metadata name
+          name		= strMetadata,
+          #Current metadatda name (as a factor level if existing as such)
+          orig		= strOrig,#
+          #Taxon feature name
+          taxon		= strTaxon,
+          #Taxon data / response
+          data		= frmeData[,iTaxon],
+          #All levels
+          factors	= c(strMetadata),
+          #Metadata values
+          metadata	= adMetadata,
+          #Current coeficient value
+          value		= dCoef,
+          #Standard deviation
+          std		= dStd,
+          #Model coefficients
+          allCoefs	= adCoefs)
+      }
+    }
+  }
+  return(list(adP=adP, lsSig=lsSig, lsQCCounts=lsQCCounts))
+  ### List containing a list of pvalues, a list of significant data per association, and a list of QC data
+}
+
+oldfuncGetZeroInflatedResults <- function
+### Reduce the lm object return to just the data needed for further analysis
+( llmod,
+### The result from a linear model
+frmeData,
+### Data analysis is performed on
+liTaxon,
+### The response id
+dSig,
+### Significance level for q-values
+adP,
+### List of pvalues from all associations performed
+lsSig,
+### List of information from the lm containing, metadata name, metadatda name (as a factor level if existing as such), Taxon feature name, Taxon data / response, All levels, Metadata values, Current coeficient value, Standard deviation, Model coefficients
+strLog,
+### File to which to document logging
+lsQCCounts,
+### Records of counts associated with quality control
+lastrCols,
+### Predictors used in the association
+asSuppressCovariates=c()
+### Vector of covariates to suppress and not give results for
+){
+  ilmodIndex = 0
+  for(lmod in llmod)
+  {
+    ilmodIndex = ilmodIndex + 1
+    lmod = llmod[[ilmodIndex]]
+    iTaxon = liTaxon[[ilmodIndex]]
+    astrCols = lastrCols[[ilmodIndex]]
+
+    #Exclude none and errors
+    if( !is.na( lmod ) && ( class( lmod ) != "try-error" ) )
+    {
+      #holds the location of the pvlaues if an lm, if lmm is detected this will be changed
+      iPValuePosition = 4
+
+      #Get the column name of the iTaxon index
+      #frmeTmp needs to be what?
+      strTaxon = colnames( frmeData )[iTaxon]
+
+      #Write summary information to log file
+      funcWrite( "#model", strLog )
+      funcWrite( lmod, strLog )
+
+      #Get the coefficients
+      #This should work for linear models
+      frmeCoefs <- summary(lmod)
       adCoefs = frmeCoefs[,1]
       names(adCoefs) = row.names(frmeCoefs)
 
@@ -417,11 +534,122 @@ asSuppressCovariates=c()
         if( substring( strOrig, nchar( strMetadata ) + 1 ) == "NA" ) { next }
         adMetadata <- frmeData[,strMetadata]
 
-        #Bonferonni correct the factor p-values based on the factor levels-1 comparisons
-        if( class( adMetadata ) == "factor" )
+        #Store (factor level modified) p-value
+        #Store general results for each coef
+        adP <- c(adP, dP)
+        lsSig[[length( lsSig ) + 1]] <- list(
+          #Current metadata name
+          name		= strMetadata,
+          #Current metadatda name (as a factor level if existing as such)
+          orig		= strOrig,#
+          #Taxon feature name
+          taxon		= strTaxon,
+          #Taxon data / response
+          data		= frmeData[,iTaxon],
+          #All levels
+          factors	= c(strMetadata),
+          #Metadata values
+          metadata	= adMetadata,
+          #Current coeficient value
+          value		= dCoef,
+          #Standard deviation
+          std		= dStd,
+          #Model coefficients
+          allCoefs	= adCoefs)
+      }
+    }
+  }
+  return(list(adP=adP, lsSig=lsSig, lsQCCounts=lsQCCounts))
+  ### List containing a list of pvalues, a list of significant data per association, and a list of QC data
+}
+
+
+notfuncGetZeroInflatedResults <- function
+### Reduce the lm object return to just the data needed for further analysis
+( llmod,
+### The result from a linear model
+frmeData,
+### Data analysis is performed on
+liTaxon,
+### The response id
+dSig,
+### Significance level for q-values
+adP,
+### List of pvalues from all associations performed
+lsSig,
+### List of information from the lm containing, metadata name, metadatda name (as a factor level if existing as such), Taxon feature name, Taxon data / response, All levels, Metadata values, Current coeficient value, Standard deviation, Model coefficients
+strLog,
+### File to which to document logging
+lsQCCounts,
+### Records of counts associated with quality control
+lastrCols,
+### Predictors used in the association
+asSuppressCovariates=c()
+### Vector of covariates to suppress and not give results for
+){
+  ilmodIndex = 0
+  for(lmod in llmod)
+  {
+    ilmodIndex = ilmodIndex + 1
+    lmod = llmod[[ilmodIndex]]
+    iTaxon = liTaxon[[ilmodIndex]]
+    astrCols = lastrCols[[ilmodIndex]]
+
+    #Exclude none and errors
+    if( !is.na( lmod ) && ( class( lmod ) != "try-error" ) )
+    {
+      #holds the location of the pvlaues if an lm, if lmm is detected this will be changed
+      iPValuePosition = 4
+
+      #Get the column name of the iTaxon index
+      #frmeTmp needs to be what?
+      strTaxon = colnames( frmeData )[iTaxon]
+
+      #Write summary information to log file
+      funcWrite( "#model", strLog )
+      funcWrite( lmod, strLog )
+
+      #Get the coefficients
+      #This should work for linear models
+      frmeCoefs <- summary(lmod)
+      frmeCoefs = frmeCoefs$coefficients$count
+      funcWrite( "#Coefs", strLog )
+      funcWrite( frmeCoefs, strLog )
+
+      adCoefs = frmeCoefs[,1]
+      names(adCoefs) = row.names(frmeCoefs)
+
+      #Go through each coefficient
+      astrRows <- row.names( frmeCoefs )
+
+      for( iMetadata in 1:length( astrRows ) )
+      {
+        #Current coef which is being evaluated 
+        strOrig = astrRows[iMetadata]
+
+        #Skip y interscept
+        if( strOrig %in% c("(Intercept)", "Intercept", "Log(theta)") ) { next }
+        #Skip suppressed covariates
+        if( funcCoef2Col(strOrig,frmeData) %in% asSuppressCovariates){next}
+
+        #Extract pvalue and std in standard model
+        dP = frmeCoefs[strOrig, iPValuePosition]
+        if(is.nan(dP)){ next }
+        dStd = frmeCoefs[strOrig,2]
+        dCoef = adCoefs[iMetadata]
+
+        #Setting adMetadata
+        #Metadata values
+        strMetadata = funcCoef2Col( strOrig, frmeData, astrCols )
+        if( is.na( strMetadata ) )
         {
-          dP <- dP * ( length( unique( adMetadata )) - 1 )
+          if( substring( strOrig, nchar( strOrig ) - 1 ) == "NA" ) { next }
+          c_logrMaaslin$error( "Unknown coefficient: %s", strOrig )
         }
+        if( substring( strOrig, nchar( strMetadata ) + 1 ) == "NA" ) { next }
+        adMetadata <- frmeData[,strMetadata]
+        print("adMetadata")
+        print(adMetadata)
 
         #Store (factor level modified) p-value
         #Store general results for each coef
@@ -452,6 +680,7 @@ asSuppressCovariates=c()
   ### List containing a list of pvalues, a list of significant data per association, and a list of QC data
 }
 
+
 ### Options for variable selection 
 # OK
 funcBoostModel <- function(
@@ -470,7 +699,8 @@ strLog
 ### File to which to document logging
 ){
   funcWrite( c("#Boost formula", strFormula), strLog )
-  lmod = try( gbm( as.formula( strFormula ), data=frmeTmp, distribution="laplace", verbose=FALSE, n.minobsinnode=min(10, round(0.1 * nrow( frmeTmp ) ) ), n.trees=1000 ) )
+#TODO#  lmod = try( gbm( as.formula( strFormula ), data=frmeTmp, distribution="laplace", verbose=FALSE, n.minobsinnode=min(10, round(0.1 * nrow( frmeTmp ) ) ), n.trees=1000 ) )
+  lmod = try( gbm( as.formula( strFormula ), data=frmeTmp, distribution="gaussian", verbose=FALSE, n.minobsinnode=min(10, round(0.1 * nrow( frmeTmp ) ) ), n.trees=1000 ) )
 
   astrTerms <- c()
   if( !is.na( lmod ) && ( class( lmod ) != "try-error" ) )
@@ -512,7 +742,8 @@ strLog
 
       #If the selprob is less than a certain frequency, skip
       dSel <- lsSum$rel.inf[which( lsSum$var == strMetadata )] / 100
-      if( is.na(dSel) || ( dSel < lsParameters$dFreq ) ){ next }
+      if( is.na(dSel) || ( dSel <= lsParameters$dFreq ) ){ next }
+#TODO#      if( is.na(dSel) || ( dSel < lsParameters$dFreq ) ){ next }
 
       #If you should ignore the metadata, continue
       if( is.null( strTerm ) ) { next }
@@ -855,15 +1086,16 @@ fZeroInflated = FALSE
   if(fZeroInflated)
   {
     return(try(zeroinfl(as.formula(strFormula), data=frmeTmp, dist="negbin"))) # pscl
+#    return(try(gamlss(as.formula(strFormula), family=ZINBI, data=frmeTmp))) # pscl
   } else {
     if(!is.null(strRandomFormula))
     {
-      throw("This analysis flow is not completely developed, please choose an option other than Negative bionomial with random covariates")
+      throw("This analysis flow is not completely developed, please choose an option other than negative bionomial with random covariates")
       #TODO need to estimate the theta
       #return(try(glmmPQL(fixed=as.formula(strFormula), random=as.formula(strRandomFormula), family=negative.binomial(theta = 2, link=log), data=frmeTmp)))
       #lme4 package but does not have pvalues for the fixed variables (have to use a mcmcsamp/pvals.fnc function which are currently disabled)
     } else {
-      return(try( glm.nb(as.formula(strFormula), data=frmeTmp, na.action=c_strNA_Action) ))
+      return(try( glm.nb(as.formula(strFormula), data=frmeTmp, na.action=c_strNA_Action )))
     }
   }
   ### lmod result object from lm
@@ -888,8 +1120,8 @@ fZeroInflated = FALSE
   adCur = frmeTmp[,iTaxon]
   if(fZeroInflated)
   {
-    return(try(gamlss(formula=as.formula(strFormula), family=ZIP, data=frmeTmp))) # gamlss
-#    return(try(zeroinfl(as.formula(strFormula), data=frmeTmp, dist="poisson"))) # pscl
+#    return(try(gamlss(formula=as.formula(strFormula), family=ZIP, data=frmeTmp))) # gamlss
+    return(try(zeroinfl(as.formula(strFormula), data=frmeTmp, dist="poisson"))) # pscl
   } else {
     #Check to see if | is in the model, if so use a lmm otherwise the standard glm is ok
     if(!is.null(strRandomFormula))

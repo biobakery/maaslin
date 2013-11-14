@@ -418,7 +418,7 @@ liMetadataDim
   funcWrite("\nDetailed outlier indices: ", strProcessFileName )
   for(sFeature in names(lsQCData$liOutliers))
   {
-    funcWrite(paste("Feature",sFeature,"Outlier indice(s):", paste(lsQCData$liOutliers[[sFeature]],sep=",")), strProcessFileName )
+    funcWrite(paste("Feature",sFeature,"Outlier indice(s):", paste(lsQCData$liOutliers[[sFeature]],collapse=",")), strProcessFileName )
   }
   funcWrite("\nMetadata which survived clean: ", strProcessFileName )
   funcWrite(lsQCData$aiMetadataCleaned, strProcessFileName )
