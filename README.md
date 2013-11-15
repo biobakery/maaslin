@@ -74,7 +74,7 @@ R Libraries: Several libraries need to be installed in R these are
 You can install them by typing R in a terminal and using the
   install.packages command:
 
-      install.packages(c('agricolae', 'gam', 'gamlss', 'gbm', 'glmnet', 'inlinedocs', 'logging', 'MASS', 'nlme', 'optparse', 'outliers', 'pscl', 'robustbase', 'testthat'))
+      install.packages(c('agricolae', 'gam', 'gamlss', 'gbm', 'glmnet', 'inlinedocs', 'logging', 'MASS', 'nlme', 'optparse', 'outliers', 'penalized', 'pscl', 'robustbase', 'testthat'))
 
 # D. MaAsLin Inputs
 
