@@ -699,8 +699,8 @@ strLog
 ### File to which to document logging
 ){
   funcWrite( c("#Boost formula", strFormula), strLog )
-#TODO#  lmod = try( gbm( as.formula( strFormula ), data=frmeTmp, distribution="laplace", verbose=FALSE, n.minobsinnode=min(10, round(0.1 * nrow( frmeTmp ) ) ), n.trees=1000 ) )
-  lmod = try( gbm( as.formula( strFormula ), data=frmeTmp, distribution="gaussian", verbose=FALSE, n.minobsinnode=min(10, round(0.1 * nrow( frmeTmp ) ) ), n.trees=1000 ) )
+  lmod = try( gbm( as.formula( strFormula ), data=frmeTmp, distribution="laplace", verbose=FALSE, n.minobsinnode=min(10, round(0.1 * nrow( frmeTmp ) ) ), n.trees=1000 ) )
+#TODO#  lmod = try( gbm( as.formula( strFormula ), data=frmeTmp, distribution="gaussian", verbose=FALSE, n.minobsinnode=min(10, round(0.1 * nrow( frmeTmp ) ) ), n.trees=1000 ) )
 
   astrTerms <- c()
   if( !is.na( lmod ) && ( class( lmod ) != "try-error" ) )

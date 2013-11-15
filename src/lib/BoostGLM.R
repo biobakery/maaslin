@@ -144,25 +144,40 @@ dFence
   return(list(data=adData,outliers=length(aiRemove),indices=aiRemove))
 }
 
-funcZerosAreUneven = function(### vdRawData,### Raw data to be checked during transformationfuncTransform,### Data transform to performvsStratificationFeatures,
+funcZerosAreUneven = function(
+### 
+vdRawData,
+### Raw data to be checked during transformation
+funcTransform,
+### Data transform to perform
+vsStratificationFeatures,
 ### Groupings to check for unevenness
 dfData
-### Data frame holding the features){
-  # Return indicator of unevenness  fUneven = FALSE
+### Data frame holding the features
+){
+  # Return indicator of unevenness
+  fUneven = FALSE
 
-  # Transform the data to compare  vdTransformed = funcTransform( vdRawData )
+  # Transform the data to compare
+  vdTransformed = funcTransform( vdRawData )
 
-  # Go through each stratification of data  for( sStratification in vsStratificationFeatures )  {
-    # Current stratification    vFactorStrats = dfData[[ sStratification ]]
+  # Go through each stratification of data
+  for( sStratification in vsStratificationFeatures )
+  {
+    # Current stratification
+    vFactorStrats = dfData[[ sStratification ]]
 
     # If the metadata is not a factor then skip
     # Only binned data can be evaluated this way.
     if( !is.factor( vFactorStrats )){ next }
     
-    viZerosCountsRaw = c()    for( sLevel in levels( vFactorStrats ) )    {
+    viZerosCountsRaw = c()
+    for( sLevel in levels( vFactorStrats ) )
+    {
       vdTest = vdRawData[ which( vFactorStrats == sLevel ) ]
       viZerosCountsRaw = c( viZerosCountsRaw, length(which(vdTest == 0)))
-      vdTest = vdTransformed[ which( vFactorStrats == sLevel ) ]    }
+      vdTest = vdTransformed[ which( vFactorStrats == sLevel ) ]
+    }
     dExpectation = 1 / length( viZerosCountsRaw )
     dMin = dExpectation / 2
     dMax = dExpectation + dMin
@@ -171,10 +186,21 @@ dfData
     {
       return( TRUE )
     }
-  }  return( fUneven )}
-funcTransformIncreasesOutliers = function(### Checks if a data transform increases outliers in a distributionvdRawData,
-### Raw data to check for outlier zerosfuncTransform){  iUnOutliers = length( boxplot( vdRawData, plot = FALSE )$out )  iTransformedOutliers = length( boxplot( funcTransform( vdRawData ), plot = FALSE )$out )
-  return( iUnOutliers <= iTransformedOutliers ) }
+  }
+  return( fUneven )
+}
+
+funcTransformIncreasesOutliers = function(
+### Checks if a data transform increases outliers in a distribution
+vdRawData,
+### Raw data to check for outlier zeros
+funcTransform
+){
+  iUnOutliers = length( boxplot( vdRawData, plot = FALSE )$out )
+  iTransformedOutliers = length( boxplot( funcTransform( vdRawData ), plot = FALSE )$out )
+
+  return( iUnOutliers <= iTransformedOutliers ) 
+}
 
 funcClean <- function(
 ### Properly clean / get data ready for analysis
@@ -388,7 +414,7 @@ dPOutlier = 0.05
 
     if(length(which(is.na(frmeData[,iCol]))) == length(frmeData[,iCol]))
     {
-      print( paste("Removing data", iCol, "for being all NA after QC"))
+      c_logrMaaslin$info( paste("Removing data", iCol, "for being all NA after QC"))
       aiRemoveData = c(aiRemoveData,iCol)
     }
   }
@@ -837,7 +863,6 @@ fIsTransformed = TRUE
       for( strAnalysisFormula in vstrFormula )
       {
         i = length(llmod)+1
-
         llmod[[i]] = funcAnalysis(strFormula=strAnalysisFormula, frmeTmp=frmeTmp, iTaxon=iTaxon, lsHistory=list(adP=adP, lsSig=lsSig, lsQCCounts=lsData$lsQCCounts), strRandomFormula=strRandomCovariatesFormula, fZeroInflated=fZeroInflated)
 
         liTaxon[[i]] = iTaxon
