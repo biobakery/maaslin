@@ -65,33 +65,33 @@ lsMaaslinInputFiles = Glob( sfle.d( fileDirInput, "*" + sfle.c_strSufPCL ) )
 for strPCLFile in lsMaaslinInputFiles:
   Default( MaAsLin( strPCLFile ))
 
-  #Graphlan figure
-  #TODO Fix path dependent, better way to know it is installed?
-  if(os.path.exists(sScriptGraphlan.get_abspath())):
+#  #Graphlan figure
+#  #TODO Fix path dependent, better way to know it is installed?
+#  if(os.path.exists(sScriptGraphlan.get_abspath())):
 
-    ## Run Graphlan on all output projects
-    strProjectName = os.path.splitext(os.path.split(strPCLFile.get_abspath())[1])[0]
-    strMaaslinOutputDir = sfle.d(fileDirOutput,strProjectName)
+#    ## Run Graphlan on all output projects
+#    strProjectName = os.path.splitext(os.path.split(strPCLFile.get_abspath())[1])[0]
+#    strMaaslinOutputDir = sfle.d(fileDirOutput,strProjectName)
 
-    ##Get maaslin data files
-    strMaaslinSummaryFile = sfle.d(os.path.join(strMaaslinOutputDir, strProjectName + sMaaslinSummaryFileExtension))
+#    ##Get maaslin data files
+#    strMaaslinSummaryFile = sfle.d(os.path.join(strMaaslinOutputDir, strProjectName + sMaaslinSummaryFileExtension))
 
-    # Make core gene file
-    sCoreGeneFile = File(sfle.d(strMaaslinOutputDir,  os.path.join(strGraphlanDirectory,sfle.rebase(strMaaslinSummaryFile, sMaaslinSummaryFileExtension,sGraphlanCoreGenesFileExtension))))
-    sReadConfigFile = File(sfle.d(fileDirInput,sfle.rebase(strMaaslinSummaryFile, sMaaslinSummaryFileExtension,sMaaslinReadConfigFileExtension)))
-    sfle.op(pE, sScriptPCLToCoreGene, [[False, strPCLFile],[False, sReadConfigFile],[True, sCoreGeneFile]])
+#    # Make core gene file
+#    sCoreGeneFile = File(sfle.d(strMaaslinOutputDir,  os.path.join(strGraphlanDirectory,sfle.rebase(strMaaslinSummaryFile, sMaaslinSummaryFileExtension,sGraphlanCoreGenesFileExtension))))
+#    sReadConfigFile = File(sfle.d(fileDirInput,sfle.rebase(strMaaslinSummaryFile, sMaaslinSummaryFileExtension,sMaaslinReadConfigFileExtension)))
+#    sfle.op(pE, sScriptPCLToCoreGene, [[False, strPCLFile],[False, sReadConfigFile],[True, sCoreGeneFile]])
 
-    # Make annotation file
-    sAnnotationFile = File(sfle.d(strMaaslinOutputDir, os.path.join(strGraphlanDirectory,sfle.rebase(strMaaslinSummaryFile, sMaaslinSummaryFileExtension,sGraphlanAnnotationFileExtension))))
-    sfle.op(pE, sScriptMaaslinSummaryToGraphlanAnnotation, [[False, strMaaslinSummaryFile],[False,sCoreGeneFile],[False,File(sfle.d(fileDirSrc,strMaaslinGraphlanSettings))],[True,sAnnotationFile]])
+#    # Make annotation file
+#    sAnnotationFile = File(sfle.d(strMaaslinOutputDir, os.path.join(strGraphlanDirectory,sfle.rebase(strMaaslinSummaryFile, sMaaslinSummaryFileExtension,sGraphlanAnnotationFileExtension))))
+#    sfle.op(pE, sScriptMaaslinSummaryToGraphlanAnnotation, [[False, strMaaslinSummaryFile],[False,sCoreGeneFile],[False,File(sfle.d(fileDirSrc,strMaaslinGraphlanSettings))],[True,sAnnotationFile]])
 
-    # Generate core gene annotation file names
-    sCoreGeneAnnotationFile = File(sfle.d(strMaaslinOutputDir,  os.path.join(strGraphlanDirectory,sfle.rebase(strMaaslinSummaryFile, sMaaslinSummaryFileExtension,sGraphlanCoreAnnotFileExtension))))
-    sfle.op(pE, sScriptGraphlanAnnotate, ["--annot",[sAnnotationFile],[False, sCoreGeneFile],[True, sCoreGeneAnnotationFile]])
+#    # Generate core gene annotation file names
+#    sCoreGeneAnnotationFile = File(sfle.d(strMaaslinOutputDir,  os.path.join(strGraphlanDirectory,sfle.rebase(strMaaslinSummaryFile, sMaaslinSummaryFileExtension,sGraphlanCoreAnnotFileExtension))))
+#    sfle.op(pE, sScriptGraphlanAnnotate, ["--annot",[sAnnotationFile],[False, sCoreGeneFile],[True, sCoreGeneAnnotationFile]])
 
-    # Call graphlan
-    # graphlan.py --dpi 150 --size 4 --pad 0.2 core_genes.annot.xml core_genes.png
-    sGraphlanFigure = File(sfle.d(strMaaslinOutputDir,  os.path.join(strGraphlanDirectory, sfle.rebase(strMaaslinSummaryFile, sMaaslinSummaryFileExtension,sGraphlanFigureExtension))))
-    sfle.op(pE, sScriptGraphlan, [[False, sCoreGeneAnnotationFile],[True, sGraphlanFigure],"--dpi",iGraphlanDPI,"--size",iGraphlanFigureSize,"--pad",iGraphlanPad])
+#    # Call graphlan
+#    # graphlan.py --dpi 150 --size 4 --pad 0.2 core_genes.annot.xml core_genes.png
+#    sGraphlanFigure = File(sfle.d(strMaaslinOutputDir,  os.path.join(strGraphlanDirectory, sfle.rebase(strMaaslinSummaryFile, sMaaslinSummaryFileExtension,sGraphlanFigureExtension))))
+#    sfle.op(pE, sScriptGraphlan, [[False, sCoreGeneAnnotationFile],[True, sGraphlanFigure],"--dpi",iGraphlanDPI,"--size",iGraphlanFigureSize,"--pad",iGraphlanPad])
 
-    Default(sCoreGeneFile,sAnnotationFile,sCoreGeneAnnotationFile,sGraphlanFigure)
+#    Default(sCoreGeneFile,sAnnotationFile,sCoreGeneAnnotationFile,sGraphlanFigure)
