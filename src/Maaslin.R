@@ -104,10 +104,7 @@ pArgs <- add_option( pArgs, c("-N","--PlotNA"), type="logical", action="store_tr
 ### Alternative methodology settings
 pArgs <- add_option( pArgs, c("-A","--pAlpha"), type="double", action="store", dest="dPenalizedAlpha", default=0.95, metavar="PenalizedAlpha",help="The alpha for penalization (1.0=L1 regularization, LASSO; 0.0=L2 regularization, ridge regression.  [Default %default]")
 ### Pass an alternative library dir
-#pArgs <- add_option( pArgs, c("-L", "--libdir"), action="store", dest="sAlternativeLibraryLocation", default=file.path( "","usr","share","biobakery" ), metavar="AlternativeLibraryDirectory", help="An alternative location to find the lib directory. This dir and children will be searched for the first maaslin/src/lib dir.")
-
-pArgs <- add_option( pArgs, c("-L", "--libdir"), action="store", dest="sAlternativeLibraryLocation", default=file.path( "","home","ttickle","Desktop","ttickle","hg","sfle" ), metavar="AlternativeLibraryDirectory", help="An alternative location to find the lib directory. This dir and children will be searched for the first lib dir.")
-
+pArgs <- add_option( pArgs, c("-L", "--libdir"), action="store", dest="sAlternativeLibraryLocation", default=file.path( "","usr","share","biobakery" ), metavar="AlternativeLibraryDirectory", help="An alternative location to find the lib directory. This dir and children will be searched for the first maaslin/src/lib dir.")
 
 ### Misc biplot arguments
 pArgs <- add_option( pArgs, c("-M","--BiplotMetadataScale"), type="double", action="store", dest="dBiplotMetadataScale", default=1, metavar="scaleForMetadata", help="A real number used to scale the metadata labels on the biplot (otherwise a default will be selected from the data).  [Default %default]")
