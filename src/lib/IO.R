@@ -217,7 +217,7 @@ tempLog=FALSE
   dataFrameDimension = dim(dataMatrix)
 
   #Get column names
-  columnNameList = columnNameList = as.matrix(dataMatrix[1,])
+  columnNameList = as.matrix(dataMatrix[1,])
   rowNameList = dataMatrix[1][[1]]
 
   #Convert characters to vectors of indices

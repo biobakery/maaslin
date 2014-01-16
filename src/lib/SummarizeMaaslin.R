@@ -60,6 +60,7 @@ afSignificanceLevel
     #Read in data and reduce to significance
     dfDetails = read.table(astrFile, header=TRUE, sep=c_cTableDelimiter)
     dfDetails = dfDetails[which(dfDetails[astrKeyword] <= afSignificanceLevel),]
+
     #Combine with other data if it exists
     if(is.null(dfSignificantData))
     {
@@ -68,13 +69,18 @@ afSignificanceLevel
       dfSignificantData = rbind(dfSignificantData,dfDetails)
     }
   }
+  
   #Write data to file
   unlink(astrSummaryFileName)
   if(is.null(dfSignificantData))
   {
-    funcWrite("No data files found to combine.",astrSummaryFileName)
+    funcWrite("No significant data found.",astrSummaryFileName)
+    return( NULL )
   } else {
+    #Sort by metadata and then significance
+    dfSignificantData = dfSignificantData[order(dfSignificantData$Value, dfSignificantData$P.value, decreasing = FALSE),]
     funcWriteTable( dfSignificantData, astrSummaryFileName, fAppend = FALSE )
+    # Sort by q.value and return
+    return( dfSignificantData[ order( dfSignificantData$P.value, decreasing = FALSE ), ] )
   }
-  return(dfSignificantData)
 } 

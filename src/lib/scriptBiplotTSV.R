@@ -212,7 +212,7 @@ sTextColor = c_sDefaultTextColor,
 sArrowColor = c_sDefaultArrowColor,
 ### The color metadata features will be plotted with as an arrow and text. Example cyan
 sArrowTextColor = c_sDefaultArrowTextColor,
-### The color for the metadata text ploted by the head of the metadat arrow. Example Blue
+### The color for the metadata text ploted by the head of the metadata arrow. Example Blue
 sPlotNAColor = c_sDefaultNAColor,
 ### Plot NA values as this color. Example grey
 sShapeBy = c_sDefaultShapeBy,
@@ -228,22 +228,19 @@ dResizeArrow = c_sDefaultResizeArrow,
 sTitle = c_sDefaultTitle,
 ### The title for the figure.
 sInputFileName,
-### File to input (tsv file: tab seperated, row = sample file)
+### File to input (tsv file: tab separated, row = sample file)
 sLastMetadata,
 ### Last metadata that seperates data and metadata
 sOutputFileName = c_sDefaultOutputFile
 ### The file name to save the figure.
 ){
+  print("IN Biplot")
   # Define the colors
   vsColorRange = c("blue","orange")
+  cDefaultColor = "black"
   if(!is.null(sColorRange))
   {
     vsColorRange = unlist(strsplit(sColorRange,","))
-  }
-  cDefaultColor = "grey"
-  if(!is.null(vsColorRange) && length(vsColorRange)>0)
-  {
-    cDefaultColor = vsColorRange[1]
   }
 
   # List of bugs to plot
@@ -254,6 +251,8 @@ sOutputFileName = c_sDefaultOutputFile
     vsBugsToPlot = unlist(strsplit(sBugs,","))
   }
 
+  print("vsBugsToPlot")
+  print(vsBugsToPlot)
   # Metadata to plot
   vsMetadata = c()
   if(!is.null(sMetadata))
@@ -261,6 +260,8 @@ sOutputFileName = c_sDefaultOutputFile
     vsMetadata = unlist(strsplit(sMetadata,","))
   }
 
+  print("vsMetadata")
+  print(vsMetadata)
   ### Load table
   if(class(sInputFileName)=="character")
   {
@@ -270,6 +271,7 @@ sOutputFileName = c_sDefaultOutputFile
     dfInput = dfInput[-1]
   } else {dfInput = sInputFileName}
 
+  ### Get positions of all metadata or all data
   iLastMetadata = which(names(dfInput)==sLastMetadata)
   viMetadata = 1:iLastMetadata
   viData = (iLastMetadata+1):ncol(dfInput)
@@ -281,8 +283,9 @@ sOutputFileName = c_sDefaultOutputFile
   viContinuousMetadata = c()
   for(i in viMetadata)
   {
+    print( names( dfInput )[i] )
     vCurMetadata = unlist(dfInput[i])
-    if(is.numeric(vCurMetadata)||is.integer(vCurMetadata))
+    if( ( is.numeric(vCurMetadata)||is.integer(vCurMetadata) )  && ( length( unique( vCurMetadata ) ) >= c_iNonFactorLevelThreshold ) )
     {
       vCurMetadata[which(is.na(vCurMetadata))] = mean(vCurMetadata,na.rm=TRUE)
       listMetadata[[length(listMetadata)+1]] = vCurMetadata
@@ -307,6 +310,7 @@ sOutputFileName = c_sDefaultOutputFile
   iNumberMetadata = ncol(dfDummyMetadata)
 
   # Data to use in ordination in NMDS
+  # All cleaned bug data
   dfData = dfInput[viData]
 
   # If rotating the ordination by a metadata
@@ -327,7 +331,7 @@ sOutputFileName = c_sDefaultOutputFile
   mNMDSData = metaMDS(dfData,k=2)
 
   ## Make shapes
-  # Defines thes shapes and the metadata they are based on
+  # Defines the shapes and the metadata they are based on
   # Metadata to use as shapes
   lShapeInfo = funcMakeShapes(dfInput=dfInput, sShapeBy=sShapeBy, sShapes=sShapes, cDefaultShape=sDefaultMarker)
 
@@ -362,9 +366,17 @@ sOutputFileName = c_sDefaultOutputFile
     }
   }
 
+  print("names(dfDummyMetadata)")
+  print(names(dfDummyMetadata))
+
   # Reduce the bugs down to the ones in the list to be plotted
   viBugsToPlot = which(row.names(mNMDSData$species) %in% vsBugsToPlot)
   viMetadataDummy = which(names(dfDummyMetadata) %in% vsMetadata)
+
+  print("viBugsToPlot")
+  print(viBugsToPlot)
+  print("viMetadataDummy")
+  print(names(dfDummyMetadata)[viMetadataDummy])
 
   # Build the matrix of metadata coordinates
   mMetadataCoordinates = matrix(rep(NA, iNumberMetadata*2),nrow=iNumberMetadata)
@@ -403,6 +415,7 @@ sOutputFileName = c_sDefaultOutputFile
   pdf(sOutputFileName, useDingbats=FALSE)
   plot(mNMDSData$points, xlab=paste("NMDS1","Stress=",mNMDSData$stress), ylab="NMDS2", pch=vsShapes, col=vsColors)
   title(sTitle,line=3)
+
   # Plot Bugs
   mPlotBugs = mNMDSData$species[viBugsToPlot,]
   if(length(viBugsToPlot)==1)
@@ -436,17 +449,38 @@ sOutputFileName = c_sDefaultOutputFile
     }
   }
 
-  sLegendText = c(paste(vsColorValues,sColorBy,sep="_"),paste(vsShapeValues,sMetadataShape,sep="_"))
-  sLegendShapes = c(rep(cDefaultShape,length(vsColorValues)),vsShapeShapes)
+  # Create Legend
+  # The text default is the colorMetadata_level (one per level) plus the ShapeMetadata_level (one per level)
+  # The color default is already determined colors plus grey for shapes.
+  sLegendText = c(paste(vsColorValues,sColorBy,sep="_"),paste(sMetadataShape,vsShapeValues,sep="_"))
   sLegendColors = c(vsColorRBG,rep(cDefaultColor,length(vsShapeValues)))
-  if(length(sLegendText)>0)
+
+  # If the color values are numeric
+  # Too many values may be given in the legend (given they may be a continuous range of values)
+  # To reduce this they are summarized instead, given the colors and values for the extreme ends.
+  if( !sum( is.na( as.numeric( vsColorValues[ which( !is.na( vsColorValues ) ) ] ) ) ) )
   {
-    legend("topright",legend=sLegendText,pch=sLegendShapes,col=sLegendColors)
+    vdNumericColors = as.numeric( vsColorValues )
+    vdNumericColors = vdNumericColors[ which( !is.na( vdNumericColors ) ) ]
+    vdSortedNumericColors = sort( vdNumericColors )
+    sLegendText = c( paste( sColorBy, vdSortedNumericColors[ 1 ], sep="_" ), 
+                     paste( sColorBy, vdSortedNumericColors[ length(vdSortedNumericColors) ], sep="_" ),
+                     paste( sMetadataShape, vsShapeValues, sep="_" ) )
+    sLegendColors = c(vsColorRBG[ which( vdNumericColors == vdSortedNumericColors[ 1 ] )[ 1 ] ],
+                      vsColorRBG[ which( vdNumericColors == vdSortedNumericColors[ length( vdSortedNumericColors ) ] )[ 1 ] ],
+                      rep(cDefaultColor,length(vsShapeValues)))
+  }
+  sLegendShapes = c( rep( cDefaultShape, length( sLegendText ) - length( vsShapeShapes ) ), vsShapeShapes )
+
+  # If any legend text was constructed then make the legend.
+  if( length( sLegendText ) >0 )
+  {
+    legend( "topright", legend = sLegendText, pch = sLegendShapes, col = sLegendColors )
   }
 
-  # Original biplot call if you want to check the custom ploting of the script
+  # Original biplot call if you want to check the custom plotting of the script
   # There will be one difference where the biplot call scales an axis, this one does not. In relation to the axes, the points, text and arrows should still match.
-  # Axes to the top and right are for the arrow, otherse are for markers and bug names.
+  # Axes to the top and right are for the arrow, others are for markers and bug names.
   #biplot(mNMDSData$points,mMetadataCoordinates[viMetadataDummy,],xlabs=vsShapes,xlab=paste("MDS1","Stress=",mNMDSData$stress),main="Biplot function Bugs and Sampes - Metadata Plotted with Centroids")
   dev.off()
 }

@@ -648,8 +648,6 @@ asSuppressCovariates=c()
         }
         if( substring( strOrig, nchar( strMetadata ) + 1 ) == "NA" ) { next }
         adMetadata <- frmeData[,strMetadata]
-        print("adMetadata")
-        print(adMetadata)
 
         #Store (factor level modified) p-value
         #Store general results for each coef
@@ -1166,4 +1164,74 @@ aData
 ){
   return(aData)
   ### Transformed data
+}
+
+funcGetAnalysisMethods <- function(
+### Returns the appropriate functions for regularization, analysis, data transformation, and analysis object inspection.
+### This allows modular customization per analysis step.
+### To add a new method insert an entry in the switch for either the selection, transform, or method
+### Insert them by using the pattern optparse_keyword_without_quotes = function_in_AnalysisModules
+### Order in the return listy is currently set and expected to be selection, transforms/links, analysis method
+### none returns null
+sModelSelectionKey,
+### Keyword defining the method of model selection
+sTransformKey,
+### Keyword defining the method of data transformation
+sMethodKey,
+### Keyword defining the method of analysis
+fZeroInflated = FALSE
+### Indicates if using zero inflated models
+){
+  lRetMethods = list()
+  #Insert selection methods here
+  lRetMethods[[c_iSelection]] = switch(sModelSelectionKey,
+    boost = funcBoostModel,
+    penalized = funcPenalizedModel,
+    forward = funcForwardModel,
+    backward = funcBackwardsModel,
+    none = NA)
+
+  #Insert transforms
+  lRetMethods[[c_iTransform]] = switch(sTransformKey,
+    asinsqrt = funcArcsinSqrt,
+    none = funcNoTransform)
+
+  #Insert untransform
+  lRetMethods[[c_iUnTransform]] = switch(sTransformKey,
+    asinsqrt = funcNoTransform,
+    none = funcNoTransform)
+
+  #Insert analysis
+  lRetMethods[[c_iAnalysis]] = switch(sMethodKey,
+    neg_binomial = funcBinomialMult,
+    quasi = funcQuasiMult,
+    univariate = funcDoUnivariate,
+    lm = funcLM,
+    none = NA)
+
+  # If a univariate method is used it is required to set this to true
+  # For correct handling.
+  lRetMethods[[c_iIsUnivariate]]=sMethodKey=="univariate"
+
+  #Insert method to get results
+  if(fZeroInflated)
+  {
+    lRetMethods[[c_iResults]] = switch(sMethodKey,
+      neg_binomial = funcGetZeroInflatedResults,
+      quasi = funcGetZeroInflatedResults,
+      univariate = funcGetUnivariateResults,
+      lm = funcGetZeroInflatedResults,
+      none = NA)
+  } else {
+    lRetMethods[[c_iResults]] = switch(sMethodKey,
+      neg_binomial = funcGetLMResults,
+      quasi = funcGetLMResults,
+      univariate = funcGetUnivariateResults,
+      lm = funcGetLMResults,
+      none = NA)
+  }
+
+  return(lRetMethods)
+  ### Returns a list of functions to be passed for regularization, data transformation, analysis,
+  ### and custom analysis results introspection functions to pull from return objects data of interest
 }

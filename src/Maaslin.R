@@ -29,75 +29,6 @@ inlinedocs <- function(
 ##description<< Main driver script. Should be called to perform MaAsLin Analysis.
 ) { return( pArgs ) }
 
-funcGetAnalysisMethods <- function(
-### Returns the appropriate functions for regularization, analysis, data transformation, and analysis object inspection.
-### This allows modular customization per analysis step.
-### To add a new method insert an entry in the switch for either the selection, transform, or method
-### Insert them by using the pattern optparse_keyword_without_quotes = function_in_AnalysisModules
-### Order in the return listy is currently set and expected to be selection, transforms/links, analysis method
-### none returns null
-sModelSelectionKey,
-### Keyword defining the method of model selection
-sTransformKey,
-### Keyword defining the method of data transformation
-sMethodKey,
-### Keyword defining the method of analysis
-fZeroInflated = FALSE
-### Indicates if using zero inflated models
-){
-  lRetMethods = list()
-  #Insert selection methods here
-  lRetMethods[[c_iSelection]] = switch(sModelSelectionKey,
-    boost = funcBoostModel,
-    penalized = funcPenalizedModel,
-    forward = funcForwardModel,
-    backward = funcBackwardsModel,
-    none = NA)
-
-  #Insert transforms
-  lRetMethods[[c_iTransform]] = switch(sTransformKey,
-    asinsqrt = funcArcsinSqrt,
-    none = funcNoTransform)
-
-  #Insert untransform
-  lRetMethods[[c_iUnTransform]] = switch(sTransformKey,
-    asinsqrt = funcNoTransform,
-    none = funcNoTransform)
-
-  #Insert analysis
-  lRetMethods[[c_iAnalysis]] = switch(sMethodKey,
-    neg_binomial = funcBinomialMult,
-    quasi = funcQuasiMult,
-    univariate = funcDoUnivariate,
-    lm = funcLM,
-    none = NA)
-
-  # If a univariate method is used it is required to set this to true
-  # For correct handling.
-  lRetMethods[[c_iIsUnivariate]]=sMethodKey=="univariate"
-
-  #Insert method to get results
-  if(fZeroInflated)
-  {
-    lRetMethods[[c_iResults]] = switch(sMethodKey,
-      neg_binomial = funcGetZeroInflatedResults,
-      quasi = funcGetZeroInflatedResults,
-      univariate = funcGetUnivariateResults,
-      lm = funcGetZeroInflatedResults,
-      none = NA)
-  } else {
-    lRetMethods[[c_iResults]] = switch(sMethodKey,
-      neg_binomial = funcGetLMResults,
-      quasi = funcGetLMResults,
-      univariate = funcGetUnivariateResults,
-      lm = funcGetLMResults,
-      none = NA)
-  }
-
-  return(lRetMethods)
-  ### Returns a list of functions to be passed for regularization, data transformation, analysis,
-  ### and custom analysis results introspection functions to pull from return objects data of interest
-}
 
 ### Install packages if not already installed
 vDepLibrary = c("agricolae", "gam", "gamlss", "gbm", "glmnet", "inlinedocs", "logging", "MASS", "nlme", "optparse", "outliers", "penalized", "pscl", "robustbase", "testthat")
@@ -114,16 +45,6 @@ suppressMessages(library( logging, warn.conflicts=FALSE, quietly=TRUE, verbose=F
 ### Class for commandline argument processing
 suppressMessages(library( optparse, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
 
-### Necessary local import files
-initial.options <- commandArgs(trailingOnly = FALSE)
-script.name <- sub("--file=", "", initial.options[grep("--file=", initial.options)])
-strDir = file.path( dirname( script.name ), "lib" )
-strSelf = basename( script.name )
-for( strR in dir( strDir, pattern = "*.R$" ) )
-{
-  if( strR == strSelf ) {next}
-  source( file.path( strDir, strR ) )
-}
 
 ### Create command line argument parser
 pArgs <- OptionParser( usage = "%prog [options] <output.txt> <data.tsv>" )
@@ -182,6 +103,10 @@ pArgs <- add_option( pArgs, c("-a","--allvall"), type="logical", action="store_t
 pArgs <- add_option( pArgs, c("-N","--PlotNA"), type="logical", action="store_true", default=FALSE, dest="fPlotNA", metavar="plotNAs",help="Plot data that was originally NA, by default they are not plotted.  [Default %default]")
 ### Alternative methodology settings
 pArgs <- add_option( pArgs, c("-A","--pAlpha"), type="double", action="store", dest="dPenalizedAlpha", default=0.95, metavar="PenalizedAlpha",help="The alpha for penalization (1.0=L1 regularization, LASSO; 0.0=L2 regularization, ridge regression.  [Default %default]")
+### Pass an alternative library dir
+#pArgs <- add_option( pArgs, c("-L", "--libdir"), action="store", dest="sAlternativeLibraryLocation", default=file.path( "","usr","share","biobakery" ), metavar="AlternativeLibraryDirectory", help="An alternative location to find the lib directory. This dir and children will be searched for the first maaslin/src/lib dir.")
+
+pArgs <- add_option( pArgs, c("-L", "--libdir"), action="store", dest="sAlternativeLibraryLocation", default=file.path( "","home","ttickle","Desktop","ttickle","hg","sfle" ), metavar="AlternativeLibraryDirectory", help="An alternative location to find the lib directory. This dir and children will be searched for the first lib dir.")
 
 
 ### Misc biplot arguments
@@ -192,7 +117,7 @@ pArgs <- add_option( pArgs, c("-P", "--BiplotPlotFeatures"), type="character", a
 pArgs <- add_option( pArgs, c("-D", "--BiplotRotateMetadata"), type="character", action="store", dest="sRotateByMetadata", default=NULL, metavar="BiplotRotateMetadata", help="Metadata to use to rotate the biplot. Format 'Metadata,value'. 'Age,0.5' .  [Default %default]")
 pArgs <- add_option( pArgs, c("-B", "--BiplotShapes"), type="character", action="store", dest="sShapes", default=NULL, metavar="BiplotShapes", help="Specify shapes specifically for metadata or metadata values.  [Default %default]")
 pArgs <- add_option( pArgs, c("-b", "--BugCount"), type="integer", action="store", dest="iNumberBugs", default=3, metavar="PlottedBugCount", help="The number of bugs automatically selected from the data to plot.  [Default %default]")
-pArgs <- add_option( pArgs, c("-E", "--MetadataCount"), type="integer", action="store", dest="iNumberMetadata", default=2, metavar="PlottedMetadataCount", help="The number of metadata automatically selected from the data to plot.  [Default %default]")
+pArgs <- add_option( pArgs, c("-E", "--MetadataCount"), type="integer", action="store", dest="iNumberMetadata", default=NULL, metavar="PlottedMetadataCount", help="The number of metadata automatically selected from the data to plot.  [Default all significant metadata and minimum is 1]")
 
 #pArgs <- add_option( pArgs, c("-c","--MFAFeatureCount"), type="integer", action="store", dest="iMFAMaxFeatures", default=3, metavar="maxMFAFeature", help="Number of features or number of bugs to plot (default=3; 3 metadata and 3 data).")
 
@@ -291,6 +216,43 @@ pArgs
   {
     logerror(paste("Received an invalid value for the multiple testing correction argument, received '",lsArgs$options$strMultTestCorrection,"'"), c_logrMaaslin)
     stop( print_help( pArgs ) )
+  }
+
+  ### Necessary local import files
+  ### Check to make sure the lib is in the expected place (where the script is)
+  ### if not, then try the alternative lib location
+  ### This will happen if, for instance the script is linked or
+  ### on the path.
+  # Get the first choice relative path
+  initial.options <- commandArgs(trailingOnly = FALSE)
+  script.name <- sub("--file=", "", initial.options[grep("--file=", initial.options)])
+  strDir = file.path( dirname( script.name ), "lib" )
+  # If this does not have the lib file then go for the alt lib
+  if( !file.exists(strDir) )
+  {
+    lsPotentialListLocations = dir( path = lsArgs$options$sAlternativeLibraryLocation, pattern = "lib", recursive = TRUE, include.dirs = TRUE)
+    if( length( lsPotentialListLocations ) > 0 )
+    {
+      sLibraryPath = file.path( "maaslin","src","lib" )
+      iLibraryPathLength = nchar( sLibraryPath )
+      for( strSearchDir in lsPotentialListLocations )
+      {
+        # Looking for the path where the end of the path is equal to the library path given earlier
+        # Also checks before hand to make sure the path is atleast as long as the library path so no errors occur
+        if ( substring( strSearchDir, 1 + nchar( strSearchDir ) - iLibraryPathLength ) == sLibraryPath )
+        {
+          strDir = file.path( lsArgs$options$sAlternativeLibraryLocation, strSearchDir )
+          break
+        }
+      }
+    }
+  }
+  
+  strSelf = basename( script.name )
+  for( strR in dir( strDir, pattern = "*.R$" ) )
+  {
+    if( strR == strSelf ) {next}
+    source( file.path( strDir, strR ) )
   }
 
   # Get analysis modules
@@ -509,117 +471,134 @@ pArgs
   }
 
   ### Write summary table
-  #Summarize output files based on a keyword and a significance threshold
-  #Look for less than or equal to the threshold (approapriate for p-value and q-value type measurements)
+  # Summarize output files based on a keyword and a significance threshold
+  # Look for less than or equal to the threshold (appropriate for p-value and q-value type measurements)
+  # DfSummary is sorted by the q.value when it is returned
   dfSummary = funcSummarizeDirectory(astrOutputDirectory=outputDirectory,
                        strBaseName=strBase,
                        astrSummaryFileName=file.path(outputDirectory,paste(strBase,c_sSummaryFileSuffix, sep="")), 
                        astrKeyword=c_strKeywordEvaluatedForInclusion, 
                        afSignificanceLevel=lsArgs$options$dSignificanceLevel)
 
-  ### Start biplot
-  # Get metadata of interest and reduce to default size
-  lsSigMetadata = unique(dfSummary[[1]])
-  lsSigMetadata = lsSigMetadata[1:max(lsArgs$options$iNumberMetadata,length(lsSigMetadata))]
-  # Convert to indices
-  liSigMetadata = which( colnames( lsRet$frmeData ) %in% lsSigMetadata )
-#  aiUMD <- intersect( lsRet$aiMetadata, which( colnames( lsRet$frmeData ) %in% lsRet$astrMetadata ) )
-
-  # Get bugs of interest and reduce to default size
-  lsSigBugs = unique(dfSummary[[2]])
-
-  if(lsArgs$options$iNumberBugs < 1)
+  if( !is.null( dfSummary ) )
   {
-    lsSigBugs = c()
-  } else {
-    iTotalBugs = max(lsArgs$options$iNumberBugs,length(lsSigBugs))
-    lsSigBugs = lsSigBugs[1:iTotalBugs]
-  }
-
-  # Set color by and shape by features if not given
-  if(is.null(lsArgs$options$strBiplotColor)||is.null(lsArgs$options$strBiplotShapeBy))
-  {
-    for(sMetadata in lsSigMetadata)
+    ### Start biplot
+    # Get metadata of interest and reduce to default size
+    lsSigMetadata = unique(dfSummary[[1]])
+    if( is.null( lsArgs$options$iNumberMetadata ) )
     {
-      if(is.factor(lsRet$frmeRaw[[sMetadata]]))
-      {
-        if(is.null(lsArgs$options$strBiplotShapeBy))
-        {
-          lsArgs$options$strBiplotShapeBy = sMetadata
-          if(!is.null(lsArgs$options$strBiplotColor))
-          {
-            break
-          }
-        }
-      }
-      if(is.numeric(lsRet$frmeRaw[[sMetadata]]))
-      {
-        if(is.null(lsArgs$options$strBiplotColor))
-        {
-          lsArgs$options$strBiplotColor = sMetadata
-          if(!is.null(lsArgs$options$strBiplotShapeBy))
-          {
-            break
-          }
-        }
-      }
+      lsSigMetadata = lsSigMetadata[ 1:length( lsSigMetadata ) ]
+    } else {
+      lsSigMetadata = lsSigMetadata[ 1:min( length( lsSigMetadata ), max( lsArgs$options$iNumberMetadata, 1 ) ) ]
     }
-  }
 
-  #If a user defines a feature, make sure it is in the bugs/data indices
-  if(!is.null(lsFeaturesToPlot) || !is.null(lsArgs$options$strBiplotColor) || !is.null(lsArgs$options$strBiplotShapeBy))
-  {
-    lsCombinedFeaturesToPlot = unique(c(lsFeaturesToPlot,lsArgs$options$strBiplotColor,lsArgs$options$strBiplotShapeBy))
-    lsCombinedFeaturesToPlot = lsCombinedFeaturesToPlot[!is.null(lsCombinedFeaturesToPlot)]
+    # Convert to indices (ordered numerically here)
+    liSigMetadata = which( colnames( lsRet$frmeData ) %in% lsSigMetadata )
 
-    # If bugs to plot were given then do not use the significant bugs from the MaAsLin output which is default
-    if(!is.null(lsFeaturesToPlot))
+    # Get bugs of interest and reduce to default size
+    lsSigBugs = unique(dfSummary[[2]])
+
+    # Reduce the bugs to the right size
+    if(lsArgs$options$iNumberBugs < 1)
     {
       lsSigBugs = c()
-      liSigMetadata = c()
-    }
-    liSigMetadata = unique(c(liSigMetadata,which(colnames(lsRet$frmeData) %in% setdiff(lsCombinedFeaturesToPlot, lsOriginalFeatureNames))))
-    lsSigBugs = unique(c(lsSigBugs, intersect(lsCombinedFeaturesToPlot, lsOriginalFeatureNames)))
-  }
-
-  # Convert bug names and metadata names to comma delimited strings
-  vsBugs = paste(lsSigBugs,sep=",",collapse=",")
-  vsMetadata = paste(colnames(lsRet$frmeData)[liSigMetadata],sep=",",collapse=",")
-  vsMetadataByLevel = c()
-  for(aiMetadataIndex in liSigMetadata)
-  {
-    lxCurMetadata = lsRet$frmeData[[aiMetadataIndex]]
-    sCurName = names(lsRet$frmeData[aiMetadataIndex])
-    if(is.factor(lxCurMetadata))
-    {
-      vsMetadataByLevel = c(vsMetadataByLevel,paste(sCurName,levels(lxCurMetadata),sep="_"))
+    } else if( is.null( lsArgs$options$iNumberBugs ) ) {
+      lsSigBugs = lsSigBugs[ 1 : length( lsSigBugs ) ]
     } else {
-      vsMetadataByLevel = c(vsMetadataByLevel,sCurName)
+      lsSigBugs = lsSigBugs[ 1 : lsArgs$options$iNumberBugs ]
     }
+
+    # Set color by and shape by features if not given
+    # Selects the continuous (for color) and factor (for shape) data with the most significant association
+    if(is.null(lsArgs$options$strBiplotColor)||is.null(lsArgs$options$strBiplotShapeBy))
+    {
+      for(sMetadata in lsSigMetadata)
+      {
+        if(is.factor(lsRet$frmeRaw[[sMetadata]]))
+        {
+          if(is.null(lsArgs$options$strBiplotShapeBy))
+          {
+            lsArgs$options$strBiplotShapeBy = sMetadata
+            if(!is.null(lsArgs$options$strBiplotColor))
+            {
+              break
+            }
+          }
+        }
+        if(is.numeric(lsRet$frmeRaw[[sMetadata]]))
+        {
+          if(is.null(lsArgs$options$strBiplotColor))
+          {
+            lsArgs$options$strBiplotColor = sMetadata
+            if(!is.null(lsArgs$options$strBiplotShapeBy))
+            {
+              break
+            }
+          }
+        }
+      }
+    }
+
+    #If a user defines a feature, make sure it is in the bugs/data indices
+    if(!is.null(lsFeaturesToPlot) || !is.null(lsArgs$options$strBiplotColor) || !is.null(lsArgs$options$strBiplotShapeBy))
+    {
+      lsCombinedFeaturesToPlot = unique(c(lsFeaturesToPlot,lsArgs$options$strBiplotColor,lsArgs$options$strBiplotShapeBy))
+      lsCombinedFeaturesToPlot = lsCombinedFeaturesToPlot[!is.null(lsCombinedFeaturesToPlot)]
+
+      # If bugs to plot were given then do not use the significant bugs from the MaAsLin output which is default
+      if(!is.null(lsFeaturesToPlot))
+      {
+        lsSigBugs = c()
+        liSigMetadata = c()
+      }
+      liSigMetadata = unique(c(liSigMetadata,which(colnames(lsRet$frmeData) %in% setdiff(lsCombinedFeaturesToPlot, lsOriginalFeatureNames))))
+      lsSigBugs = unique(c(lsSigBugs, intersect(lsCombinedFeaturesToPlot, lsOriginalFeatureNames)))
+    }
+
+    # Convert bug names and metadata names to comma delimited strings
+    vsBugs = paste(lsSigBugs,sep=",",collapse=",")
+    vsMetadata = paste(colnames(lsRet$frmeData)[liSigMetadata],sep=",",collapse=",")
+    vsMetadataByLevel = c()
+
+    # Possibly remove the NA levels depending on the preferences
+    vsRemoveNA = c(NA, "NA", "na", "Na", "nA")
+    if(!lsArgs$options$fPlotNA){ vsRemoveNA = c() }
+    for(aiMetadataIndex in liSigMetadata)
+    {
+      lxCurMetadata = lsRet$frmeData[[aiMetadataIndex]]
+      sCurName = names(lsRet$frmeData[aiMetadataIndex])
+      if(is.factor(lxCurMetadata))
+      {
+        vsMetadataByLevel = c(vsMetadataByLevel,paste(sCurName, setdiff( levels(lxCurMetadata), vsRemoveNA),sep="_"))
+      } else {
+        vsMetadataByLevel = c(vsMetadataByLevel,sCurName)
+      }
+    }
+
+    # If NAs should not be plotted, make them the background color
+    # Unless explicitly asked to be plotted
+    sPlotNAColor = "white"
+    if(lsArgs$options$fInvert){sPlotNAColor = "black"}
+    if(lsArgs$options$fPlotNA){sPlotNAColor = "grey"}
+    sLastMetadata = lsOriginalMetadataNames[max(which(lsOriginalMetadataNames %in% names(lsRet$frmeData)))]
+
+    # Plot biplot
+    logdebug("PlotBiplot:Started")
+    funcDoBiplot(
+      sBugs = vsBugs,
+      sMetadata = vsMetadataByLevel,
+      sColorBy = lsArgs$options$strBiplotColor,
+      sPlotNAColor = sPlotNAColor,
+      sShapeBy = lsArgs$options$strBiplotShapeBy,
+      sShapes = lsArgs$options$sShapes,
+      sDefaultMarker = "16",
+      sRotateByMetadata = lsArgs$options$sRotateByMetadata,
+      dResizeArrow = lsArgs$options$dBiplotMetadataScale,
+      sInputFileName = lsRet$frmeRaw,
+      sLastMetadata = sLastMetadata,
+      sOutputFileName = file.path(outputDirectory,paste(strBase,"-biplot.pdf",sep="")))
+    logdebug("PlotBiplot:Stopped")
   }
-
-  # If NAs should not be plotted, make them the background color
-  sPlotNAColor = "white"
-  if(lsArgs$options$fInvert){sPlotNAColor = "black"}
-  if(lsArgs$options$fPlotNA){sPlotNAColor = "grey"}
-  sLastMetadata = lsOriginalMetadataNames[max(which(lsOriginalMetadataNames %in% names(lsRet$frmeData)))]
-
-  # Plot biplot
-  logdebug("PlotBiplot:Started")
-  funcDoBiplot(
-    sBugs = vsBugs,
-    sMetadata = vsMetadataByLevel,
-    sColorBy = lsArgs$options$strBiplotColor,
-    sPlotNAColor = sPlotNAColor,
-    sShapeBy = lsArgs$options$strBiplotShapeBy,
-    sShapes = lsArgs$options$sShapes,
-    sDefaultMarker = "16",
-    sRotateByMetadata = lsArgs$options$sRotateByMetadata,
-    dResizeArrow = lsArgs$options$dBiplotMetadataScale,
-    sInputFileName = lsRet$frmeRaw,
-    sLastMetadata = sLastMetadata,
-    sOutputFileName = file.path(outputDirectory,paste(strBase,"-biplot.pdf",sep="")))
-  logdebug("PlotBiplot:Stopped")
 }
 
 # This is the equivalent of __name__ == "__main__" in Python.
