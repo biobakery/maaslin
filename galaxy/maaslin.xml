@@ -43,8 +43,7 @@ MaAsLin is a multivariate statistical framework that finds associations between 
 
 The results of a MaAsLin run are the association of a specific microbial community member with metadata. These associations are without the influence of the other metadata in the study. There are certain factors known that can influence the microbiome (for example diet, age, geography, fecal or biopsy sample origin). MaAsLin allows one to detect the effect of a metadata, possibly a phenotype, deconfounding the effects of diet, age, sample origin or any other metadata captured in the study!
 
-.. image:: ../galaxy/static/images/Figure1-Overview.png
-
+.. image:: https://bitbucket.org/biobakery/galaxy_maaslin/wiki/Figure1-Overview.png
 
 *Maaslin Analysis Overview* MaAsLin performs boosted, additive general linear models between one group of data (metadata/the predictors) and another group (in our case microbial abundance/the response). Given that metagenomic data is sparse, the boosting is used to select metadata that show some potential to be associated with microbial abundances. Boosting of metadata and selection of a model occurs per otu. The metadata data that is selected for use by boosting is then used in a general linear model using metadata as predictors and otu arcsin-square root transformed abundance as the response.
 
@@ -109,7 +108,7 @@ B. The following files will be generated per MaAsLin run. In the following listi
 
 **projectname-metadata.pdf** Any association that had a q-value less than or equal to the significance threshold will be plotted here. If this file does not exist, the projectname-metadata.txt should not have an entry that is less than or equal to the threshold. Factor and boolean data is plotted as knotched box plots; continuous data is plotted as a scatter plot with a line of best fit.
 
-.. image:: ../galaxy/static/images/Maaslin_Output.png
+.. image:: https://bitbucket.org/biobakery/galaxy_maaslin/wiki/Maaslin_Output.png
 
 
 *Example of the projectname-metadata.pdf file* Significant associations are combined in files of associations per metadata. Factor and boolean data is plotted as knotched box plots; continuous data is plotted as a scatter plot with a line of best fit. Plots show raw data, header data show information from the reduced 
