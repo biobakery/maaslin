@@ -74,7 +74,7 @@ R Libraries: Several libraries need to be installed in R these are
 You can install them by typing R in a terminal and using the
   install.packages command:
 
-      install.packages(c('agricolae', 'gam', 'gamlss', 'gbm', 'glmnet', 'inlinedocs', 'logging', 'MASS', 'nlme', 'optparse', 'outliers', 'penalized', 'pscl', 'robustbase', 'testthat'))
+      install.packages(c('agricolae', 'gam', 'gamlss', 'gbm', 'glmnet', 'inlinedocs', 'logging', 'MASS', 'nlme', 'optparse', 'outliers', 'penalized', 'pscl', 'robustbase', 'testthat','vegan'))
 
 # D. MaAsLin Inputs
 
@@ -238,7 +238,7 @@ By running the commandline script:
 On the commandline call the Maaslin.R script. Please refer to the help (-h, --help) for command line options. If running from commandline, the PCL file will need to be transposed. A script is included in Maaslin for your convenience (src/transpose.py). The following example will have such a call included. An example call from the Maaslin folder for the demo data could be as follows.
 
 ./src/transpose.py < input/maaslin_demo2.pcl > maaslin_demo2.tsv
-./src/Maaslin.R -i input/maaslin_demo2.read.config demo.text maaslin_demo2.tsv
+ && ./src/Maaslin.R -i input/maaslin_demo2.read.config demo.text maaslin_demo2.tsv
 
 When using sfle:
 Go to ../sfle and type the following: scons output/maaslin
