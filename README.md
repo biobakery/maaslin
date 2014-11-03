@@ -131,6 +131,11 @@ absence is intentional and not a mistake. Often investigators are
 interested in genetic measurements that may also be placed in the
 metadata section to associate to bugs.
 
+Please note that no special characters are allowed in the metadata
+header names. These names should only contain alphanumeric 
+characters with the addition of a period and an underscore: 
+`[a-zA-Z0-9.-]`.
+
 If you are not wanting to manually add metadata to your abundance
 table, you may be interested in associated tools or scripts to help
 combine your abundance table and metadata to create your pcl
@@ -410,4 +415,3 @@ In this example MaAsLin is modified to produce verbose output for
 debugging (-v DEBUG), to change the threshold for making pdfs to a
 q-value equal to or less than 0.1 (-d 0.1), and to plot 
 5 data (bug) features in the biplot (-b 5).
-
