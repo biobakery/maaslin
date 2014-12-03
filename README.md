@@ -1,3 +1,5 @@
+[TOC]
+
 MaAsLin User Guide v3.1
 =======================
 
@@ -5,21 +7,7 @@ September 2013
 
 Timothy Tickle and Curtis Huttenhower
 
-Table of Contents
------------------
-
-A. Introduction to MaAsLin  
-B. Related Projects and Scripts  
-C. Installing MaAsLin  
-D. MaAsLin Inputs  
-E. Process Flow Overview  
-D. Process Flow Detail  
-G. Expected Output Files  
-H. Troubleshooting  
-I. Installation as an Automated Pipeline  
-J. Commandline Options (Modifying Process and Figures)
-
-# A. Introduction to MaAsLin
+## Introduction ##
 
 MaAsLin is a multivariate statistical framework that finds
 associations between clinical metadata and potentially
@@ -42,29 +30,12 @@ variables). This occurs for every OTU and metadata combination. Given
 we work with proportional data, the Yi (abundances) are
 `arcsin(sqrt(Yi))` transformed. A final formula is as follows:
 
-![](https://bitbucket.org/chuttenh/maaslin/downloads/maaslinformula2.png)
+![](https://bitbucket.org/biobakery/maaslin/downloads/maaslinformula2.png)
 
 For more information about maaslin please visit
 [http://huttenhower.sph.harvard.edu/maaslin](http://huttenhower.sph.harvard.edu/maaslin).
 
-
-# B. Related Projects and Scripts
-
-Other projects exist at www.bitbucket.com that may help in your
-analysis:
-
-* **QiimeToMaAsLin** is a project that reformats abundance files from
-    Qiime for MaAsLin. Several formats of Qiime consensus lineages are
-    supported for this project. To download please visit
-    [https://bitbucket.org/timothyltickle/qiimetomaaslin](https://bitbucket.org/timothyltickle/qiimetomaaslin).
-
-* **merge_metadata.py** is a script included in the MaAsLin project to
-    generically merge a metadata file with a table of microbial (or
-    other) measurements. This script is located in `maaslin/src` and
-    is documented in `maaslin/doc/ Merge_Metadata_Read_Me.txt`.
-
-
-# C. Installing MaAsLin
+## Installation ##
 
 R Libraries: Several libraries need to be installed in R these are
   the following:
@@ -74,48 +45,40 @@ R Libraries: Several libraries need to be installed in R these are
 You can install them by typing R in a terminal and using the
   install.packages command:
 
+```
       install.packages(c('agricolae', 'gam', 'gamlss', 'gbm', 'glmnet', 'inlinedocs', 'logging', 'MASS', 'nlme', 'optparse', 'outliers', 'penalized', 'pscl', 'robustbase', 'testthat','vegan'))
+```
 
-# D. MaAsLin Inputs
+## How to Run ##
 
-There are 3 input files for each project, the "\*.read.config" file, the "\*.pcl" file, and the "\*.R" script. (If using the sfle automated pipeline, the "\*" in the file names can be anything but need to be identical for all three files. All three files need to be in the `../sfle/input/maasalin/input` folder only if using sfle). Details of each file follow:
+### Input Files ###
+There are 3 input files for each project, the "\*read.config" file, the "\*.pcl" file, and the "\*.R" script. Details of each file follow:
 
-### 1\. "\*.pcl"
+** 1\. PCL File **
 
-Required input file. A PCL file is the file that contains all the data
+Required input file \*.pcl. A PCL file is the file that contains all the data
 and metadata. This file is formatted so that metadata/data (otus or
 bugs) are rows and samples are columns. All metadata rows should come
 first before any abundance data. The file should be a tab delimited
 text file with the extension ".pcl".
 
-### 2\. "\*.read.config"
+** 2\. Read Config File **
 
-Required input file. A read config file allows one to indicate what data is read from a PCL file without having to change the pcl file or change code. This means one can have a pcl file which is a superset of metadata and abundances which includes data you are not interested in for the run. This file is a text file with ".read.config" as an extension. This file is later described in detail in section **F. Process Flow Overview** subsection **4. Create your read.config file**.
+Required input file \*.read.config. A read config file allows one to indicate what data is read from a PCL file without having to change the pcl file or change code. This means one can have a pcl file which is a superset of metadata and abundances which includes data you are not interested in for the run. This file is a text file with ".read.config" as an extension. This file is later described in detail in section **Process Flow ** subsection **4. Create your read.config file**.
 
-### 3\. "\*.R"
+** 3\. R Script File (Optional) **
+ 
+Optional input file \*.R. The R script file is using a call back programming pattern that allows one to add/modify specific code to customize analysis without touching the main MaAsLin engine. A generic R script is provided "maaslin_demo2.R" and can be renamed and used for any study. The R script can be modified to add quality control or formatting of data, add ecological measurements, or other changes to the underlying data before MaAsLin runs on it. This file is not required to run MaAsLin.
 
-Optional input file. The R script file is using a call back programming pattern that allows one to add/modify specific code to customize analysis without touching the main MaAsLin engine. A generic R script is provided "maaslin_demo2.R" and can be renamed and used for any study. The R script can be modified to add quality control or formatting of data, add ecological measurements, or other changes to the underlying data before MaAsLin runs on it. This file is not required to run MaAsLin.
+### Process Flow ###
 
-# E. Process Flow Overview
-
-1. Obtain your abundance or relative function table.
-2. Obtain your metadata.
-3. Format and combine your abundance table and metadata as a pcl file for MaAsLin.
-4. Create your read.config file.
-5. Create your R script or use the default.
-6. Place .pcl, .read.config, .R files in `../sfle/input/maaslin/input/` (sfle only)
-7. Run
-8. Discover amazing associations in your results!
-
-# F. Process Flow Detail
-
-### 1\. Obtain your abundance or relative function table.
+** 1\. Obtain your abundance or relative function table. **
 
 Abundance tables are normally derived from sequence data using
 *Mothur*, *Qiime*, *HUMAnN*, or *MetaPhlAn*. Please refer to their documentation
 for further details.
 
-### 2\. Obtain your metadata.
+** 2\. Obtain your metadata. **
 
 Metadata would be information about the samples in the study. For
 instance, one may analyze a case / control study. In this study, you
@@ -141,10 +104,9 @@ table, you may be interested in associated tools or scripts to help
 combine your abundance table and metadata to create your pcl
 file. Both require a specific format for your metadata file. Please
 see the documentation for *QiimeToMaaslin* or *merge_metadata.py* (for
-more details see section B).
+more details see section **Related Projects and Scripts**).
 
-### 3\. Format and combine your abundance table and metadata as a pcl
-file for *MaAsLin*.
+** 3\. Format and combine your abundance table and metadata as a pcl **
 
 Please note two tools have been developed to help you! If you are
 working from a Qiime OTU output and have a metadata text file try using
@@ -154,7 +116,7 @@ output) use the merge_metadata.py script provided in this project
 (`maaslin/src/merge_metadata.py`) and documented in
 `maaslin/doc/Merge_Metadata_Read_Me.txt`.
 
-###PCL format description:
+** PCL format description **
 
 i. Row 1 is expected to be sample IDs beginning the first column with a feature name to identify the row, for example "ID".
 
@@ -182,7 +144,7 @@ another example can be found in this project at
     taxa3	    0.571	0.955	0.500	0.575
 
 
-### 4\. Create your read.config file.
+** 4\. Create your read.config file. **
 
 A *.read.config file is a structured text file used to indicate which
 data in a *.pcl file should be read into MaAsLin and used for
@@ -227,7 +189,7 @@ as all rows from Bacteria to the end of the pcl file. This example
 refers to the default input files given in the MaAsLin download as
 maaslin_demo2.\*.
 
-### 5\. Optionally, create your R script.
+** 5\. Create your R script (Optional). **
 
 The R script is used to add code that manipulates your data before
 analysis, and for manipulating the multifactoral analysis figure. A
@@ -235,35 +197,29 @@ default “*.R” script is available with the default MaAsLin project at
 maaslin/input/maaslin_demo2.R. This is an expert option and should
 only be used by someone very comfortable with the R language.
 
-###6. Optional step if using the sfle analysis pipeline. Place .pcl, .read.config, and optional .R files in `../sfle/input/maasalin/input`
+** 6\. Run. **
 
-###7. Run.
-
-By running the commandline script:
 On the commandline call the Maaslin.R script. Please refer to the help (-h, --help) for command line options. If running from commandline, the PCL file will need to be transposed. A script is included in Maaslin for your convenience (src/transpose.py). The following example will have such a call included. An example call from the Maaslin folder for the demo data could be as follows.
 
-./src/transpose.py < input/maaslin_demo2.pcl > maaslin_demo2.tsv
- && ./src/Maaslin.R -i input/maaslin_demo2.read.config demo.text maaslin_demo2.tsv
+```
+$ ./src/transpose.py < input/maaslin_demo2.pcl > maaslin_demo2.tsv
+$ ./src/Maaslin.R -i input/maaslin_demo2.read.config demo.text maaslin_demo2.tsv
+```
 
-When using sfle:
-Go to ../sfle and type the following: scons output/maaslin
-
-###8. Discover amazing associations in your results!
+** 7\. Discover amazing associations in your results! **
 
 
-#G. Expected Output Files
+### Output Files ###
 
 The following files will be generated per MaAsLin run. In the
 following listing the term projectname refers to what you named your "\*.pcl" file without the extension.
 
-###Output files that are always created:
-
-**projectname_log.txt**
+**1\. projectname_log.txt**
 
 This file contains the detail for the statistical engine. This can be
 useful for detailed troubleshooting.
 
-**projectname-metadata.txt**
+**2\. projectname-metadata.txt**
 
 Each metadata will have a file of associations. Any associations
 indicated to be performed after initial variable selection (boosting)
@@ -271,7 +227,7 @@ is recorded here. Included are the information from the final general
 linear model (performed after the boosting) and the FDR corrected
 p-value (q-value). Can be opened as a text file or spreadsheet.
 
-**projectname-metadata.pdf**
+**3\. projectname-metadata.pdf**
 
 Any association that had a q-value less than or equal to the given
 significance threshold will be plotted here (default is 0.25; can be
@@ -283,112 +239,61 @@ a line of best fit. Two plots are given for MaAslin Methodology; the
 left being a raw data plot, the right being a corresponding partial
 residual plot.
 
-**projectname.pdf**
+**4\. projectname.pdf**
 
 Contains the biplot visualization. This visualization is presented as a build and can be affected by modifications in the R.script or by using commandline.
 
-**projectname.txt**
+**5\. projectname.txt**
 
 A collection of all entries in the projectname-metadata.pdf. Can be
 opened as a text file or spreadsheet.
 
-###Additional troubleshooting files when the commandline:
-
-**data.tsv**
+**6\. data.tsv (optional)**
 
 The data matrix that was read in (transposed). Useful for making sure
 the correct data was read in.
 
-**data.read.config**
+**7\. data.read.config (optional)**
 
 Can be used to read in the data.tsv.
 
-**metadata.tsv**
+**8\. metadata.tsv (optional)**
 
 The metadata that was read in (transposed). Useful for making sure the
 correct metadata was read in.
 
-**metadata.read.config**
+**9\. metadata.read.config (optional)**
 
 Can be used to read in the data.tsv.
 
-**read_merged.tsv**
+**10\. read_merged.tsv (optional)**
 
 The data and metadata merged (transposed). Useful for making sure the
 merging occurred correctly.
 
-**read_merged.read.config**
+**11\. read_merged.read.config (optional)**
 
 Can be used to read in the read_merged.tsv.
 
-**read_cleaned.tsv**
+**12\. read_cleaned.tsv (optional)**
 
 The data read in, merged, and then cleaned. After this process the
 data is written to this file for reference if needed.
 
-**read_cleaned.read.config**
+**13\. read_cleaned.read.config (optional)**
 
 Can be used to read in read_cleaned.tsv.
 
-**ProcessQC.txt**
+**14\. ProcessQC.txt (optional)**
 
 Contains quality control for the MaAsLin analysis. This includes
 information on the magnitude of outlier removal.
 
-**Run_Parameters.txt**
+**15\. Run_Parameters.txt (optional)**
+
 Contains an account of all the options used when running MaAsLin so the exact methodology can be recreated if needed.
 
-#H. Other Analysis Flows
-
-###1. All verses All
-The all verses all analysis flow is a way of manipulating how metadata are used. In this method there is a group of metadata that are always evaluated, as well there are a group that are added to this one at a time. To give a more concrete example: You may have metadata cage, diet, and treatment. You may always want to have the association of abundance evaluated controlling for cage but otherwise looking at the metadata one at a time. In this way the cage metadata is the \D2forced\D3 part of the evaluation while the others are not forced and evaluated in serial. The appropriate commandline to indicate this follows (placed in your args file if using sfle, otherwise added in the commandline call):
-
-> -a -F cage
-
--a indicates all verses all is being used, -F indicates which metadata are forced (multiple metadata can be given comma delimited as shown here -F metadata1,metadata2,metadata3). This does not bypass the feature selection method so the metadata that are not forced are subject to feature selection and may be removed before coming to the evaluation. If you want all the metadata that are not forced to be evaluated in serial you will need to turn off feature selection and will have a final combined commandline as seen here:
-
-> -a -F cage -s none
-
-#I. Troubleshooting
-
-###1\. (Only valid if using Sfle) ImportError: No module named sfle
-
-When using the command "scons output/maaslin/..." to run my projects I
-get the message:
-
-    ImportError: No module named sfle:
-      File "/home/user/sfle/SConstruct", line 2:
-        import sfle
-
-**Solution:** You need to update your path. On a linux or MacOS terminal
-in the sfle directory type the following.
-
-    export PATH=/usr/local/bin:`pwd`/src:$PATH
-    export PYTHONPATH=$PATH
-
-
-###2\. When trying to run a script I am told I do not have permission
-even though file permissions have been set for myself.
-
-**Solution:** Most likely, you need to set the main MaAsLin script
-(Maaslin.R) to executable.
-
-#J. Installation as an Automated Pipeline
-
-SflE (pronounced souffle), is a framework for automation and
-parallelization on a multiprocessor machine. MaAsLin has been
-developed to be compatible with this framework. More information can
-be found at
-[http://huttenhower.sph.harvard.edu/sfle](http://huttenhower.sph.harvard.edu/sfle). If
-interested in installing MaAsLin in a SflE environment. After
-installing SflE, download or move the complete maaslin directory into
-`sfle/input`. After setting up, one places all maaslin input files in
-`sfle/input/maaslin/input`. To run the automated pipeline and analyze
-all files in the `sfle/input/maaslin/input` directory, type: `scons output/maaslin`
-in a terminal in the sfle directory. This will produce
-output in the `sfle/output/maaslin` directory.
-
-#K. Commandline Options (Modifying Process and Figures)
+### Commandline Options ###
 
 Although we recommend the use of default options, commandline
 arguments exist to modify both MaAsLin methodology and figures. To see
@@ -396,9 +301,8 @@ an up-to-date listing of argument usage, in a terminal in the
 `maaslin/src` directory type `./Maaslin.R -h`.
 
 An additional input file (the args file) can be used to apply
-commandline arguments to a MaAsLin run. This is useful when using
-MaAsLin as an automated pipeline (using SflE) and is a way to document
-what commandline are used for different projects. The args file should
+commandline arguments to a MaAsLin run. This is a way to document
+what commandline args are used for different projects. The args file should
 be named the same as the *.pcl file except using the extension .args
 . This file should be placed in the `maaslin/input` directory with the
 other matching project input files. In this file please have one line
@@ -415,3 +319,75 @@ In this example MaAsLin is modified to produce verbose output for
 debugging (-v DEBUG), to change the threshold for making pdfs to a
 q-value equal to or less than 0.1 (-d 0.1), and to plot 
 5 data (bug) features in the biplot (-b 5).
+
+** All verses All **
+
+The all verses all analysis flow is a way of manipulating how metadata are used. In this method there is a group of metadata that are always evaluated, as well there are a group that are added to this one at a time. To give a more concrete example: You may have metadata cage, diet, and treatment. You may always want to have the association of abundance evaluated controlling for cage but otherwise looking at the metadata one at a time. In this way the cage metadata is the \D2forced\D3 part of the evaluation while the others are not forced and evaluated in serial. The appropriate commandline to indicate this follows:
+
+> -a -F cage
+
+-a indicates all verses all is being used, -F indicates which metadata are forced (multiple metadata can be given comma delimited as shown here -F metadata1,metadata2,metadata3). This does not bypass the feature selection method so the metadata that are not forced are subject to feature selection and may be removed before coming to the evaluation. If you want all the metadata that are not forced to be evaluated in serial you will need to turn off feature selection and will have a final combined commandline as seen here:
+
+> -a -F cage -s none
+
+### Troubleshooting ###
+
+When trying to run a script I am told I do not have permission
+even though file permissions have been set for myself.
+
+**Solution:** Most likely, you need to set the main MaAsLin script
+(Maaslin.R) to executable.
+
+
+## How to Run in Galaxy ##
+
+MaAsLin can be run in galaxy at : http://huttenhower.sph.harvard.edu/galaxy/
+
+Please refer to the Huttenhower Galaxy site for details on how to run MaAsLin in galaxy.
+
+## How to Run as an Automated Pipeline with Sfle ##
+SflE (pronounced souffle), is a framework for automation and
+parallelization on a multiprocessor machine. MaAsLin has been
+developed to be compatible with this framework. More information can
+be found at
+[http://huttenhower.sph.harvard.edu/sfle](http://huttenhower.sph.harvard.edu/sfle). If
+interested in installing MaAsLin in a SflE environment. After
+installing SflE, download or move the complete maaslin directory into
+`sfle/input`. After setting up, one places all maaslin input files (\*.pcl, \*.read.config, and optional \*.R and \*.args files) 
+in `sfle/input/maaslin/input`. The "\*" in the file names can be anything but need to be identical for all three files. 
+
+To run the automated pipeline and analyze
+all files in the `sfle/input/maaslin/input` directory, type: `scons output/maaslin`
+in a terminal in the sfle directory. This will produce
+output in the `sfle/output/maaslin` directory.
+
+** Troubleshooting **
+(Only valid if using Sfle) ImportError: No module named sfle
+
+When using the command "scons output/maaslin/..." to run my projects I
+get the message:
+
+    ImportError: No module named sfle:
+      File "/home/user/sfle/SConstruct", line 2:
+        import sfle
+
+**Solution:** You need to update your path. On a linux or MacOS terminal
+in the sfle directory type the following.
+
+    export PATH=/usr/local/bin:`pwd`/src:$PATH
+    export PYTHONPATH=$PATH
+
+## Related Projects and Scripts ##
+Other projects exist that may help in your analysis:
+
+** QiimeToMaAsLin **
+    QiimeToMaAsLin is a project that reformats abundance files from
+    Qiime for MaAsLin. Several formats of Qiime consensus lineages are
+    supported for this project. To download please visit
+    [https://bitbucket.org/biobakery/qiimetomaaslin](https://bitbucket.org/biobakery/qiimetomaaslin).
+
+** Merge_Metadata ** 
+    merge_metadata.py is a script included in the MaAsLin project to
+    generically merge a metadata file with a table of microbial (or
+    other) measurements. This script is located in `maaslin/src` and
+    is documented in `maaslin/doc/ Merge_Metadata_Read_Me.txt`
