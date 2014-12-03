@@ -345,38 +345,6 @@ MaAsLin can be run in galaxy at : http://huttenhower.sph.harvard.edu/galaxy/
 
 Please refer to the Huttenhower Galaxy site for details on how to run MaAsLin in galaxy.
 
-## How to Run as an Automated Pipeline with Sfle ##
-SflE (pronounced souffle), is a framework for automation and
-parallelization on a multiprocessor machine. MaAsLin has been
-developed to be compatible with this framework. More information can
-be found at
-[http://huttenhower.sph.harvard.edu/sfle](http://huttenhower.sph.harvard.edu/sfle). If
-interested in installing MaAsLin in a SflE environment. After
-installing SflE, download or move the complete maaslin directory into
-`sfle/input`. After setting up, one places all maaslin input files (\*.pcl, \*.read.config, and optional \*.R and \*.args files) 
-in `sfle/input/maaslin/input`. The "\*" in the file names can be anything but need to be identical for all three files. 
-
-To run the automated pipeline and analyze
-all files in the `sfle/input/maaslin/input` directory, type: `scons output/maaslin`
-in a terminal in the sfle directory. This will produce
-output in the `sfle/output/maaslin` directory.
-
-** Troubleshooting **
-(Only valid if using Sfle) ImportError: No module named sfle
-
-When using the command "scons output/maaslin/..." to run my projects I
-get the message:
-
-    ImportError: No module named sfle:
-      File "/home/user/sfle/SConstruct", line 2:
-        import sfle
-
-**Solution:** You need to update your path. On a linux or MacOS terminal
-in the sfle directory type the following.
-
-    export PATH=/usr/local/bin:`pwd`/src:$PATH
-    export PYTHONPATH=$PATH
-
 ## Related Projects and Scripts ##
 Other projects exist that may help in your analysis:
 
