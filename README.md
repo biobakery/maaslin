@@ -238,57 +238,53 @@ a line of best fit. Two plots are given for MaAslin Methodology; the
 left being a raw data plot, the right being a corresponding partial
 residual plot.
 
-**4\. projectname.pdf**
-
-Contains the biplot visualization. This visualization is presented as a build and can be affected by modifications in the R.script or by using commandline.
-
-**5\. projectname.txt**
+**4\. projectname.txt**
 
 A collection of all entries in the projectname-metadata.pdf. Can be
 opened as a text file or spreadsheet.
 
-**6\. data.tsv (optional)**
+**5\. data.tsv (optional)**
 
 The data matrix that was read in (transposed). Useful for making sure
 the correct data was read in.
 
-**7\. data.read.config (optional)**
+**6\. data.read.config (optional)**
 
 Can be used to read in the data.tsv.
 
-**8\. metadata.tsv (optional)**
+**7\. metadata.tsv (optional)**
 
 The metadata that was read in (transposed). Useful for making sure the
 correct metadata was read in.
 
-**9\. metadata.read.config (optional)**
+**8\. metadata.read.config (optional)**
 
 Can be used to read in the data.tsv.
 
-**10\. read_merged.tsv (optional)**
+**9\. read_merged.tsv (optional)**
 
 The data and metadata merged (transposed). Useful for making sure the
 merging occurred correctly.
 
-**11\. read_merged.read.config (optional)**
+**10\. read_merged.read.config (optional)**
 
 Can be used to read in the read_merged.tsv.
 
-**12\. read_cleaned.tsv (optional)**
+**11\. read_cleaned.tsv (optional)**
 
 The data read in, merged, and then cleaned. After this process the
 data is written to this file for reference if needed.
 
-**13\. read_cleaned.read.config (optional)**
+**12\. read_cleaned.read.config (optional)**
 
 Can be used to read in read_cleaned.tsv.
 
-**14\. ProcessQC.txt (optional)**
+**13\. ProcessQC.txt (optional)**
 
 Contains quality control for the MaAsLin analysis. This includes
 information on the magnitude of outlier removal.
 
-**15\. Run_Parameters.txt (optional)**
+**14\. Run_Parameters.txt (optional)**
 
 Contains an account of all the options used when running MaAsLin so the exact methodology can be recreated if needed.
 
