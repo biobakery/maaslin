@@ -2,7 +2,7 @@
 
 MaAsLin User Guide v3.1
 =======================
-September 2013
+December 2014
 
 Timothy Tickle and Curtis Huttenhower
 
