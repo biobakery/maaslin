@@ -241,7 +241,7 @@ residual plot.
 
 **4\. $PROJECTNAME.txt**
 
-A collection of all entries in the $PROJECTNAME-metadata.pdf. Can be
+A collection of all entries in the $PROJECTNAME-$METADATA.pdf. Can be
 opened as a text file or spreadsheet.
 
 **5\. QC/data.tsv **
