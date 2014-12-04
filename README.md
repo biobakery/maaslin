@@ -211,80 +211,81 @@ $ ./src/Maaslin.R -i input/maaslin_demo2.read.config demo.text maaslin_demo2.tsv
 ### Output Files ###
 
 The following files will be generated per MaAsLin run. In the
-following listing the term projectname refers to what you named your "\*.pcl" file without the extension.
+following listing the term $PROJECTNAME refers to what you named your "\*.pcl" file without the extension. There are four main types of output files. Additional files are created in a folder named "QC".
 
-**1\. projectname_log.txt**
+**1\. $PROJECTNAME_log.txt **
 
 This file contains the detail for the statistical engine. This can be
 useful for detailed troubleshooting.
 
-**2\. projectname-metadata.txt**
+**2\. $PROJECTNAME-$METADATA.txt**
 
-Each metadata will have a file of associations. Any associations
+Each metadata will have a file of associations. $METADATA
+is the metadata column name in the "\*.pcl" file. Any associations
 indicated to be performed after initial variable selection (boosting)
 is recorded here. Included are the information from the final general
 linear model (performed after the boosting) and the FDR corrected
 p-value (q-value). Can be opened as a text file or spreadsheet.
 
-**3\. projectname-metadata.pdf**
+**3\. $PROJECTNAME-$METADATA.pdf**
 
 Any association that had a q-value less than or equal to the given
 significance threshold will be plotted here (default is 0.25; can be
 changed using the commandline argument -d). If this file does not
-exist, the projectname-metadata.txt should not have an entry that is
+exist, the $PROJECTNAME-$METADATA.txt should not have an entry that is
 less than or equal to the threshold. Factor data is plotted as
 knotched box plots; continuous data is plotted as a scatter plot with
 a line of best fit. Two plots are given for MaAslin Methodology; the
 left being a raw data plot, the right being a corresponding partial
 residual plot.
 
-**4\. projectname.txt**
+**4\. $PROJECTNAME.txt**
 
-A collection of all entries in the projectname-metadata.pdf. Can be
+A collection of all entries in the $PROJECTNAME-metadata.pdf. Can be
 opened as a text file or spreadsheet.
 
-**5\. data.tsv (optional)**
+**5\. QC/data.tsv **
 
 The data matrix that was read in (transposed). Useful for making sure
 the correct data was read in.
 
-**6\. data.read.config (optional)**
+**6\. QC/data.read.config **
 
 Can be used to read in the data.tsv.
 
-**7\. metadata.tsv (optional)**
+**7\. QC/metadata.tsv **
 
 The metadata that was read in (transposed). Useful for making sure the
 correct metadata was read in.
 
-**8\. metadata.read.config (optional)**
+**8\. QC/metadata.read.config **
 
 Can be used to read in the data.tsv.
 
-**9\. read_merged.tsv (optional)**
+**9\. QC/read-Merged.tsv **
 
 The data and metadata merged (transposed). Useful for making sure the
 merging occurred correctly.
 
-**10\. read_merged.read.config (optional)**
+**10\. QC/read-Merged.read.config **
 
 Can be used to read in the read_merged.tsv.
 
-**11\. read_cleaned.tsv (optional)**
+**11\. QC/read_cleaned.tsv **
 
 The data read in, merged, and then cleaned. After this process the
 data is written to this file for reference if needed.
 
-**12\. read_cleaned.read.config (optional)**
+**12\. QC/read_cleaned.read.config **
 
 Can be used to read in read_cleaned.tsv.
 
-**13\. ProcessQC.txt (optional)**
+**13\. QC/ProcessQC.txt **
 
 Contains quality control for the MaAsLin analysis. This includes
 information on the magnitude of outlier removal.
 
-**14\. Run_Parameters.txt (optional)**
+**14\. QC/Run_Parameters.txt **
 
 Contains an account of all the options used when running MaAsLin so the exact methodology can be recreated if needed.
 
