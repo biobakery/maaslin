@@ -216,10 +216,25 @@ tempLog=FALSE
   dataMatrix = read.table(tempFileName, sep = tempDelimiter, as.is = TRUE, na.strings=c_astrNA, quote = "", comment.char = "")
   dataFrameDimension = dim(dataMatrix)
 
+  #Remove special characters from column names
+  tempColumns=gsub("[^a-zA-Z0-9_|,-]|@|\\?|\\]|\\[|\\^","_",tempColumns)
+  for(i in seq_along(dataMatrix[1,]))
+  {
+  	#First remove all special characters, then remove ",-" as these are
+        #part of the read.config organization
+	dataMatrix[1,i]=gsub("[^a-zA-Z0-9_|,-]|@|\\?|\\]|\\[|\\^","_",dataMatrix[1,i])
+	newColumnName=gsub("-|,","_",dataMatrix[1,i])
+	if(newColumnName!=dataMatrix[1,i])
+	{
+    	tempColumns=gsub(dataMatrix[1,i],newColumnName,tempColumns)
+    	dataMatrix[1,i]=newColumnName
+    }
+  }
+  
   #Get column names
   columnNameList = as.matrix(dataMatrix[1,])
   rowNameList = dataMatrix[1][[1]]
-
+  
   #Convert characters to vectors of indices
   tempColumns = funcParseIndexSlices(ifelse(is.na(tempColumns),"-",tempColumns), columnNameList)
   tempRows = funcParseIndexSlices(ifelse(is.na(tempRows),"-", tempRows), rowNameList)
@@ -349,6 +364,7 @@ defaultFile = NA
     matrixInformationList[[matrixInformationListCount]] = c(matrixName,fileName,delimiter,rows,columns)
     matrixInformationListCount = matrixInformationListCount + 1
   }
+
   return(matrixInformationList)
 }
 
