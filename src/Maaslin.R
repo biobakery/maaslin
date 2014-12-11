@@ -169,9 +169,9 @@ pArgs
   #Get positional arguments
   if( length( lsArgs$args ) != 2 ) { stop( print_help( pArgs ) ) }
   ### Output file name
-  strOutputTXT <- lsArgs$args[1]
+  strOutputTXT <- lsArgs$args[2]
   ### Input TSV data file
-  strInputTSV <- lsArgs$args[2]
+  strInputTSV <- lsArgs$args[1]
 
   # Get analysis method options
   # includes data transformations, model selection/regularization, regression models/links
@@ -254,7 +254,20 @@ pArgs
   logdebug(lsArgs, c_logrMaaslin)
 
   ### Output directory for the study based on the requested output file
-  outputDirectory = dirname(strOutputTXT)
+
+if (nchar(strOutputTXT) == 0)
+{print(paste("No output directory specified. Files will be logged to the current working directory"))
+outputDirectory = getwd()
+} else if (file.exists(strOutputTXT)){
+outputDirectory = strOutputTXT
+    
+} else {
+    dir.create(strOutputTXT)
+   outputDirectory = strOutputTXT 
+
+}
+
+
   ### Base name for the project based on the read.config name
   strBase <- sub("\\.[^.]*$", "", basename(strInputTSV))
 
