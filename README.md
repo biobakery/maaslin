@@ -211,14 +211,14 @@ Step 1: Transposing the pcl file to a tab separated file
 $ ./src/transpose.py < input/input.pcl > input.tsv
 
 Step 2: Running Maaslin
-$ ./src/Maaslin.R -i input/input.read.config outdir input.tsv
+$ ./src/Maaslin.R -i input/input.read.config input.tsv outputdir
 ```
 
 The following demo example is included with the package. An example call from the Maaslin folder for the demo data could be as follows.
 
 ```
 $ ./src/transpose.py < input/maaslin_demo2.pcl > maaslin_demo2.tsv
-$ ./src/Maaslin.R -i input/maaslin_demo2.read.config demo.text maaslin_demo2.tsv
+$ ./src/Maaslin.R -i input/maaslin_demo2.read.config maaslin_demo2.tsv outputdir
 ```
 
 ** 8\. Discover amazing associations in your results! **
