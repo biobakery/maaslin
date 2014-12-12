@@ -47,7 +47,7 @@ suppressMessages(library( optparse, warn.conflicts=FALSE, quietly=TRUE, verbose=
 
 
 ### Create command line argument parser
-pArgs <- OptionParser( usage = "%prog [options] <output.txt> <data.tsv>" )
+pArgs <- OptionParser( usage = "%prog [options] <data.tsv> <outputdir>" )
 
 # Input files for MaAsLin
 ## Data configuration file
