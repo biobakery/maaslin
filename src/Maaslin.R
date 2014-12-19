@@ -30,13 +30,13 @@ inlinedocs <- function(
 ) { return( pArgs ) }
 
 
-### Install packages if not already installed
+### Load packages
 vDepLibrary = c("agricolae", "gam", "gamlss", "gbm", "glmnet", "inlinedocs", "logging", "MASS", "nlme", "optparse", "outliers", "penalized", "pscl", "robustbase", "testthat")
 for(sDepLibrary in vDepLibrary)
 {
   if(! require(sDepLibrary, character.only=TRUE) )
   {
-    install.packages(pkgs=sDepLibrary, repos="http://cran.us.r-project.org")
+    stop(paste("Please install the required package:",sDepLibrary,sep=" "))
   }
 }
 
