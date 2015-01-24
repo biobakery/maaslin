@@ -30,13 +30,13 @@ inlinedocs <- function(
 ) { return( pArgs ) }
 
 
-### Install packages if not already installed
+### Load packages
 vDepLibrary = c("agricolae", "gam", "gamlss", "gbm", "glmnet", "inlinedocs", "logging", "MASS", "nlme", "optparse", "outliers", "penalized", "pscl", "robustbase", "testthat")
 for(sDepLibrary in vDepLibrary)
 {
   if(! require(sDepLibrary, character.only=TRUE) )
   {
-    install.packages(pkgs=sDepLibrary, repos="http://cran.us.r-project.org")
+    stop(paste("Please install the required package:",sDepLibrary,sep=" "))
   }
 }
 
@@ -47,7 +47,7 @@ suppressMessages(library( optparse, warn.conflicts=FALSE, quietly=TRUE, verbose=
 
 
 ### Create command line argument parser
-pArgs <- OptionParser( usage = "%prog [options] <output.txt> <data.tsv>" )
+pArgs <- OptionParser( usage = "%prog [options] <data.tsv> <outputdir>" )
 
 # Input files for MaAsLin
 ## Data configuration file
@@ -254,7 +254,7 @@ pArgs
   logdebug(lsArgs, c_logrMaaslin)
 
   ### Output directory for the study based on the requested output file
-
+  
 if (nchar(strOutputTXT) == 0)
 {print(paste("No output directory specified. Files will be logged to the current working directory"))
 outputDirectory = getwd()
@@ -266,7 +266,6 @@ outputDirectory = strOutputTXT
    outputDirectory = strOutputTXT 
 
 }
-
 
   ### Base name for the project based on the read.config name
   strBase <- sub("\\.[^.]*$", "", basename(strInputTSV))

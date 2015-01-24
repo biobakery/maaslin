@@ -196,16 +196,32 @@ default “*.R” script is available with the default MaAsLin project at
 maaslin/input/maaslin_demo2.R. This is an expert option and should
 only be used by someone very comfortable with the R language.
 
-** 6\. Run. **
+** 6\. Specify Output Directory **
 
-On the commandline call the Maaslin.R script. Please refer to the help (-h, --help) for command line options. If running from commandline, the PCL file will need to be transposed. A script is included in Maaslin for your convenience (src/transpose.py). The following example will have such a call included. An example call from the Maaslin folder for the demo data could be as follows.
+If you have a specific directory where the results must save, then specify it's location. If not, specify the name of the directory to create with it's path. E.g. If you want results to go the folder "Results" in your current path, specify "Results". If it must go to the directory "Results" in another location, specify "Path of other location/Results".
+
+** 7\. Run. **
+
+On the commandline call the Maaslin.R script. Please refer to the help (-h, --help) for command line options. If running from commandline, the PCL file will need to be transposed. A script is included in Maaslin for your convenience (src/transpose.py). 
+
+For an input file of name "input.pcl" with a read config file of name "input.read.config" and output directory name "outdir", the following is the generic call:
+
+```
+Step 1: Transposing the pcl file to a tab separated file
+$ ./src/transpose.py < input/input.pcl > input.tsv
+
+Step 2: Running Maaslin
+$ ./src/Maaslin.R -i input/input.read.config input.tsv outputdir
+```
+
+The following demo example is included with the package. An example call from the Maaslin folder for the demo data could be as follows.
 
 ```
 $ ./src/transpose.py < input/maaslin_demo2.pcl > maaslin_demo2.tsv
-$ ./src/Maaslin.R -i input/maaslin_demo2.read.config demo.text maaslin_demo2.tsv
+$ ./src/Maaslin.R -i input/maaslin_demo2.read.config maaslin_demo2.tsv outputdir
 ```
 
-** 7\. Discover amazing associations in your results! **
+** 8\. Discover amazing associations in your results! **
 
 
 ### Output Files ###
