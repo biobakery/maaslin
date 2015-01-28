@@ -25,7 +25,13 @@ function(
     dPenalizedAlpha = 0.95,
 	sAlternativeLibraryLocation = "/usr/share/biobakery",
 	strOutputTXT = "maaslin_demo2.tsv",
-	strInputTSV = "outputdir"
+	strInputTSV = "outputdir",
+	#*--------------------------------*
+	strInputR = NULL,
+	strRandomCovariates = NULL,
+	strForcedPredictors = NULL,
+	strNoImpute = NULL,
+    strDefaultLogging = "DEBUG" 
 	)					
 
 {
@@ -56,6 +62,12 @@ function(
 	lsArgs$options$sAlternativeLibraryLocation = sAlternativeLibraryLocation
 	lsArgs$args[1] =  strOutputTXT 
 	lsArgs$args[2] =  strInputTSV 
+	#*--------------------------------*
+	lsArgs$options$strInputR = strInputR
+	lsArgs$options$strRandomCovariates   =  strRandomCovariates
+	lsArgs$options$strForcedPredictors = strForcedPredictors
+	lsArgs$options$strNoImpute = strNoImpute
+	lsArgs$options$strVerbosity = strDefaultLogging   #Was set to DEBUG
 	return(lsArgs)					
 
 }
