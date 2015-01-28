@@ -1,0 +1,14 @@
+ID	Sample1	Sample2	Sample3	Sample4	Sample5	Sample6	Sample7	Sample8
+Bacteria|Actinobacteria|Actinobacteria|Bifidobacteriales|Bifidobacteriaceae|Bifidobacterium|1	0.0507585	0.0861117	0.00168464	0.0011966	0.0164305	0.00592628	0.0367439	0.0663809
+Bacteria|Actinobacteria|Actinobacteria|Coriobacteriales|Coriobacteriaceae|1008	0	0.166041	0.16004	0.0984803	0.127644	0	0.00320332	0
+Bacteria|Bacteroidetes|Bacteroidia|Bacteroidales|Bacteroidaceae|Bacteroides|101	0.0110852	0.0229631	0.019991	0.0329065	0.044465	0.020979	0	0.0450837
+Bacteria|Bacteroidetes|Bacteroidia|Bacteroidales|Prevotellaceae|1010	0.1993	0	0.134883	0.179251	0	0.065189	0.349727	0.254737
+Bacteria|Firmicutes|Bacilli|Lactobacillales|Enterococcaceae|1023	0.290198	0.0119232	0	0.00538471	0.351818	0.0321204	0.0192199	0
+Bacteria|Firmicutes|Bacilli|Lactobacillales|Unclassified|1013	0.0869312	0	0.0982704	0.0971641	0.101253	0.10691	0	0
+Bacteria|Firmicutes|Clostridia|Clostridiales|Lachnospiraceae|Anaerostipes|1026	0	0	0.143194	0	0.131957	0.142349	0.228754	0
+Bacteria|Firmicutes|Clostridia|Clostridiales|Lachnospiraceae|Roseburia|1032	0.233372	0.41157	0.280773	0.329065	0.010269	0	0.0380629	0
+Bacteria|Firmicutes|Clostridia|Clostridiales|Ruminococcaceae|1156	0.0641774	0.151248	0.0791779	0.0595908	0.00133498	0	0.00471076	0
+Bacteria|Firmicutes|Erysipelotrichi|Erysipelotrichales|Erysipelotrichaceae|Coprobacillus|1179	0	0.00971517	0.0049416	0.123489	0	0.380586	0	0.380998
+Bacteria|Firmicutes|Unclassified|1232	0.0641774	0.13535	0.0701932	0.0538471	0.0667488	0.0681522	0.127191	0.0622321
+Bacteria|Proteobacteria|Betaproteobacteria|Burkholderiales|Alcaligenaceae|Parasutterella|1344	0	0.00507838	0.0012354	0.00167524	0.0351201	0	0.00395704	0
+Bacteria|Proteobacteria|Gammaproteobacteria|Enterobacteriales|Enterobacteriaceae|Escherichia/Shigella|1532	0	0	0.00561545	0.017949	0.11296	0.177788	0.18843	0.190568

@@ -1,0 +1,26 @@
+Package: Maaslin
+Type: Package
+Title: Maaslin
+Version: 0.0.1
+Imports: agricolae,
+ gam,
+ gamlss,
+ gbm,
+ glmnet,
+ inlinedocs,
+ logging,
+ MASS,
+ nlme,
+ optparse,
+ outliers,
+ penalized,
+ pscl,
+ robustbase
+Date: 2014-12-04
+Author: Timothy Tickle<ttickle@hsph.harvard.edu>, Curtis Huttenhower <chuttenh@hsph.harvard.edu>
+Maintainer: Timothy Tickle <ttickle@hsph.harvard.edu>,Ayshwarya Subramanian<subraman@broadinstitute.org>,Lauren McIver<lauren.j.mciver@gmail.com>,George Weingart<george.weingart@gmail.com>
+Description: MaAsLin is a multivariate statistical framework that finds associations between clinical metadata and microbial community abundance or function. The clinical metadata can be of any type continuous (for example age and weight), boolean (sex, stool/biopsy), or discrete/factor (cohort groupings and phenotypes).  MaAsLin is best used in the case when you are associating many metadata with microbial measurements. When this is the case each metadatum can be a diffrent type.  For example, you could include age, weight, sex, cohort and phenotype in the same input file to be analyzed in the same MaAsLin run. The microbial measurements are expected to be normalized before using MaAsLin and so are proportional data ranging from 0 to 1.0
+License: MIT + file LICENSE
+VignetteBuilder: knitr
+Suggests: knitr, BiocStyle, BiocGenerics
+biocViews: Statistics, Metagenomics, Bioinformatics, Software
