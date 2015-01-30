@@ -112,7 +112,7 @@ working from a Qiime OTU output and have a metadata text file try using
 *QiimeToMaaslin* found at bitbucket. If you have a tab delimited file
 which matches the below .pcl description (for instance MetaPhlAn
 output) use the merge_metadata.py script provided in this project
-(`maaslin/src/merge_metadata.py`) and documented in
+(`maaslin/exec/merge_metadata.py`) and documented in
 `maaslin/doc/Merge_Metadata_Read_Me.txt`.
 
 ** PCL format description **
@@ -202,23 +202,23 @@ If you have a specific directory where the results must save, then specify it's 
 
 ** 7\. Run. **
 
-On the commandline call the Maaslin.R script. Please refer to the help (-h, --help) for command line options. If running from commandline, the PCL file will need to be transposed. A script is included in Maaslin for your convenience (src/transpose.py). 
+On the commandline call the Maaslin.R script. Please refer to the help (-h, --help) for command line options. If running from commandline, the PCL file will need to be transposed. A script is included in Maaslin for your convenience (exec/transpose.py). 
 
 For an input file of name "input.pcl" with a read config file of name "input.read.config" and output directory name "outdir", the following is the generic call:
 
 ```
 Step 1: Transposing the pcl file to a tab separated file
-$ ./src/transpose.py < input/input.pcl > input.tsv
+$ ./exec/transpose.py < input.pcl > input.tsv
 
 Step 2: Running Maaslin
-$ ./src/Maaslin.R -i input/input.read.config input.tsv outputdir
+$ ./R/Maaslin.R -i input.read.config input.tsv outputdir
 ```
 
 The following demo example is included with the package. An example call from the Maaslin folder for the demo data could be as follows.
 
 ```
-$ ./src/transpose.py < input/maaslin_demo2.pcl > maaslin_demo2.tsv
-$ ./src/Maaslin.R -i input/maaslin_demo2.read.config maaslin_demo2.tsv outputdir
+$ ./exec/transpose.py < input/maaslin_demo2.pcl > maaslin_demo2.tsv
+$ ./R/Maaslin.R -i input/maaslin_demo2.read.config maaslin_demo2.tsv outputdir
 ```
 
 ** 8\. Discover amazing associations in your results! **
@@ -310,20 +310,9 @@ Contains an account of all the options used when running MaAsLin so the exact me
 Although we recommend the use of default options, commandline
 arguments exist to modify both MaAsLin methodology and figures. To see
 an up-to-date listing of argument usage, in a terminal in the
-`maaslin/src` directory type `./Maaslin.R -h`.
+`maaslin/R` directory type `./Maaslin.R -h`.
 
-An additional input file (the args file) can be used to apply
-commandline arguments to a MaAsLin run. This is a way to document
-what commandline args are used for different projects. The args file should
-be named the same as the *.pcl file except using the extension .args
-. This file should be placed in the `maaslin/input` directory with the
-other matching project input files. In this file please have one line
-of arguments and values (if needed; some arguments are logical flags
-and do not require a value), each separated by a space. The contents
-of this file will be directly added to the commandline call for
-Maaslin.R. An example of the contents of an args file is given here.
-
-**Example.args:**
+**Example args:**
 
     -v DEBUG -d 0.1 -b 5
 
@@ -350,6 +339,9 @@ even though file permissions have been set for myself.
 **Solution:** Most likely, you need to set the main MaAsLin script
 (Maaslin.R) to executable.
 
+When trying to run with an args file it appears that these parameters are not applied to the run.
+
+**Solution:** The args file was used when running MaAsLin with sfle. Please provide the args on the command line or as options to the MaAsLin function.
 
 ## How to Run in Galaxy ##
 
@@ -369,5 +361,5 @@ Other projects exist that may help in your analysis:
 ** Merge_Metadata ** 
     merge_metadata.py is a script included in the MaAsLin project to
     generically merge a metadata file with a table of microbial (or
-    other) measurements. This script is located in `maaslin/src` and
+    other) measurements. This script is located in `maaslin/exec` and
     is documented in `maaslin/doc/ Merge_Metadata_Read_Me.txt`
