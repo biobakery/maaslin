@@ -1,7 +1,7 @@
-c_strDir <- file.path(getwd( ),"..")
+c_strDir <- file.path(getwd( ),"..","..")
 
-source(file.path(c_strDir,"lib","Constants.R"))
-source(file.path(c_strDir,"lib","Utility.R"))
+source(file.path(c_strDir,"R","lib","Constants.R"))
+source(file.path(c_strDir,"R","lib","Utility.R"))
 
 #Test Utilities
 context("Test funcGetLMResults")

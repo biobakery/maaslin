@@ -1,8 +1,9 @@
-c_strDir <- file.path(getwd( ),"..")
+c_strCWD <- getwd()
+c_strDir <- file.path(c_strCWD,"..","..")
 
-source(file.path(c_strDir,"lib","Constants.R"))
-strTestingDirectory = file.path(c_strDir,c_strTestingDirectory)
-sScriptMaaslin = file.path( c_strDir, "Maaslin.R" )
+source(file.path(c_strDir,"R","lib","Constants.R"))
+strTestingDirectory = c_strCWD
+sScriptMaaslin = file.path( c_strDir, "R","Maaslin.R" )
 
 context("Test Run From Commandline")
 

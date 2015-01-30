@@ -1,8 +1,8 @@
-c_strDir <- file.path(getwd( ),"..")
+c_strDir <- file.path(getwd( ),"..","..")
 
-source(file.path(c_strDir,"lib","Constants.R"))
-source(file.path(c_strDir,"lib","Utility.R"))
-source(file.path(c_strDir,"lib","AnalysisModules.R"))
+source(file.path(c_strDir,"R","lib","Constants.R"))
+source(file.path(c_strDir,"R","lib","Utility.R"))
+source(file.path(c_strDir,"R","lib","AnalysisModules.R"))
 
 # General setup
 covX1 = c(44.4, 45.9, 41.9, 53.3, 44.7, 44.1, 50.7, 45.2, 60.1)

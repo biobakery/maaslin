@@ -1,7 +1,8 @@
-c_strDir <- file.path(getwd( ),"..")
+c_strCWD <- getwd()
+c_strDir <- file.path(getwd( ),"..","..")
 
-source(file.path(c_strDir,"lib","Constants.R"))
-source(file.path(c_strDir,"lib","ValidateData.R"))
+source(file.path(c_strDir,"R","lib","Constants.R"))
+source(file.path(c_strDir,"R","lib","ValidateData.R"))
 
 context("Test funcIsValid")
 test_that("NA and NUll are false, all others are true",{
@@ -34,8 +35,8 @@ test_that("Test only strings are true",{
 })
 
 context("Test funcIsValidFileName")
-strFileSimpleRCFileAnswer = file.path(c_strDir,c_strTestingDirectory,c_strCorrectAnswers,"FuncWriteMatrixToReadConfigFile_SimpleAnswer.read.config")
-strFileUseAllRCFileAnswer = file.path(c_strDir,c_strTestingDirectory,c_strCorrectAnswers,"FuncWriteMatrixToReadConfigFile_AllAnswer.read.config")
+strFileSimpleRCFileAnswer = file.path(c_strCWD,c_strCorrectAnswers,"FuncWriteMatrixToReadConfigFile_SimpleAnswer.read.config")
+strFileUseAllRCFileAnswer = file.path(c_strCWD,c_strCorrectAnswers,"FuncWriteMatrixToReadConfigFile_AllAnswer.read.config")
 
 test_that("Test only strings pointing to existing files are true",{
   expect_equal(funcIsValidFileName(NA),FALSE)

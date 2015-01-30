@@ -85,7 +85,6 @@ c_sLogFileSuffix = "_log"
 c_cTableDelimiter="\t"
 
 #Testing Related
-c_strTestingDirectory = "testing"
 c_strCorrectAnswers = "answers"
 c_strTemporaryFiles = "tmp"
 c_strTestingInput = "input"
