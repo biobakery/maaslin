@@ -9,9 +9,10 @@ context("Test Run From Commandline")
 
 #Input Files
 sTestReadConfig = file.path(strTestingDirectory, c_strTestingInput, "TestMaaslin.read.config")
-sTestCustomR = file.path(strTestingDirectory, c_strTestingInput, "TestMaaslin.R")
-sTestMaaslinDirectory = file.path(strTestingDirectory, c_strTemporaryFiles, "testMaaslin")
-sTestOutput = file.path(sTestMaaslinDirectory,"TestMaaslin_Summary.txt")
+sTestTmpDirectory = file.path(strTestingDirectory, c_strTemporaryFiles)
+sTestMaaslinDirectory = file.path(sTestTmpDirectory, "testMaaslin")
+sTestOutput = file.path(sTestMaaslinDirectory,"TestMaaslin.txt")
+sTestOutputDir = file.path(sTestMaaslinDirectory)
 sTestTSV = file.path(strTestingDirectory, c_strTestingInput, "TestMaaslin.tsv")
 #Test file answers
 sTestOutputAnswer = file.path(strTestingDirectory, c_strCorrectAnswers, "TestMaaslin.tsv")
@@ -19,12 +20,17 @@ sTestOutputAnswer = file.path(strTestingDirectory, c_strCorrectAnswers, "TestMaa
 #Delete Test MaAsLin output
 unlink(sTestMaaslinDirectory, recursive=TRUE)
 #Make neccessary directories
+if (!file.exists(sTestTmpDirectory)) {
+    dir.create(sTestTmpDirectory)
+}
 dir.create(sTestMaaslinDirectory)
 dir.create(file.path(sTestMaaslinDirectory,"QC"))
 
-sCommand = paste(sScriptMaaslin, "-v", "ERROR", "-d", "0.25", "-r", "0.0001", "-p", "0.1", sTestOutput, sTestTSV, sTestReadConfig, sTestCustomR, sep=" ")
+setwd(c_strDir)
+sCommand = paste(sScriptMaaslin, "-v", "ERROR", "-d", "0.25", "-r", "0.0001", "-p", "0.1", sTestTSV,"-i",sTestReadConfig, sTestOutputDir, sep=" ")
 print(sCommand)
 system(sCommand)
+setwd(c_strCWD)
 
 sExpectedTitle = "\tVariable\tFeature\tValue\tCoefficient\tN\tN.not.0\tP.value\tQ.value"
 iExpectedNumberOfLines = 3
@@ -36,7 +42,7 @@ test_that("Make sure that the summary output file is what is expected (generally
 })
 
 lsDirectoryStructure = list.files(sTestMaaslinDirectory)
-lsDirectoryStructureAnswer = c(basename(sTestOutput),"QC","TestMaaslin-age.pdf","TestMaaslin-age.txt","TestMaaslin-dx.txt","TestMaaslin.pdf","TestMaaslin.txt")
+lsDirectoryStructureAnswer = c("QC","TestMaaslin-age.pdf","TestMaaslin-age.txt","TestMaaslin-dx.txt","TestMaaslin_log.txt","TestMaaslin.txt")
 test_that("Make sure the expected directory structure is created.",{
   expect_equal(sort(lsDirectoryStructure), sort(lsDirectoryStructureAnswer))
 })
