@@ -990,9 +990,9 @@ lsHistory,
 ### List recording p-values, association information, and QC counts
 strRandomFormula = NULL,
 ### Has the formula for random covariates
-fZeroInflate = FALSE
+fZeroInflated = FALSE
 ){
-  if(fZeroInflate)
+  if(fZeroInflated)
   {
     throw("There are no zero-inflated univariate models to perform your analysis.")
   }

@@ -78,7 +78,8 @@ context("Test funcBugHybrid")
 # multiple covariates, one call lm
 aiMetadata = c(1:5)
 aiData = c(iTaxon)
-dFreq = 0.5 / length( aiMetadata )
+lxParameters=list()
+lxParameters$dFreq = 0.5 / length( aiMetadata )
 dSig = 0.25
 dMinSamp = 0.1
 adP = c()
@@ -98,7 +99,7 @@ lsSigExpected[[3]] = lsCov3
 lsSigExpected[[4]] = lsCov4
 lsSigExpected[[5]] = lsCov5
 expectedReturn = list(adP=adPExpected,lsSig=lsSigExpected,lsQCCounts=QCExpected)
-receivedReturn = funcBugHybrid(iTaxon=iTaxon,frmeData=frmeTmp,lsData=lsData,aiMetadata=aiMetadata,dFreq=dFreq,dSig=dSig,dMinSamp=dMinSamp,adP=adP,lsSig=lsSig, strLog=NA,funcReg=funcReg,lsNonPenalizedPredictors=NULL,funcAnalysis=funcAnalysis,lsRandomCovariates=NULL,funcGetResult=funcGetResult)
+receivedReturn = funcBugHybrid(iTaxon=iTaxon,frmeData=frmeTmp,lsData=lsData,aiMetadata=aiMetadata,lxParameters=lxParameters,dSig=dSig,adP=adP,lsSig=lsSig, strLog=NA,funcReg=funcReg,lsNonPenalizedPredictors=NULL,funcAnalysis=funcAnalysis,lsRandomCovariates=NULL,funcGetResult=funcGetResult)
 receivedReturn$adP = round(receivedReturn$adP,5)
 
 vCoefs=receivedReturn$lsSig[[1]]$allCoefs
@@ -135,10 +136,10 @@ receivedReturn$lsSig[[4]]$std=round(receivedReturn$lsSig[[4]]$std,5)
 receivedReturn$lsSig[[5]]$std=round(receivedReturn$lsSig[[5]]$std,5)
 test_that("funcBugHybrid works with the lm option with multiple covariates.",{expect_equal(receivedReturn,expectedReturn)})
 
-
 # single covariate, single call lm
 aiMetadata = c(1)
-dFreq = 0.5 / length( aiMetadata )
+lxParameters=list()
+lxParameters$dFreq = 0.5 / length( aiMetadata )
 lsData$astrMetadata = names(frmeTmp)[aiMetadata]
 adPExpected = round(c(0.1081731),5)
 QCExpected = list(iLms=numeric(0))
@@ -152,7 +153,7 @@ lsSigExpected[[1]]$allCoefs= vdCoef
 lsSigExpected[[1]]$value = c(Covariate1=round(0.009718095,5))
 
 expectedReturn = list(adP=adPExpected,lsSig=lsSigExpected,lsQCCounts=QCExpected)
-receivedReturn = funcBugHybrid(iTaxon=iTaxon,frmeData=frmeTmp,lsData=lsData,aiMetadata=aiMetadata,dFreq=dFreq,dSig=dSig,dMinSamp=dMinSamp,adP=adP,lsSig=lsSig, strLog=NA,funcReg=funcReg,lsNonPenalizedPredictors=NULL,funcAnalysis=funcAnalysis,lsRandomCovariates=NULL,funcGetResult=funcGetResult)
+receivedReturn = funcBugHybrid(iTaxon=iTaxon,frmeData=frmeTmp,lsData=lsData,aiMetadata=aiMetadata,lxParameters=lxParameters,dSig=dSig,adP=adP,lsSig=lsSig, strLog=NA,funcReg=funcReg,lsNonPenalizedPredictors=NULL,funcAnalysis=funcAnalysis,lsRandomCovariates=NULL,funcGetResult=funcGetResult)
 receivedReturn$adP = round(receivedReturn$adP,5)
 
 vCoefs=receivedReturn$lsSig[[1]]$allCoefs
@@ -165,13 +166,13 @@ receivedReturn$lsSig[[1]]$value=vValue
 receivedReturn$lsSig[[1]]$std=round(0.005278468,5)
 test_that("funcBugHybrid works with the lm option with 1 covariates.",{expect_equal(receivedReturn,expectedReturn)})
 
-
 # multiple covariate, single call univariate
 funcReg = NA
 funcAnalysis = funcDoUnivariate
 funcGetResult = NA
 aiMetadata = c(3,1,2)
-dFreq = 0.5 / length( aiMetadata )
+lxParameters=list()
+lxParameters$dFreq = 0.5 / length( aiMetadata )
 lsData$astrMetadata = names(frmeTmp)[aiMetadata]
 adPExpected = round(c(1.0,1.0,0.09679784,0.21252205),5)
 QCExpected = list(iLms=numeric(0))
@@ -228,17 +229,17 @@ lsSigExpected[[3]] = lsCov3
 lsSigExpected[[4]] = lsCov4
 
 expectedReturn = list(adP=adPExpected,lsSig=lsSigExpected,lsQCCounts=QCExpected)
-receivedReturn = funcBugHybrid(iTaxon=iTaxon,frmeData=frmeTmp,lsData=lsData,aiMetadata=aiMetadata,dFreq=dFreq,dSig=dSig,dMinSamp=dMinSamp,adP=adP,lsSig=lsSig, strLog=NA,funcReg=funcReg,lsNonPenalizedPredictors=NULL,funcAnalysis=funcAnalysis,lsRandomCovariates=NULL,funcGetResult=funcGetResult)
+receivedReturn = funcBugHybrid(iTaxon=iTaxon,frmeData=frmeTmp,lsData=lsData,aiMetadata=aiMetadata,lxParameters=lxParameters,dSig=dSig,adP=adP,lsSig=lsSig, strLog=NA,funcReg=funcReg,lsNonPenalizedPredictors=NULL,funcAnalysis=funcAnalysis,lsRandomCovariates=NULL,funcGetResult=funcGetResult)
 receivedReturn$adP = round(receivedReturn$adP,5)
 test_that("funcBugHybrid works with the univariate option with 3 covariates.",{expect_equal(receivedReturn,expectedReturn)})
-
 
 # single covariate, single call univariate
 funcReg = NA
 funcAnalysis = funcDoUnivariate
 funcGetResult = NA
 aiMetadata = c(1)
-dFreq = 0.5 / length( aiMetadata )
+lxParameters=list()
+lxParameters$dFreq = 0.5 / length( aiMetadata )
 lsData$astrMetadata = names(frmeTmp)[aiMetadata]
 adPExpected = round(c(0.09679784),5)
 QCExpected = list(iLms=numeric(0))
@@ -246,10 +247,9 @@ lsSigExpected = list()
 lsSigExpected[[1]] = lsCov3
 
 expectedReturn = list(adP=adPExpected,lsSig=lsSigExpected,lsQCCounts=QCExpected)
-receivedReturn = funcBugHybrid(iTaxon=iTaxon,frmeData=frmeTmp,lsData=lsData,aiMetadata=aiMetadata,dFreq=dFreq,dSig=dSig,dMinSamp=dMinSamp,adP=adP,lsSig=lsSig, strLog=NA,funcReg=funcReg,lsNonPenalizedPredictors=NULL,funcAnalysis=funcAnalysis,lsRandomCovariates=NULL,funcGetResult=funcGetResult)
+receivedReturn = funcBugHybrid(iTaxon=iTaxon,frmeData=frmeTmp,lsData=lsData,aiMetadata=aiMetadata,lxParameters=lxParameters,dSig=dSig,adP=adP,lsSig=lsSig, strLog=NA,funcReg=funcReg,lsNonPenalizedPredictors=NULL,funcAnalysis=funcAnalysis,lsRandomCovariates=NULL,funcGetResult=funcGetResult)
 receivedReturn$adP = round(receivedReturn$adP,5)
 test_that("funcBugHybrid works with the univariate option with 1 covariates.",{expect_equal(receivedReturn,expectedReturn)})
-
 
 context("Test funcBugs")
 #One LM run
@@ -257,7 +257,8 @@ frmeData=frmeTmp
 aiMetadata=c(1)
 aiData=c(iTaxon)
 strData=NA
-dFreq= 0.5 / length( aiMetadata )
+lxParameters=list()
+lxParameters$dFreq= 0.5 / length( aiMetadata )
 dSig=0.25
 dMinSamp=0.1
 strDirOut=NA
@@ -272,7 +273,7 @@ lsData$astrMetadata = names(frmeTmp)[aiMetadata]
 QCExpected = list(iLms=numeric(0))
 
 expectedReturn = list(aiReturnBugs=aiData,lsQCCounts=QCExpected)
-receivedReturn = funcBugs(frmeData=frmeData, lsData=lsData, aiMetadata=aiMetadata, aiData=aiData, strData=strData, dFreq=dFreq, dSig=dSig, dMinSamp=dMinSamp,strDirOut=strDirOut, funcReg=funcReg,lsNonPenalizedPredictors=lsNonPenalizedPredictors,funcAnalysis=funcAnalysis,lsRandomCovariates=lsRandomCovariates,funcGetResults=funcGetResults,fDoRPlot=fDoRPlot)
+receivedReturn = funcBugs(frmeData=frmeData, lsData=lsData, aiMetadata=aiMetadata, aiData=aiData, strData=strData, lxParameters=lxParameters, dSig=dSig, strDirOut=strDirOut, funcReg=funcReg,lsNonPenalizedPredictors=lsNonPenalizedPredictors,funcAnalysis=funcAnalysis,lsRandomCovariates=lsRandomCovariates,funcGetResults=funcGetResults,fDoRPlot=fDoRPlot)
 
 test_that("funcBugs works with the lm option with 1 covariate.",{expect_equal(receivedReturn,expectedReturn)})
 
@@ -281,7 +282,8 @@ frmeData=frmeTmp
 aiMetadata=c(1:5)
 aiData=c(iTaxon)
 strData=NA
-dFreq= 0.5 / length( aiMetadata )
+lxParameters=list()
+lxParameters$dFreq= 0.5 / length( aiMetadata )
 dSig=0.25
 dMinSamp=0.1
 strDirOut=NA
@@ -296,7 +298,7 @@ lsData$astrMetadata = names(frmeTmp)[aiMetadata]
 QCExpected = list(iLms=numeric(0))
 
 expectedReturn = list(aiReturnBugs=aiData,lsQCCounts=QCExpected)
-receivedReturn = funcBugs(frmeData=frmeData, lsData=lsData, aiMetadata=aiMetadata, aiData=aiData, strData=strData, dFreq=dFreq, dSig=dSig, dMinSamp=dMinSamp,strDirOut=strDirOut, funcReg=funcReg,lsNonPenalizedPredictors=lsNonPenalizedPredictors,funcAnalysis=funcAnalysis,lsRandomCovariates=lsRandomCovariates,funcGetResults=funcGetResults,fDoRPlot=fDoRPlot)
+receivedReturn = funcBugs(frmeData=frmeData, lsData=lsData, aiMetadata=aiMetadata, aiData=aiData, strData=strData, lxParameters=lxParameters, dSig=dSig, strDirOut=strDirOut, funcReg=funcReg,lsNonPenalizedPredictors=lsNonPenalizedPredictors,funcAnalysis=funcAnalysis,lsRandomCovariates=lsRandomCovariates,funcGetResults=funcGetResults,fDoRPlot=fDoRPlot)
 
 print("START START")
 print(expectedReturn)
