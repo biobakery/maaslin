@@ -1,3 +1,31 @@
+### Set the default run options
+lsArgs = list()					 
+lsArgs$strInputConfig = NULL
+lsArgs$strInputR = NULL
+lsArgs$dSignificanceLevel =  0.25	 
+lsArgs$dMinAbd = 0.0001
+lsArgs$dMinSamp = 0.1
+lsArgs$dOutlierFence = 0
+lsArgs$dPOutlier = 0.05	 
+lsArgs$strRandomCovariates = NULL
+lsArgs$strMultTestCorrection = "BH" 
+lsArgs$fZeroInflated = FALSE
+lsArgs$strModelSelection = "boost" 
+lsArgs$strMethod = "lm"
+lsArgs$strTransform = "asinsqrt"
+lsArgs$fNoQC = FALSE
+lsArgs$strForcedPredictors = NULL
+lsArgs$strNoImpute = NULL
+lsArgs$strVerbosity = "DEBUG"
+lsArgs$fOmitLogFile = FALSE
+lsArgs$fInvert = FALSE
+lsArgs$dSelectionFrequency = NA
+lsArgs$fAllvAll = FALSE
+lsArgs$fPlotNA = FALSE
+lsArgs$dPenalizedAlpha = 0.95
+lsArgs$sAlternativeLibraryLocation = NULL
+
+
 Maaslinfn <- function(
 ### The main function manages the following:
 ### 1. Optparse arguments are checked
@@ -14,43 +42,64 @@ Maaslinfn <- function(
 ### 10. An analysis method is performed on the model (optionally boosted model).
 ### 11. Data is summarized and PDFs are created for significant associations
 ### (those whose q-values {BH FDR correction} are <= the threshold given in the optional arguments.
-lsArgs
-### Parsed commandline arguments
-){
+strInputTSV,
+strOutputDIR,
+strInputConfig=lsArgs$strInputConfig,
+strInputR = lsArgs$strInputR,
+dSignificanceLevel = lsArgs$dSignificanceLevel,	
+dMinAbd = lsArgs$dMinAbd,
+dMinSamp = lsArgs$dMinSamp,
+dOutlierFence = lsArgs$dOutlierFence,
+dPOutlier = lsArgs$dPOutlier,
+strRandomCovariates = lsArgs$strRandomCovariates,
+strMultTestCorrection = lsArgs$strMultTestCorrection,
+fZeroInflated = lsArgs$fZeroInflated,
+strModelSelection = lsArgs$strModelSelection,
+strMethod = lsArgs$strMethod,
+strTransform = lsArgs$strTransform,
+fNoQC = lsArgs$fNoQC,
+strForcedPredictors = lsArgs$strForcedPredictors,
+strNoImpute = lsArgs$strNoImpute,
+strVerbosity = lsArgs$strVerbosity,
+fOmitLogFile = lsArgs$fOmitLogFile,
+fInvert = lsArgs$fInvert,
+dSelectionFrequency = lsArgs$dSelectionFrequency,
+fAllvAll = lsArgs$fAllvAll,
+fPlotNA = lsArgs$fPlotNA,
+dPenalizedAlpha = lsArgs$dPenalizedAlpha,
+sAlternativeLibraryLocation = lsArgs$sAlternativeLibraryLocation)
+{
+
+  ### Logging class
   suppressMessages(library( logging, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
-  
-  #logdebug("lsArgs", c_logrMaaslin)
-  #logdebug(paste(lsArgs,sep=" "), c_logrMaaslin)
 
   # Parse parameters
   lsForcedParameters = NULL
-  if(!is.null(lsArgs$options$strForcedPredictors))
+  if(!is.null(strForcedPredictors))
   {
-    lsForcedParameters  = unlist(strsplit(lsArgs$options$strForcedPredictors,","))
+    lsForcedParameters  = unlist(strsplit(strForcedPredictors,","))
   }
   xNoImpute = NULL
-  if(!is.null(lsArgs$options$strNoImpute))
+  if(!is.null(strNoImpute))
   {
-    xNoImpute = unlist(strsplit(lsArgs$options$strNoImpute,"[,]"))
+    xNoImpute = unlist(strsplit(strNoImpute,"[,]"))
   }
   lsRandomCovariates = NULL
-  if(!is.null(lsArgs$options$strRandomCovariates))
+  if(!is.null(strRandomCovariates))
   {
-    lsRandomCovariates = unlist(strsplit(lsArgs$options$strRandomCovariates,"[,]"))
+    lsRandomCovariates = unlist(strsplit(strRandomCovariates,"[,]"))
   }
-
- 
   
   #If logging is not an allowable value, inform user and set to INFO
-  if(length(intersect(names(loglevels), c(lsArgs$options$strVerbosity))) == 0)
+  if(length(intersect(names(loglevels), c(strVerbosity))) == 0)
   {
     print(paste("Maaslin::Error. Did not understand the value given for logging, please use any of the following: DEBUG,INFO,WARN,ERROR."))
-    print(paste("Maaslin::Warning. Setting logging value to \"",strDefaultLogging,"\"."))
+    print(paste("Maaslin::Warning. Setting logging value to \"",strVerbosity,"\"."))
   }
 
   
   # Do not allow  mixed effect models and zero inflated models, don't have implemented
-  if(lsArgs$options$fZeroInflated && !is.null(lsArgs$options$strRandomCovariates))
+  if(fZeroInflated && !is.null(strRandomCovariates))
   {
     stop("MaAsLin Error:: The combination of zero inflated models and mixed effects models are not supported.")
   }
@@ -58,39 +107,32 @@ lsArgs
   ### Create logger
   c_logrMaaslin <- getLogger( "maaslin" )
   addHandler( writeToConsole, c_logrMaaslin )
-  setLevel( lsArgs$options$strVerbosity, c_logrMaaslin )
-
-  #Get positional arguments
-  if( length( lsArgs$args ) != 2 ) { stop( print_help( pArgs ) ) }
-  ### Output file name
-  strOutputTXT <- lsArgs$args[2]
-  ### Input TSV data file
-  strInputTSV <- lsArgs$args[1]
+  setLevel( strVerbosity, c_logrMaaslin )
 
   # Get analysis method options
   # includes data transformations, model selection/regularization, regression models/links
-  lsArgs$options$strModelSelection = tolower(lsArgs$options$strModelSelection)
-  if(!lsArgs$options$strModelSelection %in% c("none","boost","penalized","forward","backward"))
+  strModelSelection = tolower(strModelSelection)
+  if(!strModelSelection %in% c("none","boost","penalized","forward","backward"))
   {
-    logerror(paste("Received an invalid value for the selection argument, received '",lsArgs$options$strModelSelection,"'"), c_logrMaaslin)
+    logerror(paste("Received an invalid value for the selection argument, received '",strModelSelection,"'"), c_logrMaaslin)
     stop( print_help( pArgs ) )
   }
-  lsArgs$options$strMethod = tolower(lsArgs$options$strMethod)
-  if(!lsArgs$options$strMethod %in% c("univariate","lm","neg_binomial","quasi"))
+  strMethod = tolower(strMethod)
+  if(!strMethod %in% c("univariate","lm","neg_binomial","quasi"))
   {
-    logerror(paste("Received an invalid value for the method argument, received '",lsArgs$options$strMethod,"'"), c_logrMaaslin)
+    logerror(paste("Received an invalid value for the method argument, received '",strMethod,"'"), c_logrMaaslin)
     stop( print_help( pArgs ) )
   }
-  lsArgs$options$strTransform = tolower(lsArgs$options$strTransform)
-  if(!lsArgs$options$strTransform %in% c("none","asinsqrt"))
+  strTransform = tolower(strTransform)
+  if(!strTransform %in% c("none","asinsqrt"))
   {
-    logerror(paste("Received an invalid value for the transform/link argument, received '",lsArgs$options$strTransform,"'"), c_logrMaaslin)
+    logerror(paste("Received an invalid value for the transform/link argument, received '",strTransform,"'"), c_logrMaaslin)
     stop( print_help( pArgs ) )
   }
 
-  if(!lsArgs$options$strMultTestCorrection %in% c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY"))
+  if(!strMultTestCorrection %in% c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY"))
   {
-    logerror(paste("Received an invalid value for the multiple testing correction argument, received '",lsArgs$options$strMultTestCorrection,"'"), c_logrMaaslin)
+    logerror(paste("Received an invalid value for the multiple testing correction argument, received '",strMultTestCorrection,"'"), c_logrMaaslin)
     stop( print_help( pArgs ) )
   }
 
@@ -120,7 +162,7 @@ lsArgs
   # If this does not have the lib file then go for the alt lib
   if( !file.exists(strDir) )
   {
-    lsPotentialListLocations = dir( path = lsArgs$options$sAlternativeLibraryLocation, pattern = "lib", recursive = TRUE, include.dirs = TRUE)
+    lsPotentialListLocations = dir( path = sAlternativeLibraryLocation, pattern = "lib", recursive = TRUE, include.dirs = TRUE)
     if( length( lsPotentialListLocations ) > 0 )
     {
       sLibraryPath = file.path( "maaslin","src","lib" )
@@ -131,7 +173,7 @@ lsArgs
         # Also checks before hand to make sure the path is atleast as long as the library path so no errors occur
         if ( substring( strSearchDir, 1 + nchar( strSearchDir ) - iLibraryPathLength ) == sLibraryPath )
         {
-          strDir = file.path( lsArgs$options$sAlternativeLibraryLocation, strSearchDir )
+          strDir = file.path( sAlternativeLibraryLocation, strSearchDir )
           break
         }
       }
@@ -152,32 +194,29 @@ lsArgs
   }
 
   # Get analysis modules
-  afuncVariableAnalysis = funcGetAnalysisMethods(lsArgs$options$strModelSelection,lsArgs$options$strTransform,lsArgs$options$strMethod,lsArgs$options$fZeroInflated)
+  afuncVariableAnalysis = funcGetAnalysisMethods(strModelSelection,strTransform,strMethod,fZeroInflated)
 
   # Set up parameters for variable selection
-  lxParameters = list(dFreq=lsArgs$options$dSelectionFrequency, dPAlpha=lsArgs$options$dPenalizedAlpha)
-  if((lsArgs$options$strMethod == "lm")||(lsArgs$options$strMethod == "univariate"))
+  lxParameters = list(dFreq=dSelectionFrequency, dPAlpha=dPenalizedAlpha)
+  if((strMethod == "lm")||(strMethod == "univariate"))
   { lxParameters$sFamily = "gaussian"
-  } else if(lsArgs$options$strMethod == "neg_binomial"){ lxParameters$sFamily = "binomial"
-  } else if(lsArgs$options$strMethod == "quasi"){ lxParameters$sFamily = "poisson"}
+  } else if(strMethod == "neg_binomial"){ lxParameters$sFamily = "binomial"
+  } else if(strMethod == "quasi"){ lxParameters$sFamily = "poisson"}
 
   #Indicate start
   logdebug("Start MaAsLin", c_logrMaaslin)
-  #Log commandline arguments
-  logdebug("Commandline Arguments", c_logrMaaslin)
-  logdebug(lsArgs, c_logrMaaslin)
 
   ### Output directory for the study based on the requested output file
   
-if (nchar(strOutputTXT) == 0)
+if (nchar(strOutputDIR) == 0)
 {print(paste("No output directory specified. Files will be logged to the current working directory"))
 outputDirectory = getwd()
-} else if (file.exists(strOutputTXT)){
-outputDirectory = strOutputTXT
+} else if (file.exists(strOutputDIR)){
+outputDirectory = strOutputDIR
     
 } else {
-    dir.create(strOutputTXT)
-   outputDirectory = strOutputTXT 
+    dir.create(strOutputDIR)
+   outputDirectory = strOutputDIR 
 
 }
 
@@ -205,7 +244,7 @@ outputDirectory = strOutputTXT
   }
 
   #Read file
-  inputFileData = funcReadMatrices(lsArgs$options$strInputConfig, strInputTSV, log=TRUE)
+  inputFileData = funcReadMatrices(strInputConfig, strInputTSV, log=TRUE)
   if(is.null(inputFileData[[c_strMatrixMetadata]])) { names(inputFileData)[1] <- c_strMatrixMetadata }
   if(is.null(inputFileData[[c_strMatrixData]])) { names(inputFileData)[2] <- c_strMatrixData }
 
@@ -259,7 +298,7 @@ outputDirectory = strOutputTXT
 
   #Load script if it exists, stop on error
   funcProcess <- NULL
-  if(!is.null(funcSourceScript(lsArgs$options$strInputR))){funcProcess <- get(c_strCustomProcessFunction)}
+  if(!is.null(funcSourceScript(strInputR))){funcProcess <- get(c_strCustomProcessFunction)}
 
   #Clean the data and update the current data list to the cleaned data list
   funcTransformData = afuncVariableAnalysis[[c_iTransform]]
@@ -267,15 +306,15 @@ outputDirectory = strOutputTXT
   lsRet = list(frmeData=frmeData, aiData=aiData, aiMetadata=aiMetadata, lsQCCounts=lsQCCounts, liNaIndices=c())
 
   viNotTransformedDataIndices = c()
-  if(!lsArgs$options$fNoQC)
+  if(!fNoQC)
   {
     c_logrMaaslin$info( "Running quality control." )
-    lsRet = funcClean( frmeData=frmeData, funcDataProcess=funcProcess, aiMetadata=aiMetadata, aiData=aiData, lsQCCounts=lsData$lsQCCounts, astrNoImpute=xNoImpute, dMinSamp = lsArgs$options$dMinSamp, dMinAbd = lsArgs$options$dMinAbd, dFence=lsArgs$options$dOutlierFence, funcTransform=funcTransformData, dPOutlier=lsArgs$options$dPOutlier)
+    lsRet = funcClean( frmeData=frmeData, funcDataProcess=funcProcess, aiMetadata=aiMetadata, aiData=aiData, lsQCCounts=lsData$lsQCCounts, astrNoImpute=xNoImpute, dMinSamp = dMinSamp, dMinAbd = dMinAbd, dFence=dOutlierFence, funcTransform=funcTransformData, dPOutlier=dPOutlier)
 
     viNotTransformedDataIndices = lsRet$viNotTransformedData
 
     #If using a count based model make sure all are integer (QCing can add in numeric values during interpolation for example)
-    if(lsArgs$options$strMethod %in% c_vCountBasedModels)
+    if(strMethod %in% c_vCountBasedModels)
     {
       c_logrMaaslin$info( "Assuring the data matrix is integer." )
       for(iDataIndex in aiData)
@@ -312,7 +351,7 @@ outputDirectory = strOutputTXT
   lsRet$astrMetadata = astrMetadata
 
   # If plotting NA data reset the NA metadata indices to empty so they will not be excluded
-  if(lsArgs$options$fPlotNA)
+  if(fPlotNA)
   {
     lsRet$liNaIndices = list()
   }
@@ -331,14 +370,14 @@ outputDirectory = strOutputTXT
   #Indicate if the residuals plots should occur
   fDoRPlot=TRUE
   #Should not occur for univariates
-  if(lsArgs$options$strMethod %in% c("univariate")){ fDoRPlot=FALSE }
+  if(strMethod %in% c("univariate")){ fDoRPlot=FALSE }
 
   #Run analysis
-  alsRetBugs = funcBugs( frmeData=lsRet$frmeData, lsData=lsRet, aiMetadata=lsRet$aiMetadata, aiData=lsRet$aiData, aiNotTransformedData=viNotTransformedDataIndices, strData=strBase, dSig=lsArgs$options$dSignificanceLevel, fInvert=lsArgs$options$fInvert,
+  alsRetBugs = funcBugs( frmeData=lsRet$frmeData, lsData=lsRet, aiMetadata=lsRet$aiMetadata, aiData=lsRet$aiData, aiNotTransformedData=viNotTransformedDataIndices, strData=strBase, dSig=dSignificanceLevel, fInvert=fInvert,
         strDirOut=outputDirectory, funcReg=afuncVariableAnalysis[[c_iSelection]], funcTransform=funcTransformData, funcUnTransform=afuncVariableAnalysis[[c_iUnTransform]], lsNonPenalizedPredictors=lsForcedParameters,
-        funcAnalysis=afuncVariableAnalysis[[c_iAnalysis]], lsRandomCovariates=lsRandomCovariates, funcGetResults=afuncVariableAnalysis[[c_iResults]], fDoRPlot=fDoRPlot, fOmitLogFile=lsArgs$options$fOmitLogFile,
-        fAllvAll=lsArgs$options$fAllvAll, liNaIndices=lsRet$liNaIndices, lxParameters=lxParameters, strTestingCorrection=lsArgs$options$strMultTestCorrection, 
-        fIsUnivariate=afuncVariableAnalysis[[c_iIsUnivariate]], fZeroInflated=lsArgs$options$fZeroInflated )
+        funcAnalysis=afuncVariableAnalysis[[c_iAnalysis]], lsRandomCovariates=lsRandomCovariates, funcGetResults=afuncVariableAnalysis[[c_iResults]], fDoRPlot=fDoRPlot, fOmitLogFile=fOmitLogFile,
+        fAllvAll=fAllvAll, liNaIndices=lsRet$liNaIndices, lxParameters=lxParameters, strTestingCorrection=strMultTestCorrection, 
+        fIsUnivariate=afuncVariableAnalysis[[c_iIsUnivariate]], fZeroInflated=fZeroInflated )
 
   #Write QC files only in certain modes of verbosity
   if( c_logrMaaslin$level <= loglevels["DEBUG"] ) {
@@ -347,28 +386,28 @@ outputDirectory = strOutputTXT
     ### Write out the parameters used in the run
     unlink(file.path(strQCDir,"Run_Parameters.txt"))
     funcWrite("Parameters used in the MaAsLin run", file.path(strQCDir,"Run_Parameters.txt"))
-    funcWrite(paste("Optional input read.config file=",lsArgs$options$strInputConfig), file.path(strQCDir,"Run_Parameters.txt"))
-    funcWrite(paste("Optional R file=",lsArgs$options$strInputR), file.path(strQCDir,"Run_Parameters.txt"))
-    funcWrite(paste("FDR threshold for pdf generation=",lsArgs$options$dSignificanceLevel), file.path(strQCDir,"Run_Parameters.txt"))
-    funcWrite(paste("Minimum relative abundance=",lsArgs$options$dMinAbd), file.path(strQCDir,"Run_Parameters.txt"))
-    funcWrite(paste("Minimum percentage of samples with measurements=",lsArgs$options$dMinSamp), file.path(strQCDir,"Run_Parameters.txt"))
-    funcWrite(paste("The fence used to define outliers with a quantile based analysis. If set to 0, the Grubbs test was used=",lsArgs$options$dOutlierFence), file.path(strQCDir,"Run_Parameters.txt"))
-    funcWrite(paste("Ignore if the Grubbs test was not used. The significance level used as a cut-off to define outliers=",lsArgs$options$dPOutlier), file.path(strQCDir,"Run_Parameters.txt"))
-    funcWrite(paste("These covariates are treated as random covariates and not fixed covariates=",lsArgs$options$strRandomCovariates), file.path(strQCDir,"Run_Parameters.txt"))
-    funcWrite(paste("The type of multiple testing correction used=",lsArgs$options$strMultTestCorrection), file.path(strQCDir,"Run_Parameters.txt"))
-    funcWrite(paste("Zero inflated inference models were turned on=",lsArgs$options$fZeroInflated), file.path(strQCDir,"Run_Parameters.txt"))
-    funcWrite(paste("Feature selection step=",lsArgs$options$strModelSelection), file.path(strQCDir,"Run_Parameters.txt"))
-    funcWrite(paste("Statistical inference step=",lsArgs$options$strMethod), file.path(strQCDir,"Run_Parameters.txt"))
-    funcWrite(paste("Numeric transform used=",lsArgs$options$strTransform), file.path(strQCDir,"Run_Parameters.txt"))
-    funcWrite(paste("Quality control was run=",!lsArgs$options$fNoQC), file.path(strQCDir,"Run_Parameters.txt"))
-    funcWrite(paste("These covariates were forced into each model=",lsArgs$options$strForcedPredictors), file.path(strQCDir,"Run_Parameters.txt"))
-    funcWrite(paste("These features' data were not changed by QC processes=",lsArgs$options$strNoImpute), file.path(strQCDir,"Run_Parameters.txt"))
-    funcWrite(paste("Output verbosity=",lsArgs$options$strVerbosity), file.path(strQCDir,"Run_Parameters.txt"))
-    funcWrite(paste("Log file was generated=",!lsArgs$options$fOmitLogFile), file.path(strQCDir,"Run_Parameters.txt"))
-    funcWrite(paste("Data plots were inverted=",lsArgs$options$fInvert), file.path(strQCDir,"Run_Parameters.txt"))
-    funcWrite(paste("Ignore unless boosting was used. The threshold for the rel.inf used to select features=",lsArgs$options$dSelectionFrequency), file.path(strQCDir,"Run_Parameters.txt"))
-    funcWrite(paste("All verses all inference method was used=",lsArgs$options$fAllvAll), file.path(strQCDir,"Run_Parameters.txt"))
-    funcWrite(paste("Ignore unless penalized feature selection was used. Alpha to determine the type of penalty=",lsArgs$options$dPenalizedAlpha), file.path(strQCDir,"Run_Parameters.txt"))
+    funcWrite(paste("Optional input read.config file=",strInputConfig), file.path(strQCDir,"Run_Parameters.txt"))
+    funcWrite(paste("Optional R file=",strInputR), file.path(strQCDir,"Run_Parameters.txt"))
+    funcWrite(paste("FDR threshold for pdf generation=",dSignificanceLevel), file.path(strQCDir,"Run_Parameters.txt"))
+    funcWrite(paste("Minimum relative abundance=",dMinAbd), file.path(strQCDir,"Run_Parameters.txt"))
+    funcWrite(paste("Minimum percentage of samples with measurements=",dMinSamp), file.path(strQCDir,"Run_Parameters.txt"))
+    funcWrite(paste("The fence used to define outliers with a quantile based analysis. If set to 0, the Grubbs test was used=",dOutlierFence), file.path(strQCDir,"Run_Parameters.txt"))
+    funcWrite(paste("Ignore if the Grubbs test was not used. The significance level used as a cut-off to define outliers=",dPOutlier), file.path(strQCDir,"Run_Parameters.txt"))
+    funcWrite(paste("These covariates are treated as random covariates and not fixed covariates=",strRandomCovariates), file.path(strQCDir,"Run_Parameters.txt"))
+    funcWrite(paste("The type of multiple testing correction used=",strMultTestCorrection), file.path(strQCDir,"Run_Parameters.txt"))
+    funcWrite(paste("Zero inflated inference models were turned on=",fZeroInflated), file.path(strQCDir,"Run_Parameters.txt"))
+    funcWrite(paste("Feature selection step=",strModelSelection), file.path(strQCDir,"Run_Parameters.txt"))
+    funcWrite(paste("Statistical inference step=",strMethod), file.path(strQCDir,"Run_Parameters.txt"))
+    funcWrite(paste("Numeric transform used=",strTransform), file.path(strQCDir,"Run_Parameters.txt"))
+    funcWrite(paste("Quality control was run=",!fNoQC), file.path(strQCDir,"Run_Parameters.txt"))
+    funcWrite(paste("These covariates were forced into each model=",strForcedPredictors), file.path(strQCDir,"Run_Parameters.txt"))
+    funcWrite(paste("These features' data were not changed by QC processes=",strNoImpute), file.path(strQCDir,"Run_Parameters.txt"))
+    funcWrite(paste("Output verbosity=",strVerbosity), file.path(strQCDir,"Run_Parameters.txt"))
+    funcWrite(paste("Log file was generated=",!fOmitLogFile), file.path(strQCDir,"Run_Parameters.txt"))
+    funcWrite(paste("Data plots were inverted=",fInvert), file.path(strQCDir,"Run_Parameters.txt"))
+    funcWrite(paste("Ignore unless boosting was used. The threshold for the rel.inf used to select features=",dSelectionFrequency), file.path(strQCDir,"Run_Parameters.txt"))
+    funcWrite(paste("All verses all inference method was used=",fAllvAll), file.path(strQCDir,"Run_Parameters.txt"))
+    funcWrite(paste("Ignore unless penalized feature selection was used. Alpha to determine the type of penalty=",dPenalizedAlpha), file.path(strQCDir,"Run_Parameters.txt"))
   }
 
   ### Write summary table
@@ -379,7 +418,7 @@ outputDirectory = strOutputTXT
                        strBaseName=strBase,
                        astrSummaryFileName=file.path(outputDirectory,paste(strBase,c_sSummaryFileSuffix, sep="")), 
                        astrKeyword=c_strKeywordEvaluatedForInclusion, 
-                       afSignificanceLevel=lsArgs$options$dSignificanceLevel)
+                       afSignificanceLevel=dSignificanceLevel)
 }
  
  
