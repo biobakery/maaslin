@@ -472,7 +472,7 @@ outputDirectory = strOutputDIR
   lsRet$lsQCCounts$iLms = 0
 
   #Indicate if the residuals plots should occur
-  fDoRPlot=TRUE
+  fDoRPlot=FALSE
   #Should not occur for univariates
   if(strMethod %in% c("univariate")){ fDoRPlot=FALSE }
 
