@@ -95,7 +95,7 @@ pArgs <- add_option( pArgs, c("-R","--random"), type="character", action="store"
 ## Change the type of correction fo rmultiple corrections
 pArgs <- add_option( pArgs, c("-T","--testingCorrection"), type="character", action="store", dest="strMultTestCorrection", default=lsArgs$strMultTestCorrection, metavar="multipleTestingCorrection", help="This indicates which multiple hypothesis testing method will be used, available are holm, hochberg, hommel, bonferroni, BH, BY.  [Default %default]")
 ## Use a zero inflated model of the inference method indicate in -m
-pArgs <- add_option( pArgs, c("-z","--doZeroInfated"), type="logical", action="store_true", default = lsArgs$fZeroInflated, dest="fZeroInflated", metavar="fZeroInflated", help="If true, the zero inflated version of the inference model indicated in -m is used. For instance if using lm, zero-inflated regression on a gaussian distribution is used.  [Default %default].")
+pArgs <- add_option( pArgs, c("-z","--doZeroInflated"), type="logical", action="store_true", default = lsArgs$fZeroInflated, dest="fZeroInflated", metavar="fZeroInflated", help="If true, the zero inflated version of the inference model indicated in -m is used. For instance if using lm, zero-inflated regression on a gaussian distribution is used.  [Default %default].")
 
 # Arguments used in validation of MaAsLin
 ## Model selection (enumerate) c("none","boost","penalized","forward","backward")
