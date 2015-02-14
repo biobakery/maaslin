@@ -251,9 +251,7 @@ changed using the commandline argument -d). If this file does not
 exist, the $PROJECTNAME-$METADATA.txt should not have an entry that is
 less than or equal to the threshold. Factor data is plotted as
 knotched box plots; continuous data is plotted as a scatter plot with
-a line of best fit. Two plots are given for MaAslin Methodology; the
-left being a raw data plot, the right being a corresponding partial
-residual plot.
+a line of best fit. 
 
 **4\. $PROJECTNAME.txt**
 
