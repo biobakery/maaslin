@@ -204,7 +204,7 @@ If you have a specific directory where the results must save, then specify it's 
 
 On the commandline call the Maaslin.R script. Please refer to the help (-h, --help) for command line options. If running from commandline, the PCL file will need to be transposed. A script is included in Maaslin for your convenience (exec/transpose.py). 
 
-For an input file of name "input.pcl" with a read config file of name "input.read.config" and output directory name "outdir", the following is the generic call:
+For an input file of name "input.pcl" with a read config file of name "input.read.config" and output directory name "outdir", the following is the generic command, to be executed inside the maaslin directory:
 
 ```
 Step 1: Transposing the pcl file to a tab separated file
@@ -308,7 +308,7 @@ Contains an account of all the options used when running MaAsLin so the exact me
 Although we recommend the use of default options, commandline
 arguments exist to modify both MaAsLin methodology and figures. To see
 an up-to-date listing of argument usage, in a terminal in the
-`maaslin/R` directory type `./Maaslin.R -h`.
+`maaslin` directory type `./R/Maaslin.R -h`.
 
 **Example args:**
 
