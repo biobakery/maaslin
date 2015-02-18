@@ -682,7 +682,7 @@ fZeroInflated = FALSE
       # Do not make residuals plots if univariate is selected
       strFilePDF = funcPDF( frmeTmp=frmeData, lsCur=lsCur, curPValue=adP[j], curQValue=adQ[j], strFilePDF=strFilePDF, strBaseOut=strBaseOut, strName=strName, funcUnTransform= funcUnTransform, fDoResidualPlot=fDoRPlot, fInvert=fInvert, liNaIndices=liNaIndices )
    }
-    if( dev.cur( ) != 1 ) { dev.off( ) }
+    ################################################GW    if( dev.cur( ) != 1 ) { dev.off( ) }
   }
   aiTmp <- aiData
 

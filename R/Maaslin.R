@@ -23,7 +23,6 @@
 # authored by the Huttenhower lab at the Harvard School of Public Health
 # (contact Timothy Tickle, ttickle@hsph.harvard.edu).
 #####################################################################################
-
 inlinedocs <- function(
 ##author<< Curtis Huttenhower <chuttenh@hsph.harvard.edu> and Timothy Tickle <ttickle@hsph.harvard.edu>
 ##description<< Main driver script. Should be called to perform MaAsLin Analysis.
@@ -248,51 +247,54 @@ sAlternativeLibraryLocation = lsArgs$sAlternativeLibraryLocation)
   # Get the first choice relative path
   initial.options <- commandArgs(trailingOnly = FALSE)
   script.name <- sub("--file=", "", initial.options[grep("--file=", initial.options)])
-  strDir = file.path( dirname( script.name ), "lib" )
-  
-  
   #######################################################################################################
   #  The following chages were introduced in order to be able to run under R in the following manner:
   #  source('./R/Maslin.R')
   #  main(pArgs)
-  #  George Weingart   george.weingart@gmail.com   1/1/2015                    
+  #  George Weingart   george.weingart@gmail.com   2/17/2015                    
   #######################################################################################################
+  strDir = file.path( dirname( script.name )  )
+  
+  
+
   if (identical(strDir, character(0)))                   #if Running under R with no override
-	{strDir <- c("./R/lib")}
-  #######################################################################################################
-  #  End of changes  George Weingart   george.weingart@gmail.com   1/1/2015                    
-  #######################################################################################################
+	{strDir <- c("./R")}
+
   
   # If this does not have the lib file then go for the alt lib
-  if( !file.exists(strDir) )
-  {
-    lsPotentialListLocations = dir( path = sAlternativeLibraryLocation, pattern = "lib", recursive = TRUE, include.dirs = TRUE)
-    if( length( lsPotentialListLocations ) > 0 )
-    {
-      sLibraryPath = file.path( "maaslin","src","lib" )
-      iLibraryPathLength = nchar( sLibraryPath )
-      for( strSearchDir in lsPotentialListLocations )
-      {
+ ###if( !file.exists(strDir) )
+  #{
+  #  lsPotentialListLocations = dir( path = sAlternativeLibraryLocation, pattern = "lib", recursive = TRUE, include.dirs = TRUE)
+  #  if( length( lsPotentialListLocations ) > 0 )
+  #  {
+  #    sLibraryPath = file.path( "maaslin","src","lib" )
+  #    iLibraryPathLength = nchar( sLibraryPath )
+  #   for( strSearchDir in lsPotentialListLocations )
+   #   {
         # Looking for the path where the end of the path is equal to the library path given earlier
         # Also checks before hand to make sure the path is atleast as long as the library path so no errors occur
-        if ( substring( strSearchDir, 1 + nchar( strSearchDir ) - iLibraryPathLength ) == sLibraryPath )
-        {
-          strDir = file.path( sAlternativeLibraryLocation, strSearchDir )
-          break
-        }
-      }
-    }
-  }
-
+    #    if ( substring( strSearchDir, 1 + nchar( strSearchDir ) - iLibraryPathLength ) == sLibraryPath )
+   #     {
+   #       strDir = file.path( sAlternativeLibraryLocation, strSearchDir )
+   #       break
+   #     }
+   #   }
+ #   }
+#  }
+  #######################################################################################################
+  #  End of changes  George Weingart   george.weingart@gmail.com   2/17/2015                    
+  #######################################################################################################
  
   strSelf = basename( script.name )   
   
+ 
+  
+  
   if (identical(strSelf, character(0)))                   #if Running under R with no override - force it 
 	{strSelf <- c("Maaslin.R")}
-
+	
   for( strR in dir( strDir, pattern = "*.R$" ) )
   {
-
     if( strR == strSelf ) {next}
     source( file.path( strDir, strR ) )
   }
