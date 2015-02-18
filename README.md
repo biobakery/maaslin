@@ -131,7 +131,7 @@ iv. Abundances should be normalized by dividing each abundance measurement by th
 
 v. Here is an example of the contents of an extremely small pcl file;
 another example can be found in this project at
-`maaslin/input/maaslin_demo.pcl`.
+`maaslin/inst/extdata/maaslin_demo.pcl`.
 
 
     ID	Sample1	Sample2	Sample3	Sample4
@@ -186,14 +186,14 @@ here). Metadata are read as all rows from the beginning of the pcl
 file (skipping the first Sample ID row) to Weight; all data are read
 as all rows from Bacteria to the end of the pcl file. This example
 refers to the default input files given in the MaAsLin download as
-maaslin_demo2.\*.
+maaslin/inst/extdata/maaslin_demo2.\*.
 
 ** 5\. Create your R script (Optional). **
 
 The R script is used to add code that manipulates your data before
 analysis, and for manipulating the multifactoral analysis figure. A
 default “*.R” script is available with the default MaAsLin project at
-maaslin/input/maaslin_demo2.R. This is an expert option and should
+maaslin/inst/extdata/maaslin_demo2.R. This is an expert option and should
 only be used by someone very comfortable with the R language.
 
 ** 6\. Specify Output Directory **
@@ -217,8 +217,8 @@ $ ./R/Maaslin.R -i input.read.config input.tsv outputdir
 The following demo example is included with the package. An example call from the Maaslin folder for the demo data could be as follows.
 
 ```
-$ ./exec/transpose.py < input/maaslin_demo2.pcl > maaslin_demo2.tsv
-$ ./R/Maaslin.R -i input/maaslin_demo2.read.config maaslin_demo2.tsv outputdir
+$ ./exec/transpose.py < inst/extdata/maaslin_demo2.pcl > maaslin_demo2.tsv
+$ ./R/Maaslin.R -i inst/extdata/maaslin_demo2.read.config maaslin_demo2.tsv outputdir
 ```
 
 ** 8\. Discover amazing associations in your results! **
