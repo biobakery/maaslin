@@ -1,9 +1,0 @@
-ID	Cohort	Age	Height	Weight	Sex	Smoking	Star_Trek_Fan	Favorite_color
-Sample1	Healthy	87	60	151	0	0	1	Yellow
-Sample2	Healthy	78	72	258	1	0	1	Blue
-Sample3	Healthy	3	63	195	0	1	0	Green
-Sample4	Healthy	2	67	172	1	0	0	Yellow
-Sample5	IBD	32	71	202	1	1	1	Green
-Sample6	IBD	10	65	210	0	1	0	Blue
-Sample7	IBD	39	61	139	1	1	0	Green
-Sample8	IBD	96	64	140	0	0	1	Blue

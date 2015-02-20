@@ -7,7 +7,32 @@ MaAsLin is a multivariate statistical framework that finds associations between 
 MaAsLin performs boosted additive general linear models between one group of data (metadata/the predictors) and another group (in our case relative taxonomic abundances/the response). 
 Used to discover associations between clinical metadata and microbial community relative abundance or function }
 \usage{
-Maaslin(strInputTSV, strOutputDIR, strInputConfig = lsArgs$strInputConfig, strInputR = lsArgs$strInputR, dSignificanceLevel = lsArgs$dSignificanceLevel, dMinAbd = lsArgs$dMinAbd, dMinSamp = lsArgs$dMinSamp, dOutlierFence = lsArgs$dOutlierFence, dPOutlier = lsArgs$dPOutlier, strRandomCovariates = lsArgs$strRandomCovariates, strMultTestCorrection = lsArgs$strMultTestCorrection, fZeroInflated = lsArgs$fZeroInflated, strModelSelection = lsArgs$strModelSelection, strMethod = lsArgs$strMethod, strTransform = lsArgs$strTransform, fNoQC = lsArgs$fNoQC, strForcedPredictors = lsArgs$strForcedPredictors, strNoImpute = lsArgs$strNoImpute, strVerbosity = lsArgs$strVerbosity, fOmitLogFile = lsArgs$fOmitLogFile, fInvert = lsArgs$fInvert, dSelectionFrequency = lsArgs$dSelectionFrequency, fAllvAll = lsArgs$fAllvAll, fPlotNA = lsArgs$fPlotNA, dPenalizedAlpha = lsArgs$dPenalizedAlpha, sAlternativeLibraryLocation = lsArgs$sAlternativeLibraryLocation)
+Maaslin(strInputTSV,
+	 strOutputDIR, 
+	 strInputConfig = NULL, 
+	 strInputR = NULL, 
+	 dSignificanceLevel = 0.25,
+	 dMinAbd = 0.0001,
+	 dMinSamp = 0.1,
+	 dOutlierFence = 0, 
+	 dPOutlier = 0.05, 
+	 strRandomCovariates = NULL, 
+	 strMultTestCorrection = "BH",
+	 fZeroInflated = FALSE, 
+	 strModelSelection = "boost",
+	 strMethod = "lm",
+	 strTransform = "asinsqrt",
+	 fNoQC = FALSE,
+	 strForcedPredictors = NULL, 
+	 strNoImpute = NULL,
+	 strVerbosity = "DEBUG",
+	 fOmitLogFile = FALSE,
+	 fInvert = FALSE,
+	 dSelectionFrequency = NA, 
+	 fAllvAll = FALSE,
+	 fPlotNA = FALSE, 
+	 dPenalizedAlpha = 0.95, 
+	 sAlternativeLibraryLocation = NULL)
 }
 \arguments{
   \item{strInputTSV}{
