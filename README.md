@@ -36,6 +36,17 @@ For more information about maaslin please visit
 
 ## Installation ##
 
+### Download MaAsLin ###
+MaAsLin can be downloaded in two ways:
+
+* [Download](https://bitbucket.org/biobakery/maaslin/get/tip.tar.gz) a compressed set of files.
+* Create a clone of the repository on your computer with the command: 
+	
+	``hg clone https://bitbucket.org/biobakery/maaslin ``
+
+Note: Creating a clone of the repository requires [Mercurial](http://mercurial.selenic.com/) to be installed. Once the repository has been cloned upgrading to the latest release of MaAsLin is simple. Just type ``hg pull -u`` from within the repository which will download the latest release.
+
+### Required libraries ###
 R Libraries: Several libraries need to be installed in R these are
   the following:
 
