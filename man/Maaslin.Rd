@@ -113,9 +113,6 @@ Maaslin(strInputTSV,
     An alternative location to find the lib directory. This dir and children will be searched for the first maaslin/src/lib dir.
  }
 }
-\references{
-%% ~put references to the literature/web site here ~
-}
 \author{
 Timothy Tickle<ttickle@hsph.harvard.edu>,\cr
 Curtis Huttenhower <chuttenh@hsph.harvard.edu>\cr
