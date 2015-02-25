@@ -9,9 +9,9 @@ output: html_document
 
 MaAsLin User Guide v3.1
 =======================
-December 2014
+February 2015
 
-Timothy Tickle and Curtis Huttenhower
+Ayshwarya Subramanian, Timothy Tickle, Levi Waldron, George Weingart, Lauren McIver and Curtis Huttenhower
 
 ## Introduction ##
 
@@ -115,13 +115,6 @@ Please note that no special characters are allowed in the metadata
 header names. These names should only contain alphanumeric 
 characters with the addition of a period and an underscore: 
 `[a-zA-Z0-9.-]`.
-
-If you are not wanting to manually add metadata to your abundance
-table, you may be interested in associated tools or scripts to help
-combine your abundance table and metadata to create your pcl
-file. Both require a specific format for your metadata file. Please
-see the documentation for *QiimeToMaaslin* or *merge_metadata.py* (for
-more details see section **Related Projects and Scripts**).
 
 ** 3\. Format and combine your abundance table and metadata as a pcl **
 
@@ -347,35 +340,3 @@ The all verses all analysis flow is a way of manipulating how metadata are used.
 
 > -a -F cage -s none
 
-### Troubleshooting ###
-
-When trying to run a script I am told I do not have permission
-even though file permissions have been set for myself.
-
-**Solution:** Most likely, you need to set the main MaAsLin script
-(Maaslin.R) to executable.
-
-When trying to run with an args file it appears that these parameters are not applied to the run.
-
-**Solution:** The args file was used when running MaAsLin with sfle. Please provide the args on the command line or as options to the MaAsLin function.
-
-## How to Run in Galaxy ##
-
-MaAsLin can be run in galaxy at : http://huttenhower.sph.harvard.edu/galaxy/
-
-Please refer to the Huttenhower Galaxy site for details on how to run MaAsLin in galaxy.
-
-## Related Projects and Scripts ##
-Other projects exist that may help in your analysis:
-
-** QiimeToMaAsLin **
-    QiimeToMaAsLin is a project that reformats abundance files from
-    Qiime for MaAsLin. Several formats of Qiime consensus lineages are
-    supported for this project. To download please visit
-    [https://bitbucket.org/biobakery/qiimetomaaslin](https://bitbucket.org/biobakery/qiimetomaaslin).
-
-** Merge_Metadata ** 
-    merge_metadata.py is a script included in the MaAsLin project to
-    generically merge a metadata file with a table of microbial (or
-    other) measurements. This script is located in `maaslin/exec` and
-    is documented in `maaslin/doc/ Merge_Me
