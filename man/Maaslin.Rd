@@ -54,7 +54,7 @@ Maaslin(strInputTSV,
   Minimum relative abundance allowed in the data. Values below this are removed and imputed as the median of the sample data.  
 }
   \item{dMinSamp}{
-   Minimum percentage of samples a feature can have abundance in before being removed. Also is the minimum percentage of samples a metadata can have that are not NA before being removed.
+   Minimum percentage of samples in which a feature must have the minimum relative abundance in order not to be removed. Also this is the maximum percentage of samples for which a metadata can have NAs before being removed. 
 }
   \item{dOutlierFence}{
   Outliers are defined as this number times the interquartile range added/subtracted from the 3rd/1st quartiles respectively. If set to 0 (default), outliers are defined by the Grubbs test.

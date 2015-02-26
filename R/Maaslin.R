@@ -84,7 +84,7 @@ pArgs <- add_option( pArgs, c("-d", "--fdr"), type="double", action="store", des
 ## Minimum feature relative abundance filtering
 pArgs <- add_option( pArgs, c("-r", "--minRelativeAbundance"), type="double", action="store", dest="dMinAbd", default=lsArgs$dMinAbd, metavar="minRelativeAbundance", help="The minimum relative abundance allowed in the data. Values below this are removed and imputed as the median of the sample data.  [Default %default]")
 ## Minimum feature prevalence filtering
-pArgs <- add_option( pArgs, c("-p", "--minPrevalence"), type="double", action="store", dest="dMinSamp", default=lsArgs$dMinSamp, metavar="minPrevalence", help="The minimum percentage of samples a feature can have abundance in before being removed. Also is the minimum percentage of samples a metadata can have that are not NA before being removed.  [Default %default]")
+pArgs <- add_option( pArgs, c("-p", "--minPrevalence"), type="double", action="store", dest="dMinSamp", default=lsArgs$dMinSamp, metavar="minPrevalence", help="The minimum percentage of samples in which a feature must have the minimum relative abundance in order not to be removed. Also this is the maximum percentage of samples for which a metadata can have NAs before being removed.  [Default %default]")
 ## Fence for outlier, if not set Grubbs test is used
 pArgs <- add_option( pArgs, c("-o", "--outlierFence"), type="double", action="store", dest="dOutlierFence", default=lsArgs$dOutlierFence, metavar="outlierFence", help="Outliers are defined as this number times the interquartile range added/subtracted from the 3rd/1st quartiles respectively. If set to 0 (default), outliers are defined by the Grubbs test.  [Default %default]")
 ## Significance for Grubbs test
