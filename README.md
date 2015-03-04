@@ -2,9 +2,9 @@
 
 MaAsLin User Guide v3.1
 =======================
-December 2014
+March 2015
 
-Timothy Tickle and Curtis Huttenhower
+Ayshwarya Subramanian, Timothy Tickle, Levi Waldron, Lauren McIver, George Weingart and Curtis Huttenhower
 
 ## Introduction ##
 
