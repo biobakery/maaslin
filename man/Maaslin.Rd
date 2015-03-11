@@ -121,8 +121,8 @@ Lauren McIver<lauren.j.mciver@gmail.com>,\cr
 George Weingart<george.weingart@gmail.com>
 }
 \examples{
-getwd()
-list.files()
-Maaslin('Maaslin/extdata/maaslin_demo2.tsv','output',strInputConfig='Maaslin/extdata/maaslin_demo2.read.config')
+InputTSV <- system.file('extdata','maaslin_demo2.tsv', package="Maaslin")
+InputConfig <-system.file('extdata','maaslin_demo2.read.config', package="Maaslin")
+Maaslin(InputTSV,'maaslin_example_output',strInputConfig=InputConfig)
 }
 

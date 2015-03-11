@@ -59,7 +59,10 @@ liNaIndices = c()
     strFilePDF <- sprintf( "%s-%s.pdf", strBaseOut, strName )
     pdf( strFilePDF, width = 11, useDingbats=FALSE )
   }
-  
+
+  # Turn off ask prompt for next plot 
+  par( ask = FALSE ) 
+
   #Invert plots
   adColorMin <- c(1, 0, 0)
   adColorMax <- c(0, 1, 0)
