@@ -220,7 +220,7 @@ $ R
 > Maaslin('input.tsv','maaslin_output',strInputConfig='input.read.config')
 ```
 
-Please see the FAQs if you would like to run MaAsLin from the command line.
+Please see the [FAQs](https://bitbucket.org/biobakery/maaslin/wiki/Home) if you need information on running MaAsLin from the command line.
 
 ** 8\. Discover amazing associations in your results! **
 
