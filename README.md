@@ -34,29 +34,25 @@ we work with proportional data, the Yi (abundances) are
 For more information about maaslin please visit
 [http://huttenhower.sph.harvard.edu/maaslin](http://huttenhower.sph.harvard.edu/maaslin).
 
+## Requirements ##
+
+MaAsLin requires the following R packages: agricolae, gam, gamlss, gbm, glmnet, inlinedocs, logging, MASS, nlme, optparse, outliers, penalized, pscl, robustbase
+
+Please install these packages before installing MaAsLin.
+
 ## Installation ##
 
-### Download MaAsLin ###
-MaAsLin can be downloaded in two ways:
+1. [Download](https://bitbucket.org/biobakery/maaslin/downloads/Maaslin_0.0.2.tar.gz) the latest release of MaAsLin.
+2. Install MaAsLin (where X.Y.Z is the latest release number) : `` $ R CMD INSTALL Maaslin_X.Y.Z.tar.gz ``
 
-* [Download](https://bitbucket.org/biobakery/maaslin/get/tip.tar.gz) a compressed set of files.
-* Create a clone of the repository on your computer with the command: 
-	
-	``hg clone https://bitbucket.org/biobakery/maaslin ``
+## Run a Demo ##
 
-Note: Creating a clone of the repository requires [Mercurial](http://mercurial.selenic.com/) to be installed. Once the repository has been cloned upgrading to the latest release of MaAsLin is simple. Just type ``hg pull -u`` from within the repository which will download the latest release.
-
-### Required libraries ###
-R Libraries: Several libraries need to be installed in R these are
-  the following:
-
-  * agricolae, gam, gamlss, gbm, glmnet, inlinedocs, logging, MASS, nlme, optparse, outliers, penalized, pscl, robustbase, testhat, vegan
-
-You can install them by typing R in a terminal and using the
-  install.packages command:
+Run the demo included in the MaAsLin release.
 
 ```
-      install.packages(c('agricolae', 'gam', 'gamlss', 'gbm', 'glmnet', 'inlinedocs', 'logging', 'MASS', 'nlme', 'optparse', 'outliers', 'penalized', 'pscl', 'robustbase', 'testthat','vegan'))
+$ R
+> library(Maaslin)
+> example(Maaslin)
 ```
 
 ## How to Run ##
@@ -213,24 +209,18 @@ If you have a specific directory where the results must save, then specify it's 
 
 ** 7\. Run. **
 
-On the commandline call the Maaslin.R script. Please refer to the help (-h, --help) for command line options. If running from commandline, the PCL file will need to be transposed. A script is included in Maaslin for your convenience (exec/transpose.py). 
+If starting with a PCL file (input.pcl), first transpose it to a TSV file (input.tsv).
 
-For an input file of name "input.pcl" with a read config file of name "input.read.config" and output directory name "outdir", the following is the generic command, to be executed inside the maaslin directory:
+`` $ ./Maaslin/exec/transpose.py < input.pcl > input.tsv ``
 
+Run MaAsLin.
 ```
-Step 1: Transposing the pcl file to a tab separated file
-$ ./exec/transpose.py < input.pcl > input.tsv
-
-Step 2: Running Maaslin
-$ ./R/Maaslin.R -i input.read.config input.tsv outputdir
+$ R
+> library(Maaslin)
+> Maaslin('input.tsv','maaslin_output',strInputConfig='input.read.config')
 ```
 
-The following demo example is included with the package. An example call from the Maaslin folder for the demo data could be as follows.
-
-```
-$ ./exec/transpose.py < inst/extdata/maaslin_demo2.pcl > maaslin_demo2.tsv
-$ ./R/Maaslin.R -i inst/extdata/maaslin_demo2.read.config maaslin_demo2.tsv outputdir
-```
+Please see the FAQs if you would like to run MaAsLin from the command line.
 
 ** 8\. Discover amazing associations in your results! **
 
@@ -341,12 +331,6 @@ The all verses all analysis flow is a way of manipulating how metadata are used.
 > -a -F cage -s none
 
 ### Troubleshooting ###
-
-When trying to run a script I am told I do not have permission
-even though file permissions have been set for myself.
-
-**Solution:** Most likely, you need to set the main MaAsLin script
-(Maaslin.R) to executable.
 
 When trying to run with an args file it appears that these parameters are not applied to the run.
 
