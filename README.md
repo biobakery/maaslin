@@ -304,37 +304,36 @@ information on the magnitude of outlier removal.
 
 Contains an account of all the options used when running MaAsLin so the exact methodology can be recreated if needed.
 
-### Commandline Options ###
+### Options ###
 
-Although we recommend the use of default options, commandline
-arguments exist to modify both MaAsLin methodology and figures. To see
-an up-to-date listing of argument usage, in a terminal in the
-`maaslin` directory type `./R/Maaslin.R -h`.
+Although we recommend the use of default options, arguments exist to modify both MaAsLin methodology and figures. To see
+an up-to-date listing of argument usage, type ` > help(Maaslin)`.
 
 **Example args:**
 
-    -v DEBUG -d 0.1 -b 5
+1. strVerbosity = "DEBUG" 
+1. dSignificanceLevel = 0.1 
 
 In this example MaAsLin is modified to produce verbose output for
-debugging (-v DEBUG), to change the threshold for making pdfs to a
-q-value equal to or less than 0.1 (-d 0.1), and to plot 
-5 data (bug) features in the biplot (-b 5).
+debugging and to change the threshold for making pdfs to a
+q-value equal to or less than 0.1.
 
 ** All verses All **
 
-The all verses all analysis flow is a way of manipulating how metadata are used. In this method there is a group of metadata that are always evaluated, as well there are a group that are added to this one at a time. To give a more concrete example: You may have metadata cage, diet, and treatment. You may always want to have the association of abundance evaluated controlling for cage but otherwise looking at the metadata one at a time. In this way the cage metadata is the \D2forced\D3 part of the evaluation while the others are not forced and evaluated in serial. The appropriate commandline to indicate this follows:
+The all verses all analysis flow is a way of manipulating how metadata are used. In this method there is a group of metadata that are always evaluated, as well there are a group that are added to this one at a time. To give a more concrete example: You may have metadata cage, diet, and treatment. You may always want to have the association of abundance evaluated controlling for cage but otherwise looking at the metadata one at a time. In this way the cage metadata is the forced part of the evaluation while the others are not forced and evaluated in serial. The appropriate options to indicate this follows:
 
-> -a -F cage
+1. fAllvAll = TRUE
+1. strForcedPredictors = "cage"
 
--a indicates all verses all is being used, -F indicates which metadata are forced (multiple metadata can be given comma delimited as shown here -F metadata1,metadata2,metadata3). This does not bypass the feature selection method so the metadata that are not forced are subject to feature selection and may be removed before coming to the evaluation. If you want all the metadata that are not forced to be evaluated in serial you will need to turn off feature selection and will have a final combined commandline as seen here:
+(fAllvAll=TRUE) indicates all verses all is being used, (strForcedPredictors) indicates which metadata are forced (multiple metadata can be given comma delimited as shown here =c("metadata1","metadata2","metadata3")). This does not bypass the feature selection method so the metadata that are not forced are subject to feature selection and may be removed before coming to the evaluation. If you want all the metadata that are not forced to be evaluated in serial you will need to turn off feature selection and will have final combined options as seen here:
 
-> -a -F cage -s none
+1. fAllvAll = TRUE
+1. strForcedPredictors = "cage"
+1. strModelSelection = "none"
 
 ### Troubleshooting ###
 
-When trying to run with an args file it appears that these parameters are not applied to the run.
-
-**Solution:** The args file was used when running MaAsLin with sfle. Please provide the args on the command line or as options to the MaAsLin function.
+Please see the [FAQs](https://bitbucket.org/biobakery/maaslin/wiki/Home) for MaAsLin troubleshooting.
 
 ## How to Run in Galaxy ##
 
