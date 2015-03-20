@@ -161,7 +161,7 @@ while manipulating the pcl files.
 Here is an example of the contents of a *.read.config file.
 
     Matrix: Metadata
-    Read_PCL_Columns: Sample2-Sample15
+    Read_PCL_Columns: Sample2-Sample15 
     Read_PCL_Rows: Age-Height,Weight,Sex,Cohort-Profession
 
     Matrix: Abundance
