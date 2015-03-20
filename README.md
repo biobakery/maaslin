@@ -182,7 +182,7 @@ the end of the pcl file, respectively.
 A minimal example is shown here:
 
     Matrix: Metadata
-    Read\_PCL\_Rows: -Weight
+    Read_PCL_Rows: -Weight
 
     Matrix: Abundance
     Read_PCL_Rows: Bacteria-
