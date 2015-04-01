@@ -81,7 +81,18 @@ Required input file \*.pcl. A PCL file is the file that contains all the data
 and metadata. This file is formatted so that metadata/data (otus or
 bugs) are rows and samples are columns. All metadata rows should come
 first before any abundance data. The file should be a tab delimited
-text file with the extension ".pcl".
+text file with the extension ".pcl". Please note the ".pcl" extension is not required. 
+A demo PCL file is found in the MaAsLin download in maaslin/inst/extdata/ .
+
+A PCL file is a TEXT delimited file similar to an excel spread sheet with the following characteristics. 
+
+1. Rows represent metadata and features (bugs), columns represent samples.
+2. The first row by default should be the sample ids.
+3. Metadata rows should be next.
+4. Lastly, rows containing features (bugs) measurements (like abundance) should be after metadata rows.
+5. The first column should contain the ID describing the column. For metadata this may be, for example, "Age" for a row containing the age of the patients donating the samples. For measurements, this should be the feature name (bug name).
+5. By default the file is expected to be TAB delimited.
+6. If a consensus lineage or hierarchy of taxonomy is in the feature name, the default delimiter between clades is the pipe ("|").
 
 ** 2\. Read Config File **
 
