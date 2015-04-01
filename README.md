@@ -77,12 +77,11 @@ There are 3 input files for each project, the "\*read.config" file, the "\*.pcl"
 
 ** 1\. PCL File **
 
-Required input file \*.pcl. A PCL file is the file that contains all the data
+Required input file. By PCL file,  here we mean the file that contains all the data
 and metadata. This file is formatted so that metadata/data (otus or
 bugs) are rows and samples are columns. All metadata rows should come
 first before any abundance data. The file should be a tab delimited
-text file with the extension ".pcl". Please note the ".pcl" extension is not required. 
-A demo PCL file is found in the MaAsLin download in maaslin/inst/extdata/ .
+text file. A demo PCL file is found in the MaAsLin download in maaslin/inst/extdata/ .
 
 A PCL file is a TEXT delimited file similar to an excel spread sheet with the following characteristics. 
 
@@ -179,10 +178,10 @@ another example can be found in this project at
 ** 4\. Create your read.config file. **
 
 A *.read.config file is a structured text file used to indicate which
-data in a *.pcl file should be read into MaAsLin and used for
-analysis. This allows one to keep their *.pcl file intact while
+data in the PCL file should be read into MaAsLin and used for
+analysis. This allows one to keep their PCL file intact while
 varying analysis. Hopefully, this avoids errors that may be introduced
-while manipulating the pcl files.
+while manipulating the PCL files.
 
 Here is an example of the contents of a *.read.config file.
 
@@ -254,7 +253,7 @@ Please see the [FAQs](https://bitbucket.org/biobakery/maaslin/wiki/Home) if you 
 ### Output Files ###
 
 The following files will be generated per MaAsLin run. In the
-following listing the term $PROJECTNAME refers to what you named your "\*.pcl" file without the extension. There are four main types of output files. Additional files are created in a folder named "QC".
+following listing the term $PROJECTNAME refers to what you named your PCL file without the extension. There are four main types of output files. Additional files are created in a folder named "QC".
 
 **1\. $PROJECTNAME_log.txt **
 
@@ -264,7 +263,7 @@ useful for detailed troubleshooting.
 **2\. $PROJECTNAME-$METADATA.txt**
 
 Each metadata will have a file of associations. $METADATA
-is the metadata column name in the "\*.pcl" file. Any associations
+is the metadata column name in the PCL file. Any associations
 indicated to be performed after initial variable selection (boosting)
 is recorded here. Included are the information from the final general
 linear model (performed after the boosting) and the FDR corrected
