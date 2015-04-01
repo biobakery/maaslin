@@ -1,12 +1,30 @@
-[TOC]
+# MaAsLin: Multivariate Association with Linear Models
 
-MaAsLin User Guide v3.1
-=======================
-March 2015
+[MaAsLin](http://huttenhower.sph.harvard.edu/maaslin)
 
 Ayshwarya Subramanian, Timothy Tickle, Levi Waldron, Lauren McIver, George Weingart and Curtis Huttenhower
 
-## Introduction ##
+[MaAsLin Users Google Group](https://groups.google.com/forum/#!forum/maaslin-users)
+
+MIT License
+
+--------------------------------------------
+
+## Contents ##
+* [Description](#markdown-header-description)
+* [Requirements](#markdown-header-requirements)
+* [Installation](#markdown-header-installation)
+* [Run a Demo](#markdown-header-run-a-demo)
+* [How to Run](#markdown-header-how-to-run)
+    * [Input Files](#markdown-header-input-files)
+    * [Process Flow](#markdown-header-process-flow)
+    * [Output Files](#markdown-header-output-files)
+    * [Options](#markdown-header-options)
+* [Troubleshooting](#markdown-header-troubleshooting)
+* [How to Run in Galaxy](#markdown-header-how-to-run-in-galaxy)
+* [Related Projects and Scripts](#markdown-header-related-projects-and-scripts)
+
+## Description ##
 
 MaAsLin is a multivariate statistical framework that finds
 associations between clinical metadata and potentially
@@ -30,9 +48,6 @@ we work with proportional data, the Yi (abundances) are
 `arcsin(sqrt(Yi))` transformed. A final formula is as follows:
 
 ![](https://bitbucket.org/biobakery/maaslin/downloads/maaslinformula2.png)
-
-For more information about maaslin please visit
-[http://huttenhower.sph.harvard.edu/maaslin](http://huttenhower.sph.harvard.edu/maaslin).
 
 ## Requirements ##
 
@@ -331,7 +346,7 @@ The all verses all analysis flow is a way of manipulating how metadata are used.
 1. strForcedPredictors = "cage"
 1. strModelSelection = "none"
 
-### Troubleshooting ###
+## Troubleshooting ##
 
 Please see the [FAQs](https://bitbucket.org/biobakery/maaslin/wiki/Home) for MaAsLin troubleshooting.
 
