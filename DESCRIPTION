@@ -1,7 +1,7 @@
 Package: Maaslin
 Type: Package
 Title: Maaslin
-Version: 0.0.1
+Version: 0.0.3
 Imports: agricolae,
  gam,
  gamlss,

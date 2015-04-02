@@ -57,7 +57,7 @@ Please install these packages before installing MaAsLin.
 
 ## Installation ##
 
-1. [Download](https://bitbucket.org/biobakery/maaslin/downloads/Maaslin_0.0.2.tar.gz) the latest version of MaAsLin.
+1. [Download](https://bitbucket.org/biobakery/maaslin/downloads/Maaslin_0.0.3.tar.gz) the latest version of MaAsLin.
 2. Install MaAsLin (where X.Y.Z is the version number) : `` $ R CMD INSTALL Maaslin_X.Y.Z.tar.gz ``
 
 ## Run a Demo ##
