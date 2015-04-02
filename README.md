@@ -73,11 +73,11 @@ $ R
 ## How to Run ##
 
 ### Input Files ###
-There are 3 input files for each project, the "\*read.config" file, the "\*.pcl" file, and the "\*.R" script. Details of each file follow:
+There are 2 essential input files: the "\*read.config" file and the input data file, and an optional "\*R script" . Details of each file follow:
 
-** 1\. PCL File **
+** 1\. Input data File **
 
-Required input file. By PCL file,  here we mean the file that contains all the data
+Required input file which we call the PCL file. This file that contains all the data
 and metadata. This file is formatted so that metadata/data (otus or
 bugs) are rows and samples are columns. All metadata rows should come
 first before any abundance data. The file should be a tab delimited
