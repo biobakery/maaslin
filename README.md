@@ -73,7 +73,7 @@ $ R
 ## How to Run ##
 
 ### Input Files ###
-There are 2 essential input files: the "\*read.config*" file and the "\*input data*" file, and an optional "\*R script*" . Details of each file follow:
+There are 2 essential input files: the "\*read.config*\" file and the "\*input data*\" file, and an optional "\*R script*\" . Details of each file follow:
 
 ** 1\. Input data File **
 
