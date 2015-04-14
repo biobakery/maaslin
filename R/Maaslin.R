@@ -530,7 +530,13 @@ outputDirectory = strOutputDIR
 
 if( identical( environment( ), globalenv( ) ) &&
 	!length( grep( "^source\\(", sys.calls( ) ) ) ) {
-	cArgs <- parse_args( pArgs, positional_arguments = 2 )
+	cArgs <- parse_args( pArgs, positional_arguments = TRUE)
+
+        # check for the correct number of positional arguments
+        if(length(cArgs$args)!= 2) {
+            print_help(pArgs)
+            stop("Please provide an input data file ( <data.tsv> ) and an output directory ( <outputdir> ).\n\nUsage: Maaslin.R [options] <data.tsv> <outputdir>")
+        }
 	Maaslin( cArgs$args[1], cArgs$args[2], 
         strInputConfig=cArgs$options$strInputConfig,
         strInputR = cArgs$options$strInputR,
