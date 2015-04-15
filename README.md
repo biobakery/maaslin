@@ -239,6 +239,9 @@ If starting with a PCL file (input.pcl), first transpose it to a TSV file (input
 `` $ ./Maaslin/exec/transpose.py < input.pcl > input.tsv ``
 
 Run MaAsLin.
+
+`` $ ./R/Maaslin.R -i input.read.config input.tsv outputdir ``
+ ```
 ```
 $ R
 > library(Maaslin)
