@@ -353,7 +353,10 @@ The all verses all analysis flow is a way of manipulating how metadata are used.
 1. fAllvAll = TRUE
 1. strForcedPredictors = "cage"
 
-(fAllvAll=TRUE) indicates all verses all is being used, (strForcedPredictors) indicates which metadata are forced (multiple metadata can be given comma delimited as shown here =c("metadata1","metadata2","metadata3")). This does not bypass the feature selection method so the metadata that are not forced are subject to feature selection and may be removed before coming to the evaluation. If you want all the metadata that are not forced to be evaluated in serial you will need to turn off feature selection and will have final combined options as seen here:
+(fAllvAll=TRUE) indicates all verses all is being used. 
+
+** Forcing covariates **
+(strForcedPredictors) indicates which metadata are forced (multiple metadata can be given comma delimited as shown here =c("metadata1","metadata2","metadata3")). This does not bypass the feature selection method so the metadata that are not forced are subject to feature selection and may be removed before coming to the evaluation. If you want all the metadata that are not forced to be evaluated in serial you will need to turn off feature selection and will have final combined options as seen here:
 
 1. fAllvAll = TRUE
 1. strForcedPredictors = "cage"
