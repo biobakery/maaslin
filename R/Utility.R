@@ -30,30 +30,6 @@ inlinedocs <- function(
 
 #source("Constants.R")
 
-funcRename <- function(
-### Modifies labels for plotting
-### If the name is not an otu collapse to the last two clades
-### Otherwise use the most terminal clade
-astrNames
-### Names to modify for plotting
-){
-  astrRet <- c()
-  for( strName in astrNames )
-  {
-    astrName <- strsplit( strName, c_cFeatureDelimRex )[[1]]
-    i <- length( astrName )
-    if( ( astrName[i] == c_strUnclassified ) || !is.na( as.numeric( astrName[i] ) ) )
-    {
-      strRet <- paste( astrName[( i - 1 ):i], collapse = c_cFeatureDelim )
-    } else {
-    strRet <- astrName[i]
-    }
-    astrRet <- c(astrRet, strRet)
-  }
-  return( astrRet )
-  ### List of modified names
-}
-
 funcBonferonniCorrectFactorData <- function
 ### Bonferroni correct for factor data
 (dPvalue,
@@ -87,18 +63,6 @@ fAllvAll
 
   #Normal flow formula
   return((iMetadata-iRandom) * iDataCount)
-}
-
-funcGetRandomColors=function(
-#Generates a given number of random colors
-tempNumberColors = 1
-### Number of colors to generate
-){
-  adRet = c()
-  return(sapply(1:tempNumberColors, function(x){
-    adRGB <- ( runif( 3 ) * 0.66 ) + 0.33
-    adRet <- c(adRet, rgb( adRGB[1], adRGB[2], adRGB[3] ))
-  }))
 }
 
 funcCoef2Col <- function(
@@ -155,79 +119,6 @@ astrCols = c()
   #data frame, return the name. Otherwise return NA.
   return( ifelse( ( strCoef %in% colnames( frmeData ) ), strCoef, NA ) )
   ### Coefficient name
-}
-
-funcColToMFAValue = function(
-### Given a column name, return the MFA values that could be associated with the name
-lsColNames,
-### String list of column names (as you would get from names(dataframe))
-dfData
-### Data frame of data the column names refer to
-){
-  lsMFAValues = c()
-
-  for(sColName in lsColNames)
-  {
-    axCur = dfData[[sColName]]
-
-    if(is.logical(axCur)){axCur=as.factor(axCur)}
-    if(is.factor(axCur))
-    {
-      lsLevels = levels(axCur)
-      if((length(lsLevels)==2) && (!is.na(as.numeric(lsLevels[1]))) && (!is.na(as.numeric(lsLevels[2]))))
-      {
-        lsMFAValues = c(lsMFAValues,paste(sColName,lsLevels[1],sep=c_sMFANameSep1),paste(sColName,lsLevels[2],sep=c_sMFANameSep1))
-      }else{
-        for(sLevel in levels(axCur))
-        {
-          lsMFAValues = c(lsMFAValues,sLevel)
-        }
-      }
-    } else {
-      lsMFAValues = c(lsMFAValues,sColName)
-    }
-  }
-  return(setdiff(lsMFAValues,c("NA",NA)))
-}
-
-funcMFAValue2Col = function(
-### Given a value in a column, the column name is returned.
-xValue,
-dfData,
-aiColumnIndicesToSearch = NULL
-){
-  lsColumnNames = names(dfData)
-
-  if(is.null(aiColumnIndicesToSearch))
-  {
-    aiColumnIndicesToSearch = c(1:dim(dfData)[2])
-  }
-
-  # Could be the column name
-  if(xValue %in% lsColumnNames){return(xValue)}
-
-  # Could be the column name and value
-  iValueLength = length(xValue)
-  for( iColIndex in c(1:length(lsColumnNames) ))
-  {
-    adCur = dfData[[lsColumnNames[iColIndex]]]
-    if(is.factor(adCur))
-    {
-      for(strValue in levels(adCur))
-      {
-        strCurVersion1 <- paste( lsColumnNames[iColIndex], strValue, sep = c_sMFANameSep1 )
-        strCurVersion2 <- paste( lsColumnNames[iColIndex], strValue, sep = c_sMFANameSep2 )
-        if((xValue == strCurVersion1) || (xValue == strCurVersion2)){return(lsColumnNames[iColIndex])}
-      }
-    }
-  }
-
-  # Could be the value
-  for(iColIndex in aiColumnIndicesToSearch)
-  {
-    if(xValue %in% dfData[[lsColumnNames[iColIndex]]]){return(lsColumnNames[iColIndex])}
-  }
-  return(NULL)
 }
 
 funcColorHelper <- function(
@@ -290,36 +181,6 @@ adMed = c(0, 0, 0)
   ### RGB object
 }
 
-funcColors <- function(
-### Generate a range of colors
-dMax = 1,
-### Max possible value
-dMin = -1,
-### Min possible value
-dMed = NA,
-### Central value if you don't want to be the average
-adMax = c(1, 1, 0),
-### Is used to generate the color for the higher values in the range, this can be changed to give different colors set to green
-adMin = c(0, 0, 1),
-### Is used to generate the color for the lower values in the range, this can be changed to give different colors set to red
-adMed = c(0, 0, 0),
-### Is used to generate the color for the central values in the range, this can be changed to give different colors set to black
-iSteps = 64
-### Number of intermediary colors made in the range of colors
-){
-  lsTmp <- funcColorHelper( dMax, dMin, dMed )
-  dMax <- lsTmp$dMax
-  dMin <- lsTmp$dMin
-  dMed <- lsTmp$dMed
-  aRet <- c ()
-  for( dCur in seq( dMin, dMax, ( dMax - dMin ) / ( iSteps - 1 ) ) )
-  {
-    aRet <- c(aRet, funcColor( dCur, dMax, dMin, dMed, adMax, adMin, adMed ))
-  }
-  return( aRet )
-  ### List of colors
-}
-
 funcGetColor <- function(
 ### Get a color based on col parameter
 ) {
@@ -328,13 +189,6 @@ funcGetColor <- function(
   ### Return hexadecimal color
 }
 
-funcTrim=function(
-### Remove whitespace at the beginning or the end of a string
-tempString
-### tempString String to be trimmed.
-){
-  return(gsub("^\\s+|\\s+$","",tempString))
-}
 
 funcWrite <- function(
 ### Write a string or a table of data
@@ -426,18 +280,6 @@ liMetadataDim
   funcWrite(lsQCData$aiDataCleaned, strProcessFileName )
 }
 
-funcLMToNoNAFormula <-function(
-lMod,
-frmeTmp,
-adCur
-){
-  dfCoef = coef(lMod)
-  astrCoefNames = setdiff(names(dfCoef[as.vector(!is.na(dfCoef))==TRUE]),"(Intercept)")
-  astrPredictors = unique(as.vector(sapply(astrCoefNames,funcCoef2Col, frmeData=frmeTmp)))
-  strFormula = paste( "adCur ~", paste( sprintf( "`%s`", astrPredictors ), collapse = " + " ), sep = " " )
-  return(try( lm(as.formula( strFormula ), data=frmeTmp )))
-}
-
 funcFormulaStrToList <- function(
 #Takes a lm or mixed model formula and returns a list of covariate names in the formula
 strFormula
@@ -462,42 +304,3 @@ strFormula
   return(lsRetComparisons)
 }
 
-funcFormulaListToString <- function(
-# Using covariate and random covariate names, creates a lm or mixed model formula
-# returns a vector of c(strLM, strMixedModel), one will be NA given the existance of random covariates.
-# On error c(NA,NA) is given
-astrTerms,
-#Fixed covariates or all covariates if using an lm
-astrRandomCovariates = NULL
-#Random covariates for a mixed model
-){
-  strRetLMFormula = NA
-  strRetMMFormula = NA
-
-  #If no covariates return NA
-  if(is.null(astrTerms)){return(c(strRetLMFormula, strRetMMFormula))}
-
-  #Get fixed covariates
-  astrFixedCovariates = setdiff(astrTerms,astrRandomCovariates)
-
-  #If no fixed coavariates return NA
-  # Can not run a model with no fixed covariate, restriction of lmm
-  if(length(astrFixedCovariates)==0){return(c(strRetLMFormula, strRetMMFormula))}
-
-  # Fixed Covariates
-  strFixedCovariates = paste( sprintf( "`%s`", astrFixedCovariates ), collapse = " + " )
-
-  #If random covariates, set up a formula for mixed models
-  if(length(astrRandomCovariates)>0)
-  {
-    #Format for lmer
-    #strRetFormula <- paste( "adCur ~ ", paste( sprintf( "(1|`%s`))", intersect(astrRandomCovariates, astrTerms)), collapse = " + " ))
-    #Format for glmmpql
-    strRandomCovariates = paste( sprintf( "1|`%s`", setdiff(astrRandomCovariates, astrTerms)), collapse = " + " )
-    strRetMMFormula <- paste( "adCur ~ ", strFixedCovariates, " + ", strRandomCovariates, sep="")
-  } else {
-    #This is either the formula for all covariates in an lm or fixed covariates in the lmm
-    strRetLMFormula <- paste( "adCur ~ ", strFixedCovariates, sep="")
-  }
-  return(c(strRetLMFormula, strRetMMFormula))
-}
