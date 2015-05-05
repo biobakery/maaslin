@@ -101,6 +101,36 @@ Required input file \*.read.config. A read config file allows one to indicate wh
  
 Optional input file \*.R. The R script file is using a call back programming pattern that allows one to add/modify specific code to customize analysis without touching the main MaAsLin engine. A generic R script is provided "maaslin_demo2.R" and can be renamed and used for any study. The R script can be modified to add quality control or formatting of data, add ecological measurements, or other changes to the underlying data before MaAsLin runs on it. This file is not required to run MaAsLin.
 
+### Updates in the new release ###
+ 
+
+The program now can use as inputs either a PCL file or a TSV file.
+It detects the type of the file by the suffix of the file  - *.tsv   or *.pcl
+
+**Example of running with a tsv file: **
+
+./R/Maaslin.R inst/extdata/maaslin_demo2.tsv output1  -i inst/extdata/maaslin_demo2.read.config
+
+**Example of running with a pcl file: **
+
+./R/Maaslin.R inst/extdata/maaslin_demo2.pcl output2 -i inst/extdata/maaslin_demo2.read.config
+
+
+**The config file is optional - Can be generated dynamically **
+
+If you pass the number of the row of the LAST Metadata (For a pcl file) or the number of the column of the LAST METADATA (For a tsv file) 
+using the parameter --lastMetadata=  the Config file gets generated for you.
+
+**Example of syntax to generate the config file automatically  for a pcl file:**
+
+ ./R/Maaslin.R inst/extdata/maaslin_demo2.pcl output3  --lastMetadata=9
+ 
+**Example of syntax to generate the config file automatically  for a tsv file:**
+ 
+  ./R/Maaslin.R inst/extdata/maaslin_demo2.tsv output4  --lastMetadata=9
+
+
+
 ### Process Flow ###
 
 ** 1\. Obtain your abundance or relative function table. **

@@ -417,3 +417,55 @@ cstrNames
   return(sort(unique(viRetIndicies)))
   ### Sorted indicies vector
 }
+
+
+
+  ##################################################################################
+  #   Modification log                                                             #
+  #   Check if the input file is of type pcl - if so, transpose it                 #
+  #   George Weingart  george.weingart@gmail.com  4/27/15                          #
+  ##################################################################################
+
+funcTransposeInputPCLtoTSV = function(
+### Take the input PCL file and transpose it to TSV
+strInputTSV 
+ ){ 
+   TSVFileName = paste(substr(strInputTSV, 1, nchar(strInputTSV) - 4), ".tsv", sep="")   #Calculate tsv file name  
+   matrx <- read.csv(strInputTSV, header=F, dec=".",sep="\t")
+   funcFileToMatrixAndTranspose(t(matrx),TSVFileName)
+   return(TSVFileName)
+ }
+ 
+ 
+ 
+funcFileToMatrixAndTranspose <- function(
+###  Read in a file into matrix, transpose it and then write to an output file
+ver,
+outfile
+){
+
+	verC <- ncol(ver)
+	verR <- nrow(ver)
+
+	writ <- file(outfile,"w")
+
+	for (i in 1:verR)
+	{
+	   str=""
+	   for (j in 1:verC)
+	   {
+	      str=paste(str,ver[i,j],sep="\t") 
+	   }
+
+	   str = substring(str, 2, nchar(str))
+	   str = gsub("^,","",str);
+	   writeLines(str,con=writ,sep="\n")
+	}
+
+	close(writ) 
+}
+
+  ##################################################################################
+  #   End Modification log                                                         #
+  #   George Weingart  george.weingart@gmail.com  4/27/15                          #
+  ##################################################################################

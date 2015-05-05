@@ -29,8 +29,14 @@ inlinedocs <- function(
 ) { return( pArgs ) }
 
 
+  #######################################################################################################
+  #  The following changes were introduced  
+  #   Added  the 'tools' library     - needed to find the suffix of a dataset name        
+  #  George Weingart   george.weingart@gmail.com   4/28/15                  
+  #######################################################################################################
+ 
 ### Load packages
-vDepLibrary = c("agricolae", "gam", "gamlss", "gbm", "glmnet", "inlinedocs", "logging", "MASS", "nlme", "optparse", "outliers", "penalized", "pscl", "robustbase")
+vDepLibrary = c("agricolae", "gam", "gamlss", "gbm", "glmnet", "inlinedocs", "logging", "MASS", "nlme", "optparse", "outliers", "penalized", "pscl", "robustbase", "tools")
 for(sDepLibrary in vDepLibrary)
 {
   if(! require(sDepLibrary, character.only=TRUE) )
@@ -68,6 +74,8 @@ lsArgs$fAllvAll = FALSE
 lsArgs$fPlotNA = FALSE
 lsArgs$dPenalizedAlpha = 0.95
 lsArgs$sAlternativeLibraryLocation = NULL
+lsArgs$iLastMetadata = NULL  # Added by GW on 2015/04/28 to support lastmetadata row for pcl files
+lsArgs$iFirstMetadata = NULL  # Added by GW on 2015/04/28 to support lastmetadata row for pcl files
 
 ### Create command line argument parser
 pArgs <- OptionParser( usage = "%prog [options] <data.tsv> <outputdir>" )
@@ -129,6 +137,13 @@ pArgs <- add_option( pArgs, c("-A","--pAlpha"), type="double", action="store", d
 pArgs <- add_option( pArgs, c("-L", "--libdir"), action="store", dest="sAlternativeLibraryLocation", default=lsArgs$sAlternativeLibraryLocation, metavar="AlternativeLibraryDirectory", help="An alternative location to find the lib directory. This dir and children will be searched for the first maaslin/src/lib dir.")
 
 
+## Last Metadata Row    #Added by GW on 2015/04/28  to support last metadata row if the input was pcl
+pArgs <- add_option( pArgs, c("--lastMetadata" ), type="integer", action="store", dest="iLastMetadata", default=lsArgs$iLastMetadata, metavar="LastMetadata", help="Last metadata row in the pcl input file (Number of the row) or Last metadata column in a tsv file.  [Default %default]")
+## First Metadata Row   #Added by GW on 2015/04/28  to support last metadata row if the input was pcl
+pArgs <- add_option( pArgs, c("--firstMetadata" ), type="integer", action="store", dest="iFirstMetadata", default=lsArgs$iFirstMetadata, metavar="FirstMetadata", help="First metadata row in the pcl input file (Number of the row) or first metadata column in a tsv file.  [Default %default]")
+
+
+
 Maaslin <- function(
 ### The main function manages the following:
 ### 1. Arguments are checked
@@ -170,8 +185,11 @@ dSelectionFrequency = NA,
 fAllvAll = FALSE,
 fPlotNA = FALSE,
 dPenalizedAlpha = 0.95,
-sAlternativeLibraryLocation = NULL)
+sAlternativeLibraryLocation = NULL,
+iLastMetadata = NULL,    #Added by GW on 2015/04/28  to support last metadata row if the input was pcl
+iFirstMetadata = NULL)   #Added by GW on 2015/04/28  to support first metadata row if the input was pcl
 {
+
 
   ### Logging class
   suppressMessages(library( logging, warn.conflicts=FALSE, quietly=TRUE, verbose=FALSE))
@@ -261,26 +279,7 @@ sAlternativeLibraryLocation = NULL)
 	{strDir <- c("./R")}
 
   
-  # If this does not have the lib file then go for the alt lib
- ###if( !file.exists(strDir) )
-  #{
-  #  lsPotentialListLocations = dir( path = sAlternativeLibraryLocation, pattern = "lib", recursive = TRUE, include.dirs = TRUE)
-  #  if( length( lsPotentialListLocations ) > 0 )
-  #  {
-  #    sLibraryPath = file.path( "maaslin","src","lib" )
-  #    iLibraryPathLength = nchar( sLibraryPath )
-  #   for( strSearchDir in lsPotentialListLocations )
-   #   {
-        # Looking for the path where the end of the path is equal to the library path given earlier
-        # Also checks before hand to make sure the path is atleast as long as the library path so no errors occur
-    #    if ( substring( strSearchDir, 1 + nchar( strSearchDir ) - iLibraryPathLength ) == sLibraryPath )
-   #     {
-   #       strDir = file.path( sAlternativeLibraryLocation, strSearchDir )
-   #       break
-   #     }
-   #   }
- #   }
-#  }
+ 
   #######################################################################################################
   #  End of changes  George Weingart   george.weingart@gmail.com   2/17/2015                    
   #######################################################################################################
@@ -350,6 +349,49 @@ outputDirectory = strOutputDIR
   }
 
   #Read file
+  ##################################################################################
+  #   Modification log                                                             #
+  #   Check if the input file is of type pcl - if so, transpose it                 #
+  #   George Weingart  george.weingart@gmail.com  4/27/15                          #
+  ##################################################################################
+  
+ 
+ 
+  fConvertPCLtoTSV  = FALSE
+  fGenerateConfigFile  = FALSE
+  OriginalstrInputTSV = strInputTSV  #  Store the original input filename
+  inputFileDataSuffix  =  file_ext(strInputTSV)
+  if  (inputFileDataSuffix  == "pcl")
+	{
+		strInputTSV = funcTransposeInputPCLtoTSV(strInputTSV)
+	    fConvertPCLtoTSV  = TRUE
+
+	}
+	
+ 
+  if  ( is.null(strInputConfig)  &&   !is.null(iLastMetadata))   #  If the User did not provide config file but provided Lastmetadata - we will build config file
+	{
+		if (is.null(iFirstMetadata))  # If user provided last metadata row but not first, we will try 2.....
+		{
+			iFirstMetadata = 2
+		}
+		strParmColIndeces1 = paste(toString(iFirstMetadata),"-",toString(iLastMetadata),sep="")
+		funcWriteMatrixToReadConfigFile(strConfigureFileName='generated_config', strMatrixName='Metadata',  strColIndices=strParmColIndeces1 )
+		strParmColIndeces2 = paste( toString(iLastMetadata + 1),'-',sep="")
+		funcWriteMatrixToReadConfigFile(strConfigureFileName='generated_config', strMatrixName='Abundance',  strColIndices=strParmColIndeces2 ,fAppend=TRUE)
+		strInputConfig = "generated_config"
+		fGenerateConfigFile  = TRUE
+	}
+	
+  ##################################################################################
+  #   End Modification log                                                         #
+  #   George Weingart  george.weingart@gmail.com  4/27/15                          #
+  ##################################################################################
+  
+  
+
+  
+  
   inputFileData = funcReadMatrices(strInputConfig, strInputTSV, log=TRUE)
   if(is.null(inputFileData[[c_strMatrixMetadata]])) { names(inputFileData)[1] <- c_strMatrixMetadata }
   if(is.null(inputFileData[[c_strMatrixData]])) { names(inputFileData)[2] <- c_strMatrixData }
@@ -367,6 +409,9 @@ outputDirectory = strOutputDIR
   #Reset rownames
   row.names(frmeData) = frmeData[[1]]
   frmeData = frmeData[-1]
+ 
+ 
+ 
 
   #Write QC files only in certain modes of verbosity
   # Read in and merge files
@@ -485,6 +530,11 @@ outputDirectory = strOutputDIR
         fAllvAll=fAllvAll, liNaIndices=lsRet$liNaIndices, lxParameters=lxParameters, strTestingCorrection=strMultTestCorrection, 
         fIsUnivariate=afuncVariableAnalysis[[c_iIsUnivariate]], fZeroInflated=fZeroInflated )
 
+	
+	
+	
+
+		
   #Write QC files only in certain modes of verbosity
   if( c_logrMaaslin$level <= loglevels["DEBUG"] ) {
 	funcWriteQCReport(strProcessFileName=file.path(strQCDir,"ProcessQC.txt"), lsQCData=alsRetBugs$lsQCCounts, liDataDim=liData, liMetadataDim=liMetaData)
@@ -515,7 +565,34 @@ outputDirectory = strOutputDIR
     funcWrite(paste("All verses all inference method was used=",fAllvAll), file.path(strQCDir,"Run_Parameters.txt"))
     funcWrite(paste("Ignore unless penalized feature selection was used. Alpha to determine the type of penalty=",dPenalizedAlpha), file.path(strQCDir,"Run_Parameters.txt"))
   }
+  ##################################################################################
+  #   Modification log                                                             #
+  #   If the input was a pcl file, notif the User we transposed it and             #
+  #   move the transposed tsv file to the output directory                         #
+  #   George Weingart  george.weingart@gmail.com  4/27/15                          #
+  ##################################################################################
+  	if (fConvertPCLtoTSV  ==  TRUE) 
+		{
+		    strTSVFIleNewLocation = file.path(strOutputDIR,basename(strInputTSV))  #In the output directory
+			funcWrite(paste("Input pcl file: ",OriginalstrInputTSV , "transposed and converted to tsv format and stored in the output directory (with a .tsv suffix)" ),file.path(strQCDir,"Run_Parameters.txt"))
+			file.rename(from=strInputTSV,to=strTSVFIleNewLocation)  # Move the new TSV file to the Output directory
+		}
+  if (fGenerateConfigFile  == TRUE)  #If we generated a config file - notify and move it to Output directory
+				{
+					strConfigFIleNewLocation = file.path(strOutputDIR,basename(strInputConfig))  #In the output directory
+					file.rename(from=strInputConfig,to=strConfigFIleNewLocation)  # Move the new TSV file to the Output directory
+					funcWrite(paste("Generated config file in: ",strConfigFIleNewLocation , " - You can use as a sample and create your own and pass it using the parm strInputConfig=YourConfigFile" ),file.path(strQCDir,"Run_Parameters.txt"))
 
+				}
+  
+  ##################################################################################
+  #   End Modification log                                                         #
+  #   If the input was a pcl file, notif the User we transposed it and             #
+  #   move the transposed tsv file to the output directory                         #
+  #   George Weingart  george.weingart@gmail.com  4/27/15                          #
+  ##################################################################################
+  
+  
   ### Write summary table
   # Summarize output files based on a keyword and a significance threshold
   # Look for less than or equal to the threshold (appropriate for p-value and q-value type measurements)
@@ -531,9 +608,8 @@ outputDirectory = strOutputDIR
 if( identical( environment( ), globalenv( ) ) &&
 	!length( grep( "^source\\(", sys.calls( ) ) ) ) {
 	cArgs <- parse_args( pArgs, positional_arguments = TRUE)
-
         # check for the correct number of positional arguments
-        if(length(cArgs$args)!= 2) {
+    if(length(cArgs$args)!= 2) {
             print_help(pArgs)
             stop("Please provide an input data file ( <data.tsv> ) and an output directory ( <outputdir> ).\n\nUsage: Maaslin.R [options] <data.tsv> <outputdir>")
         }
@@ -561,6 +637,9 @@ if( identical( environment( ), globalenv( ) ) &&
         fAllvAll = cArgs$options$fAllvAll,
         fPlotNA = cArgs$options$fPlotNA,
         dPenalizedAlpha = cArgs$options$dPenalizedAlpha,
-        sAlternativeLibraryLocation = cArgs$options$sAlternativeLibraryLocation) 
+        sAlternativeLibraryLocation = cArgs$options$sAlternativeLibraryLocation,
+		iLastMetadata = cArgs$options$iLastMetadata,  #Added by GW on 2015/04/28 to support Lastmetadata if pcl file was provided
+		iFirstMetadata = cArgs$options$iFirstMetadata  #Added by GW on 2015/04/28 to support Lastmetadata if pcl file was provided
+		) 
 }
  
