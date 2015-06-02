@@ -15,7 +15,8 @@ Imports: agricolae,
  outliers,
  penalized,
  pscl,
- robustbase
+ robustbase,
+ tools
 Date: 2014-12-04
 Author: Timothy Tickle<ttickle@hsph.harvard.edu>, Curtis Huttenhower <chuttenh@hsph.harvard.edu>
 Maintainer: Timothy Tickle <ttickle@hsph.harvard.edu>,Ayshwarya Subramanian<subraman@broadinstitute.org>,Lauren McIver<lauren.j.mciver@gmail.com>,George Weingart<george.weingart@gmail.com>

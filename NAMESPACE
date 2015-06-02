@@ -1,2 +1,2 @@
-import(agricolae,gam,gamlss,gbm,glmnet,inlinedocs,logging,MASS,nlme,optparse,outliers,penalized,pscl,robustbase)
+import(agricolae,gam,gamlss,gbm,glmnet,inlinedocs,logging,MASS,nlme,optparse,outliers,penalized,pscl,robustbase,tools)
 export(Maaslin)
