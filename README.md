@@ -2,7 +2,7 @@
 
 [MaAsLin](http://huttenhower.sph.harvard.edu/maaslin)
 
-Ayshwarya Subramanian, Timothy Tickle, Levi Waldron, Lauren McIver, George Weingart and Curtis Huttenhower
+TBD
 
 [MaAsLin Users Google Group](https://groups.google.com/forum/#!forum/maaslin-users)
 
