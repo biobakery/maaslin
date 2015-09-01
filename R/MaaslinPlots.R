@@ -58,7 +58,6 @@ liNaIndices = c()
   {
     strFilePDF <- sprintf( "%s-%s.pdf", strBaseOut, strName )
     pdf( strFilePDF, width = 11, useDingbats=FALSE )
-    dev.off()
   }
 
   # Turn off ask prompt for next plot 
@@ -183,7 +182,7 @@ liNaIndices = c()
   if(fDoResidualPlot){funcResidualPlot(lsCur=lsCur, frmeTmp=frmeTmp, adColorMin=adColorMin, adColorMax=adColorMax, adColorMed=adColorMed, adMar, funcUnTransform=funcUnTransform, liNaIndices)}
   return(strFilePDF)
   ### File to which the pdf was written
-
+dev.off()
 }
 
 ### Plot 1
