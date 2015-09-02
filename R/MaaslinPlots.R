@@ -180,9 +180,9 @@ liNaIndices = c()
   }
   ### Plot the residual plot
   if(fDoResidualPlot){funcResidualPlot(lsCur=lsCur, frmeTmp=frmeTmp, adColorMin=adColorMin, adColorMax=adColorMax, adColorMed=adColorMed, adMar, funcUnTransform=funcUnTransform, liNaIndices)}
-  return(strFilePDF)
+dev.off()  
+return(strFilePDF)
   ### File to which the pdf was written
-dev.off()
 }
 
 ### Plot 1
