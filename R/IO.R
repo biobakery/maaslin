@@ -428,9 +428,11 @@ cstrNames
 
 funcTransposeInputPCLtoTSV = function(
 ### Take the input PCL file and transpose it to TSV
-strInputTSV 
+strInputTSV,
+strOutputDIR
  ){ 
-   TSVFileName = paste(substr(strInputTSV, 1, nchar(strInputTSV) - 4), ".tsv", sep="")   #Calculate tsv file name  
+   strInputTSVBasename = basename(strInputTSV)
+   TSVFileName = file.path(dirname(strOutputDIR), paste(substr(strInputTSVBasename, 1, nchar(strInputTSVBasename) - 4), ".tsv", sep=""))   #Calculate tsv file name  
    matrx <- read.csv(strInputTSV, header=F, dec=".",sep="\t")
    funcFileToMatrixAndTranspose(t(matrx),TSVFileName)
    return(TSVFileName)

@@ -363,7 +363,7 @@ outputDirectory = strOutputDIR
   inputFileDataSuffix  =  file_ext(strInputTSV)
   if  (inputFileDataSuffix  == "pcl")
 	{
-		strInputTSV = funcTransposeInputPCLtoTSV(strInputTSV)
+		strInputTSV = funcTransposeInputPCLtoTSV(strInputTSV, strOutputDIR)
 	    fConvertPCLtoTSV  = TRUE
 
 	}
