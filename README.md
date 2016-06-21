@@ -57,7 +57,7 @@ Please install these packages before installing MaAsLin.
 
 ## Installation ##
 
-1. [Download](https://bitbucket.org/biobakery/maaslin/downloads/Maaslin_0.0.3.tar.gz) the latest version of MaAsLin.
+1. [Download](https://bitbucket.org/biobakery/maaslin/downloads/Maaslin_0.0.4.tar.gz) the latest version of MaAsLin.
 2. Install dependencies
 
 ```
