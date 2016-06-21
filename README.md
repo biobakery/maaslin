@@ -58,14 +58,7 @@ Please install these packages before installing MaAsLin.
 ## Installation ##
 
 1. [Download](https://bitbucket.org/biobakery/maaslin/downloads/Maaslin_0.0.4.tar.gz) the latest version of MaAsLin.
-2. Install dependencies
-
-```
-$ R 
-> install.packages(c('agricolae','gam','gamlss','gbm','glmnet','inlinedocs','logging','MASS','nlme','optparse','outliers','penalized','pscl','robustbase'))
-```
-
-3. Install MaAsLin (where X.Y.Z is the version number) : `` $ R CMD INSTALL Maaslin_X.Y.Z.tar.gz ``
+2. Install MaAsLin (where X.Y.Z is the version number) : `` $ R CMD INSTALL Maaslin_X.Y.Z.tar.gz ``
 
 ## Run a Demo ##
 
