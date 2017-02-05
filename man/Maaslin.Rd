@@ -95,7 +95,7 @@ Maaslin(strInputTSV,
   Including this flag will stop the creation of the output log file.  Default=FALSE
 }
   \item{fInvert}{
-  When given, flag indicates to invert the background of figures to black. Defaule = FALSE
+  When given, flag indicates to invert the background of figures to black. Default = FALSE
 }
   \item{dSelectionFrequency}{
   Selection Frequency for boosting (max 1 will remove almost everything). Interpreted as requiring boosting to select metadata 100% percent of the time (or less if given a number that is less). Value should be between 1 (100%) and 0 (0%), NA (default is determined by data size)
