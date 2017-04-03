@@ -51,7 +51,7 @@ we work with proportional data, the Yi (abundances) are
 
 ## Requirements ##
 
-MaAsLin requires the following R packages: agricolae, gam, gamlss, gbm, glmnet, inlinedocs, logging, MASS, nlme, optparse, outliers, penalized, pscl, robustbase
+MaAsLin requires the following R packages: agricolae, gam, gamlss, gbm, glmnet, inlinedocs, logging, MASS, nlme (version 3.1-127), optparse, outliers, penalized, pscl, robustbase
 
 Please install these packages before installing MaAsLin.
 
