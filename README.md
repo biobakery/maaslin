@@ -1,12 +1,13 @@
-# MaAsLin: Multivariate Association with Linear Models
+# MaAsLin User Manual
 
-[MaAsLin](http://huttenhower.sph.harvard.edu/maaslin)
+MaAsLin is a multivariate statistical framework that finds associations between clinical metadata and potentially high-dimensional experimental data.
 
-TBD
+If you use MaAsLin, please cite the paper the MaAsLin methodology was initially presented in: 
+[Morgan XC, Tickle TL, Sokol H, Gevers D, Devaney KL, Ward DV, Reyes JA, Shah SA, LeLeiko N, Snapper SB, Bousvaros A, Korzenik J, Sands BE, Xavier RJ, Huttenhower C. Dysfunction of the intestinal microbiome in inflammatory bowel disease and treatment. Genome Biol. 2012 Apr 16;13(9):R79.](https://www.ncbi.nlm.nih.gov/pubmed/23013615)
 
-[MaAsLin Users Google Group](https://groups.google.com/forum/#!forum/maaslin-users)
+If you have questions, please email the [MaAsLin Users Google Group](https://groups.google.com/forum/#!forum/maaslin-users).
 
-MIT License
+For more information, see the [MaAsLin Tutorial](https://bitbucket.org/biobakery/biobakery/wiki/maaslin).
 
 --------------------------------------------
 
