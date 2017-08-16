@@ -23,6 +23,92 @@
 # (contact Timothy Tickle, ttickle@hsph.harvard.edu).
 #####################################################################################
 
+
+na.gam.replace_hutlab <-
+#####################################################################################
+#  <<<<  I M P O R T A N T   >>>>  !!!!                                             #
+#   Log of Change                                                                   #
+#   =============                                                                   #
+#   By: George Weingart on August 15,2017                                           #
+#   This is a fixed version of na.gam.replace provided to George Weingart by        #
+#       Prof. Trevor Hastie to resolve the problem of                               #
+# Error in if (0 < (resp <- attr(attr(frame, "terms"), "response"))) { :            #
+# argument is of length zero                                                        #  
+# The problems occurr na.gam.replace at release gam_1.14-3 and gam_1.14.4           #
+#  but not in gam_1.14                                                              #
+#                                                                                   #
+#  Once Prof. Hastie propagates the fix of na.gam.replace to CRAN,  we need to:     #
+#  1. Delete the temporary function na.gam.replace_hutlab that I built              #
+#  2. Reinstate the call to na.gam.replace below un funclean (Around line 515       #
+#         instead of the temporary call to na.gam.replace_hutlab                    #
+#                                                                                   #
+#  <<<<  I M P O R T A N T   >>>>  !!!!                                             #
+#####################################################################################            
+    function (frame)
+{
+    vars <- names(frame)
+    ##See if there is a response
+    if(!is.null(tt <- attr(frame, "terms"))){
+        if (0 < (resp <- attr(tt, "response"))) {
+            vars <- vars[-resp]
+            x <- frame[[resp]]
+            pos <- is.na(x)
+            if (any(pos)) {
+                frame <- frame[!pos, , drop = FALSE]
+                warning(paste(sum(pos), "observations omitted due to missing values in the response"))
+            }
+        }
+    }
+    for (j in vars) {
+        x <- frame[[j]]
+        pos <- is.na(x)
+        if (any(pos)) {
+            if (length(levels(x))) {
+                xx <- as.character(x)
+                xx[pos] <- "NA"
+                x <- factor(xx, exclude = NULL)
+            }
+            else if (is.matrix(x)) {
+                ats <- attributes(x)
+                w <- !pos
+                x[pos] <- 0
+                n <- nrow(x)
+                TT <- array(1, c(1, n))
+                xbar <- (TT %*% x)/(TT %*% w)
+                xbar <- t(TT) %*% xbar
+                x[pos] <- xbar[pos]
+                attributes(x) <- ats
+            }
+            else {
+                ats <- attributes(x)
+                x[pos] <- mean(x[!pos])
+                attributes(x) <- ats
+            }
+            frame[[j]] <- x
+        }
+    }
+    frame
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 inlinedocs <- function(
 ##author<< Curtis Huttenhower <chuttenh@hsph.harvard.edu> and Timothy Tickle <ttickle@hsph.harvard.edu>
 ##description<< Manages the quality control of data and the performance of analysis (univariate or multivariate), regularization, and data (response) transformation.
@@ -428,7 +514,29 @@ dPOutlier = 0.05
     c_logrMaaslin$info( format( colnames( frmeData )[aiRemoveData] ))
   }
 
-  #Use na.gam.replace to manage NA metadata
+#####################################################################################
+#  <<<<  I M P O R T A N T   >>>>  !!!!                                             #
+#   Log of Change                                                                   #
+#   =============                                                                   #
+#   By: George Weingart on August 15,2017                                           #
+#   This is a fixed version of na.gam.replace provided to George Weingart by        #
+#       Prof. Trevor Hastie to resolve the problem of                               #
+# Error in if (0 < (resp <- attr(attr(frame, "terms"), "response"))) { :            #
+# argument is of length zero                                                        #  
+# The problems occurr na.gam.replace at release gam_1.14-3 and gam_1.14.4           #
+#  but not in gam_1.14                                                              #
+#                                                                                   #
+#  Once Prof. Hastie propagates the fix of na.gam.replace to CRAN,  we need to:     #
+#  1. Delete the temporary function na.gam.replace_hutlab that I built              #
+#  2. Reinstate the call to na.gam.replace below un funclean (Around line 515       #
+#         instead of the temporary call to na.gam.replace_hutlab                    #
+#                                                                                   #
+#  <<<<  I M P O R T A N T   >>>>  !!!!                                             #
+##################################################################################### 
+  
+  
+  
+  #Use na.gam.replace to manage NA metadata   
   aiTmp <- setdiff( aiMetadata, which( colnames( frmeData ) %in% astrNoImpute ) )
   # Keep tack of NAs so the may not be plotted later.
   liNaIndices = list()
@@ -437,8 +545,29 @@ dPOutlier = 0.05
   {
     liNaIndices[[lsNames[i]]] = which(is.na(frmeData[,i]))
   }
-  frmeData[,aiTmp] <- na.gam.replace( frmeData[,aiTmp] )
-
+  
+####################################################################################
+#  <<<<  I M P O R T A N T   >>>>  !!!!                                             #
+#   Log of Change                                                                   #
+#   =============                                                                   #
+#   By: George Weingart on August 15,2017                                           #
+#   This is a fixed version of na.gam.replace provided to George Weingart by        #
+#       Prof. Trevor Hastie to resolve the problem of                               #
+# Error in if (0 < (resp <- attr(attr(frame, "terms"), "response"))) { :            #
+# argument is of length zero                                                        #  
+# The problems occurr na.gam.replace at release gam_1.14-3 and gam_1.14.4           #
+#  but not in gam_1.14                                                              #
+#                                                                                   #
+#  Once Prof. Hastie propagates the fix of na.gam.replace to CRAN,  we need to:     #
+#  1. Delete the temporary function na.gam.replace_hutlab that I built              #
+#  2. Reinstate the call to na.gam.replace below un funclean (Around line 515       #
+#         instead of the temporary call to na.gam.replace_hutlab                    #
+#                                                                                   #
+#  <<<<  I M P O R T A N T   >>>>  !!!!                                             #
+#####################################################################################
+  
+# frmeData[,aiTmp] <- na.gam.replace( frmeData[,aiTmp] )   # Commented  out by George Weingart on 8/15/2017 to fix problem in na.gam.replace
+  frmeData[,aiTmp] <- na.gam.replace_hutlab( frmeData[,aiTmp] )  #GW 2017/08/15 - This line needs to be reinstated to na.gam.replace when na.gam.replace is fixed in CRAN
   #If NA is a value in factor data, set the NA as a level.
   for( lsFactor in lslsFactors )
   {
