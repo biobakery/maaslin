@@ -54,7 +54,26 @@ we work with proportional data, the Yi (abundances) are
 
 MaAsLin requires the following R packages: agricolae, gam (version 1.14), gamlss, gbm, glmnet, inlinedocs, logging, MASS, nlme (version 3.1-127), optparse, outliers, penalized, pscl, robustbase
 
-Please install these packages before installing MaAsLin.
+Please install these packages before installing MaAsLin. Here is an example script for installing dependencies (execute from within a fresh R session)
+
+```R
+				# Load all required packages at once
+				if(! require("pacman")) install.packages("pacman", repos='http://cran.us.r-project.org')
+				suppressPackageStartupMessages(library("pacman"))
+				pacman::p_load('agricolae', 'gamlss', 'gbm', 'nlme', 'gam', 'glmnet', 'inlinedocs', 'logging', 'devtools','MASS', 'optparse', 'outliers','penalized', 'pscl', 'robustbase')
+
+				# Install older version of gam
+				if (!packageVersion('gam')=='1.14') {
+  				remove.packages('gam')
+  				devtools::install_version("gam", version = "1.14", repos = "http://cran.us.r-project.org")
+				}
+
+				# Install older version of nlme
+				if (!packageVersion('nlme')=='3.1-127') {
+  				remove.packages('nlme')
+  				devtools::install_version("nlme", version = "3.1-127", repos = "http://cran.us.r-project.org")
+				}
+```
 
 ## Installation ##
 
