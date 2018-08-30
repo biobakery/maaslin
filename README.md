@@ -60,7 +60,7 @@ Please install these packages before installing MaAsLin. Here is an example scri
 # Load all required packages at once
 if(! require("pacman")) install.packages("pacman", repos='http://cran.us.r-project.org')
 suppressPackageStartupMessages(library("pacman"))
-pacman::p_load('agricolae', 'gamlss', 'gbm', 'nlme', 'gam', 'glmnet', 'inlinedocs', 'logging', 'devtools','MASS', 'optparse', 'outliers','penalized', 'pscl', 'robustbase')
+pacman::p_load('devtools', 'agricolae', 'gamlss', 'gbm', 'nlme', 'gam', 'glmnet', 'inlinedocs', 'logging', 'devtools','MASS', 'optparse', 'outliers','penalized', 'pscl', 'robustbase')
 
 # Install older version of gam
 if (!packageVersion('gam')=='1.14') {
