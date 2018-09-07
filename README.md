@@ -78,7 +78,11 @@ devtools::install_version("nlme", version = "3.1-127", repos = "http://cran.us.r
 ## Installation ##
 
 1. [Download](https://bitbucket.org/biobakery/maaslin/downloads/Maaslin_0.0.5.tar.gz) the latest version of MaAsLin.
-2. Install MaAsLin (where X.Y.Z is the version number) : `` $ R CMD INSTALL Maaslin_X.Y.Z.tar.gz ``
+2. Install MaAsLin (where X.Y.Z is the version number) from the command line: `` $ R CMD INSTALL Maaslin_X.Y.Z.tar.gz ``. Alternatively, 
+install from within a fresh R session as: 
+```R
+install.packages("https://bitbucket.org/biobakery/maaslin/downloads/Maaslin_X.Y.Z.tar.gz", repo=NULL, type="source")
+```
 
 ## Run a Demo ##
 
