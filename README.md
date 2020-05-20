@@ -5,9 +5,9 @@ MaAsLin is a multivariate statistical framework that finds associations between 
 If you use MaAsLin, please cite the paper the MaAsLin methodology was initially presented in: 
 [Morgan XC, Tickle TL, Sokol H, Gevers D, Devaney KL, Ward DV, Reyes JA, Shah SA, LeLeiko N, Snapper SB, Bousvaros A, Korzenik J, Sands BE, Xavier RJ, Huttenhower C. Dysfunction of the intestinal microbiome in inflammatory bowel disease and treatment. Genome Biol. 2012 Apr 16;13(9):R79.](https://www.ncbi.nlm.nih.gov/pubmed/23013615)
 
-If you have questions, please email the [MaAsLin Users Google Group](https://groups.google.com/forum/#!forum/maaslin-users).
+If you have questions, please email the [MaAsLin bioBakery Support Forum](https://forum.biobakery.org/c/Downstream-analysis-and-statistics/MaAsLin2/10).
 
-For more information, see the [MaAsLin Tutorial](https://bitbucket.org/biobakery/biobakery/wiki/maaslin).
+For more information, see the [MaAsLin Tutorial](https://github.com/biobakery/biobakery/wiki/maaslin).
 
 --------------------------------------------
 
@@ -83,11 +83,11 @@ devtools::install_version("nlme", version = "3.1-127", repos = "http://cran.us.r
 
 ## Installation ##
 
-1. [Download](https://bitbucket.org/biobakery/maaslin/downloads/Maaslin_0.0.5.tar.gz) the latest version of MaAsLin.
+1. [Download](https://github.com/biobakery/maaslin/archive/0.0.4.tar.gz) the latest version of MaAsLin.
 2. Install MaAsLin (where X.Y.Z is the version number) from the command line: `` $ R CMD INSTALL Maaslin_X.Y.Z.tar.gz ``. Alternatively, 
 install from within a fresh R session as: 
 ```R
-install.packages("https://bitbucket.org/biobakery/maaslin/downloads/Maaslin_X.Y.Z.tar.gz", repo=NULL, type="source")
+install.packages("https://github.com/biobakery/maaslin/downloads/Maaslin_X.Y.Z.tar.gz", repo=NULL, type="source")
 ```
 
 ## Run a Demo ##
@@ -201,7 +201,7 @@ more details see section **Related Projects and Scripts**).
 
 Please note two tools have been developed to help you! If you are
 working from a Qiime OTU output and have a metadata text file try using
-*QiimeToMaaslin* found at bitbucket. If you have a tab delimited file
+*QiimeToMaaslin* found at Github. If you have a tab delimited file
 which matches the below .pcl description (for instance MetaPhlAn
 output) use the merge_metadata.py script provided in this project
 (`maaslin/exec/merge_metadata.py`) and documented in
@@ -308,7 +308,7 @@ $ R
 > Maaslin('input.tsv','maaslin_output',strInputConfig='input.read.config')
 ```
 
-Please see the [FAQs](https://bitbucket.org/biobakery/maaslin/wiki/Home) if you need information on running MaAsLin from the command line.
+
 
 ** 8\. Discover amazing associations in your results! **
 
@@ -422,9 +422,6 @@ The all verses all analysis flow is a way of manipulating how metadata are used.
 1. strForcedPredictors = "cage"
 1. strModelSelection = "none"
 
-## Troubleshooting ##
-
-Please see the [FAQs](https://bitbucket.org/biobakery/maaslin/wiki/Home) for MaAsLin troubleshooting.
 
 ## How to Run in Galaxy ##
 
