@@ -7,7 +7,7 @@ If you use MaAsLin, please cite the paper the MaAsLin methodology was initially 
 
 If you have questions, please email the [MaAsLin bioBakery Support Forum](https://forum.biobakery.org/c/Downstream-analysis-and-statistics/MaAsLin2/10).
 
-For more information, see the [MaAsLin Tutorial](https://github.com/biobakery/biobakery/wiki/maaslin).
+For more information, see the [MaAsLin Tutorial](https://github.com/biobakery/biobakery/wiki/maaslin1).
 
 --------------------------------------------
 
